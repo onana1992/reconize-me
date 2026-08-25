@@ -2,6 +2,8 @@ package com.kyc.controllers;
 
 import com.kyc.entities.Verification;
 import com.kyc.services.VerificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/v1/verifications")
+@Tag(name = "Verifications")
 public class VerificationsController {
 
     private final VerificationService verificationService;
@@ -21,6 +24,7 @@ public class VerificationsController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Lire une vérification (isolée par organisation)")
     public ResponseEntity<Verification> get(
             @PathVariable UUID id, @RequestHeader(value = "X-Organization-Id", required = false) UUID organizationId) {
         if (organizationId == null) {
