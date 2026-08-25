@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Recogniz-Me",
+      "request": "launch",
+      "mainClass": "com.kyc.RecognizMeApplication",
+      "cwd": "${workspaceFolder}/api",
+      "shortenCommandLine": "argfile"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "java.debug.settings.forceBuildBeforeLaunch": true,
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true,
+  "java.import.gradle.enabled": false,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/web/**",
+    "**/.next/**",
+    "**/packages/**"
+  ]
+}

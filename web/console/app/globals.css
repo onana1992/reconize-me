@@ -1,0 +1,11 @@
+html,
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background: #0b1220;
+  color: #e8eef9;
+}
+
+a {
+  color: #8cb4ff;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "recogniz-me",
+  "private": true,
+  "workspaces": [
+    "web/console",
+    "web/flow",
+    "packages/capture-sdk"
+  ],
+  "scripts": {
+    "dev:console": "npm run dev -w web/console",
+    "dev:flow": "npm run dev -w web/flow"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "folders": [
+    { "name": "api", "path": "api" },
+    { "name": "Recogniz-Me", "path": "." }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true
+  }
+}

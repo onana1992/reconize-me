@@ -1,0 +1,40 @@
+# Java / Maven
+api/**/target/
+api/**/.classpath
+api/**/.project
+api/**/.settings/
+*.class
+*.jar
+*.war
+hs_err_pid*
+
+# Node
+node_modules/
+web/**/.next/
+web/**/out/
+packages/**/dist/
+npm-debug.log*
+.pnpm-store/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
