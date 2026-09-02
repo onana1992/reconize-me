@@ -1,0 +1,161 @@
+/*
+ * Recogniz-Me — tokens de marque (M0).
+ * Source unique des couleurs, typo, espacements, rayons.
+ * Aucune surface (console, flow, vitrine, e-mail) ne définit sa propre couleur.
+ * Thème clair, accent vert. Contrastes vérifiés WCAG 2.2 AA.
+ */
+
+:root {
+  /* Échelle verte — identité */
+  --rm-green-50: #eef7f2;
+  --rm-green-100: #e0f1e8;
+  --rm-green-200: #b7dfc9;
+  --rm-green-300: #86c9a7;
+  --rm-green-500: #1a8f5e;
+  --rm-green-600: #0f7a4d;
+  --rm-green-700: #0b6340;
+  --rm-green-800: #084d32;
+  --rm-green-900: #063523;
+
+  /* Échelle neutre — légèrement teintée vert pour rester dans la marque */
+  --rm-neutral-0: #ffffff;
+  --rm-neutral-25: #f9fbf9;
+  --rm-neutral-50: #f4f7f5;
+  --rm-neutral-100: #eaefec;
+  --rm-neutral-200: #dde5e0;
+  --rm-neutral-300: #c7d3cc;
+  --rm-neutral-500: #5a6b62;
+  --rm-neutral-700: #33423a;
+  --rm-neutral-900: #111a15;
+
+  /* Surfaces */
+  --rm-bg: var(--rm-neutral-50);
+  --rm-surface: var(--rm-neutral-0);
+  --rm-surface-subtle: var(--rm-neutral-25);
+  --rm-surface-sunken: var(--rm-neutral-100);
+
+  /* Texte */
+  --rm-text: var(--rm-neutral-900);
+  --rm-text-muted: var(--rm-neutral-500);
+  --rm-text-on-accent: var(--rm-neutral-0);
+
+  /* Bordures */
+  --rm-border: var(--rm-neutral-200);
+  --rm-border-strong: var(--rm-neutral-300);
+
+  /* Action — le vert n'habille que ce qui agit (et l'état approuvé) */
+  --rm-accent: var(--rm-green-600);
+  --rm-accent-hover: var(--rm-green-700);
+  --rm-accent-active: var(--rm-green-800);
+  --rm-accent-subtle: var(--rm-green-50);
+  --rm-accent-border: var(--rm-green-200);
+  --rm-link: var(--rm-green-700);
+
+  /* Focus — visible sur fond clair comme sur bouton vert */
+  --rm-focus: var(--rm-green-800);
+  --rm-focus-width: 2px;
+  --rm-focus-offset: 2px;
+
+  /* Statuts sémantiques : chaque ton a fond + texte, jamais la couleur seule */
+  --rm-tone-neutral-bg: #eef1f4;
+  --rm-tone-neutral-fg: #475569;
+  --rm-tone-info-bg: #e7f0fb;
+  --rm-tone-info-fg: #1d5fa8;
+  --rm-tone-progress-bg: var(--rm-green-100);
+  --rm-tone-progress-fg: var(--rm-green-800);
+  --rm-tone-success-bg: var(--rm-green-50);
+  --rm-tone-success-fg: var(--rm-green-600);
+  --rm-tone-warning-bg: #fdf3dc;
+  --rm-tone-warning-fg: #8a5a00;
+  --rm-tone-danger-bg: #fceae9;
+  --rm-tone-danger-fg: #b3261e;
+
+  /* Typographie — une seule famille.
+     `--rm-font-brand` est le point d'accroche d'une fonte chargée par une
+     surface (la vitrine y met Inter via next/font). Non défini, la pile
+     système s'applique : console et flow restent inchangés. */
+  --rm-font-sans: var(--rm-font-brand, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --rm-font-mono: var(--rm-font-brand-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace);
+  --rm-text-xs: 0.75rem;
+  --rm-text-sm: 0.875rem;
+  --rm-text-base: 1rem;
+  --rm-text-lg: 1.125rem;
+  --rm-text-xl: 1.375rem;
+  --rm-text-2xl: 1.75rem;
+  --rm-leading-tight: 1.25;
+  --rm-leading-normal: 1.55;
+  --rm-tracking-eyebrow: 0.08em;
+
+  /* Espacements — pas de valeur hors échelle */
+  --rm-space-1: 0.25rem;
+  --rm-space-2: 0.5rem;
+  --rm-space-3: 0.75rem;
+  --rm-space-4: 1rem;
+  --rm-space-5: 1.5rem;
+  --rm-space-6: 2rem;
+  --rm-space-7: 2.5rem;
+  --rm-space-8: 3.5rem;
+
+  /* Rayons et ombres */
+  --rm-radius-sm: 6px;
+  --rm-radius-md: 10px;
+  --rm-radius-lg: 14px;
+  --rm-radius-pill: 999px;
+  --rm-shadow-sm: 0 1px 2px rgba(6, 53, 35, 0.06);
+  --rm-shadow-md: 0 6px 20px rgba(6, 53, 35, 0.08);
+
+  /* Largeurs de contenu */
+  --rm-width-form: 27.5rem;
+  --rm-width-content: 45rem;
+  --rm-width-flow: 30rem;
+  --rm-width-site: 68rem;
+
+  /* ---------------------------------------------------------------------
+   * Ajouts de la refonte vitrine. Strictement additifs : aucune valeur
+   * ci-dessus n'est modifiée, donc console et flow rendent à l'identique.
+   * ------------------------------------------------------------------ */
+
+  /* Encre — surfaces sombres qui cassent le rythme du papier.
+     Ce n'est pas un second thème : le produit reste clair. C'est un contraste
+     éditorial, réservé aux sections de respiration et d'appel à l'action. */
+  --rm-ink: #061410;
+  --rm-ink-raised: #0b201a;
+  --rm-ink-border: #1d3a30;
+  --rm-ink-text: #eaf2ed;
+  --rm-ink-muted: #93aaa0;
+  /* Le vert de marque n'a pas assez de contraste sur l'encre : cette variante
+     éclaircie tient 9:1 et ne sert que là. */
+  --rm-accent-on-ink: #4dc98d;
+
+  /* Papier — grain et trame de relevé, dessinés, jamais chargés en image */
+  --rm-mesh-line: rgba(6, 53, 35, 0.055);
+  --rm-mesh-line-ink: rgba(234, 242, 237, 0.06);
+  --rm-mesh-step: 2.75rem;
+
+  /* Échelle d'affichage fluide : un seul titre par palier, pas de media query */
+  --rm-display-1: clamp(2.5rem, 1.55rem + 3.8vw, 4.25rem);
+  --rm-display-2: clamp(1.95rem, 1.4rem + 2.2vw, 2.9rem);
+  --rm-display-3: clamp(1.5rem, 1.28rem + 0.9vw, 1.95rem);
+  --rm-text-3xl: 2.25rem;
+  --rm-leading-display: 1.05;
+  --rm-tracking-display: -0.03em;
+  --rm-tracking-mono: 0.04em;
+
+  /* Espacements longs — rythme vertical de la vitrine */
+  --rm-space-9: 4.5rem;
+  --rm-space-10: 6rem;
+  --rm-space-11: 8.5rem;
+
+  --rm-radius-xl: 24px;
+  --rm-shadow-lg: 0 30px 70px -20px rgba(6, 53, 35, 0.22);
+  --rm-shadow-ink: 0 30px 70px -20px rgba(3, 12, 9, 0.55);
+
+  --rm-width-wide: 78rem;
+  --rm-width-hero: 92rem;
+
+  /* Motion — une seule courbe, trois durées */
+  --rm-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rm-duration-fast: 140ms;
+  --rm-duration: 320ms;
+  --rm-duration-slow: 760ms;
+}

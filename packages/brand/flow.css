@@ -1,0 +1,51 @@
+/*
+ * Recogniz-Me — atmosphère Hosted flow (applicant).
+ * Même marque, sans chrome d'application : un humain devant une caméra,
+ * pas un back-office. Mobile d'abord, cibles tactiles larges.
+ * Dépend de tokens.css + base.css.
+ */
+
+body {
+  background: var(--rm-surface);
+}
+
+.rm-flow {
+  max-width: var(--rm-width-flow);
+  margin: 0 auto;
+  padding: var(--rm-space-6) var(--rm-space-5) var(--rm-space-8);
+}
+
+.rm-flow-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  margin: 0 0 var(--rm-space-6);
+  font-size: var(--rm-text-sm);
+  font-weight: 600;
+  color: var(--rm-text-muted);
+}
+
+.rm-flow h1 {
+  font-size: var(--rm-text-2xl);
+}
+
+.rm-flow p {
+  font-size: var(--rm-text-lg);
+  line-height: var(--rm-leading-normal);
+}
+
+.rm-flow .rm-actions {
+  margin-top: var(--rm-space-6);
+}
+
+.rm-flow button {
+  padding: var(--rm-space-4) var(--rm-space-5);
+  font-size: var(--rm-text-base);
+}
+
+@media (max-width: 30rem) {
+  .rm-flow .rm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

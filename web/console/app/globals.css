@@ -1,11 +1,14 @@
-html,
-body {
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  background: #0b1220;
-  color: #e8eef9;
+/*
+ * Console — styles propres à cette surface uniquement.
+ * Couleurs, typo, espacements : @kyc/brand (tokens.css, base.css, console.css).
+ * Ne pas écrire de valeur de couleur ici.
+ */
+
+.rm-created {
+  margin-top: var(--rm-space-5);
 }
 
-a {
-  color: #8cb4ff;
+/* Renvoi vers la fiche, détaché du bloc lien */
+.rm-created > p:last-of-type {
+  margin-top: var(--rm-space-5);
 }

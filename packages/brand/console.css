@@ -1,0 +1,56 @@
+/*
+ * Recogniz-Me — atmosphère Console (client SaaS).
+ * Chrome d'application : barre de navigation, page cadrée, densité back-office.
+ * Dépend de tokens.css + base.css.
+ */
+
+.rm-app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-6);
+  padding: var(--rm-space-4) var(--rm-space-6);
+  border-bottom: 1px solid var(--rm-border);
+  background: var(--rm-surface);
+}
+
+.rm-app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  color: var(--rm-text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.rm-app-brand:hover {
+  color: var(--rm-text);
+}
+
+.rm-app-nav {
+  display: flex;
+  gap: var(--rm-space-4);
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+}
+
+.rm-page {
+  max-width: var(--rm-width-content);
+  padding: var(--rm-space-7) var(--rm-space-6) var(--rm-space-8);
+}
+
+.rm-form {
+  display: grid;
+  gap: var(--rm-space-4);
+  max-width: var(--rm-width-form);
+}
+
+.rm-form button {
+  justify-self: start;
+}
+
+.rm-details {
+  display: grid;
+  gap: var(--rm-space-4);
+  max-width: var(--rm-width-form);
+}

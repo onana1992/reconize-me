@@ -6,11 +6,17 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "verifications")
+@Table(
+        name = "verifications",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_verifications_org_external",
+                        columnNames = {"organization_id", "external_id"}))
 public class Verification {
 
     @Id
@@ -40,6 +46,9 @@ public class Verification {
 
     @Column(name = "hosted_expires_at", nullable = false)
     private Instant hostedExpiresAt;
+
+    @Column(name = "metadata", nullable = false, length = 4096)
+    private String metadata = "{}";
 
     @Column(nullable = false)
     private Instant createdAt;
@@ -110,6 +119,14 @@ public class Verification {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(String metadata) {
+        this.metadata = metadata == null || metadata.isBlank() ? "{}" : metadata;
     }
 
     public void setApplicant(String firstName, String lastName, String email) {

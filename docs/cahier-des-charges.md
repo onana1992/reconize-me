@@ -1,7 +1,9 @@
 # Cahier des charges — Recogniz-Me
 
 **Date :** 23 août 2026  
-**Statut :** spécification produit
+**Statut :** spécification produit (vision)
+
+**Implémentation en cours :** le livrable métier immédiat est le [cahier des charges MVP](./MVP/cahier-des-charges-mvp.md) ([roadmap](./MVP/roadmap-implementation-mvp.md)). Le présent document reste la **vision** (moteurs IA propriétaires). Le MVP ne livre pas SageMaker ni les produits Biometric Authentication et AML.
 
 ---
 
@@ -9,18 +11,11 @@
 
 Développer **Recogniz-Me**, une plateforme SaaS KYC / Identity Verification comparable dans son positionnement à Onfido, permettant aux entreprises de vérifier l'identité de leurs utilisateurs à distance.
 
-La particularité du projet sera de développer progressivement un moteur IA propriétaire pour :
+La particularité du projet est un **moteur IA propriétaire dès le premier livrable d’analyse documentaire** : détection de pièce, classification, authenticité et fraude visuelle. On **n’emprunte pas** un palier heuristique (contours, ratios, règles de coins) avant le modèle : la vision documentaire est entraînée et servie (SageMaker), pas un enchaînement OpenCV « en attendant ».
 
-- la compréhension des documents d'identité ;
-- la détection de falsification ;
-- la vérification biométrique ;
-- le liveness / anti-spoofing ;
-- le scoring de risque ;
-- la détection de fraude.
+Les services AWS AI/ML restent l’**infrastructure et des accélérateurs ciblés** (annotation Ground Truth, entraînement / endpoints SageMaker, OCR Textract ou lecture propriétaire, Rekognition en complément biométrique si besoin, Bedrock hors décision).
 
-Les services AWS AI/ML seront utilisés comme accélérateurs lorsque pertinent, notamment Amazon Textract, Amazon Rekognition, Amazon SageMaker AI, Amazon SageMaker Ground Truth et Amazon Bedrock.
-
-L'objectif n'est donc pas de construire un simple agrégateur d'APIs KYC, mais une plateforme dont les modèles et le moteur de décision pourront progressivement devenir propriétaires.
+L'objectif n'est pas de construire un agrégateur d'APIs KYC, ni un MVP « règles puis on verra l’IA ». La décision KYC reste des **règles auditables** ; la perception de la pièce est **dès le départ** un modèle à nous.
 
 ---
 
@@ -114,8 +109,7 @@ Document Authenticity
 APPROVE / REJECT / REVIEW
 ```
 
-Tutoriel des concepts et des cycles : [`tutoriel-pipeline-kyc.md`](./tutoriel-pipeline-kyc.md).  
-Architecture d’implémentation (modules, workers, state machine) : [`architecture-implementation.md`](./architecture-implementation.md).
+Spécification du premier produit : [`specs/specification-fonctionnelle-idv.md`](./specs/specification-fonctionnelle-idv.md).
 
 ---
 
@@ -152,13 +146,17 @@ Le système devra détecter :
 
 ## 6. Document Detection
 
-Un modèle de computer vision devra déterminer :
+La détection est un **modèle de computer vision propriétaire** (coins / présence / orientation), déployé en inférence (SageMaker). **Pas de chemin produit en heuristiques** (Canny, plus grand quadrilatère, ratio carte/passeport) : trop fragile hors labo, et ça retarderait le dataset.
+
+Le modèle devra déterminer :
 
 - présence d'un document ;
 - position du document ;
 - coins du document ;
 - orientation ;
 - perspective.
+
+Prérequis de livrable : dataset versionné + annotation (Ground Truth) des coins / présence, métriques d’évaluation, endpoint d’inférence. Une image de **repli** (échec modèle → recapture) est autorisée ; un détecteur de contours **n’est pas** le moteur V1.
 
 Sortie attendue :
 
@@ -180,6 +178,8 @@ Une correction de perspective sera ensuite effectuée.
 ---
 
 ## 7. Document Classification
+
+Le moteur est un **classifieur propriétaire** (pays, type, éventuellement version), pas une allow-list de règles ou d’heuristiques de layout. Le corridor V1 (nombre limité de pays et de types) borne le **dataset et les classes**, pas un substitut au modèle.
 
 Le moteur devra identifier :
 
@@ -203,9 +203,9 @@ Le MVP devra commencer avec un nombre limité de pays et de documents.
 
 ## 8. OCR
 
-### MVP
+### Lecture
 
-Utilisation d'Amazon Textract pour accélérer le développement.
+La lecture des champs visuels peut s’appuyer sur Amazon Textract **en accélérateur de lecture** (pas un substitut à la détection / classification / authenticité). L’alternative cible reste un OCR / parseur propriétaire entraîné sur le même corpus.
 
 Le moteur devra normaliser les résultats pour produire :
 
@@ -219,9 +219,7 @@ Le moteur devra normaliser les résultats pour produire :
 }
 ```
 
-### Évolution
-
-Les données collectées permettront progressivement d'entraîner des modèles OCR propriétaires avec Amazon SageMaker AI.
+Les données de production (anonymisées) alimentent le réentraînement OCR et des autres modèles documentaires.
 
 ---
 
@@ -251,7 +249,7 @@ Toute incohérence devra générer un signal de risque.
 
 ## 10. Document Authenticity Engine
 
-Ce moteur constitue une partie importante de la propriété intellectuelle du projet.
+Ce moteur constitue une partie importante de la propriété intellectuelle du projet. Il est un **modèle (ou un ensemble de modèles) propriétaire** dès le premier pipeline d’analyse, pas une couche de règles visuelles « en attendant SageMaker ». Les contrôles déterministes (checksums MRZ, dates) restent des **signaux** à côté du modèle, pas le moteur d’authenticité.
 
 Il devra analyser :
 
@@ -299,13 +297,13 @@ Il devra analyser :
             Risk Probability
 ```
 
-Le modèle pourra être entraîné et déployé avec Amazon SageMaker AI.
+Le modèle de fraude documentaire est entraîné et déployé avec Amazon SageMaker AI **dans le même horizon que la détection**, pas dans une « phase 2 IA » après un MVP heuristique.
 
 ---
 
 ## 12. Dataset IA
 
-Le projet devra prévoir dès le départ la constitution d'un dataset.
+Le projet devra constituer le dataset **avant** (ou en parallèle bloquante de) la première mise en production de la détection / classification / authenticité. Sans corpus annoté, on ne bascule pas sur des heuristiques de contours pour « avancer quand même ».
 
 ### Catégories
 
@@ -886,24 +884,20 @@ Document ML       Biometric ML
 
 ## 31. Stack IA AWS
 
-### MVP
+### Document AI (dès le premier pipeline d’analyse)
 
-- Amazon Textract → OCR
-- Amazon Rekognition → face detection / fonctions biométriques complémentaires
-- Amazon SageMaker AI → modèles custom
-- Amazon SageMaker Ground Truth → annotation
-- Amazon Bedrock → fonctions LLM
-- S3 → datasets et médias
+- Amazon SageMaker Ground Truth → annotation (coins, type, fraude, qualité, …)
+- Amazon SageMaker AI → entraînement, registry, **endpoints** détection / classification / authenticité-fraude
+- Amazon S3 → datasets versionnés et médias
+- Amazon Textract → OCR des champs **en complément** de la vision propriétaire (remplaçable par OCR proprio)
+- Amazon Bedrock → hors décision (résumés analyste, etc.)
 
-### Phase avancée
+### Biométrie
 
-- modèles OCR propriétaires ;
-- document classification propriétaire ;
-- document fraud detection propriétaire ;
-- liveness propriétaire ;
-- anti-spoofing propriétaire ;
-- fraud scoring propriétaire ;
-- modèles multimodaux spécialisés.
+- Amazon Rekognition → face detection / comparaison / liveness **en complément** tant que le liveness / match propriétaire n’égale pas les métriques
+- SageMaker → liveness / anti-spoof / embeddings propriétaires dès que le dataset biométrique le permet (pas un palier « Rekognition forever »)
+
+Il n’y a **pas** de phase « heuristiques documentaires puis modèle ». La phase avancée, c’est l’**élargissement** (plus de classes, liveness passif, OCR 100 % proprio, multimodal), pas le premier modèle.
 
 ---
 
@@ -1000,38 +994,37 @@ Les exigences réglementaires devront être définies selon les marchés ciblés
 
 ## 35. Roadmap
 
-Vision produit : V1 AWS AI → V2 modèles propriétaires → V3 avantage technologique (voir §36).
+Vision produit : **V1 = plateforme + vision documentaire propriétaire** → V2 élargissement des modèles et biométrie proprio → V3 avantage technologique (voir §36). Pas de V1 « Textract + heuristiques de coins ».
 
-Le détail sprint par sprint, livrables, kill criteria et modules de code est dans [`roadmap-implementation.md`](./roadmap-implementation.md).
+Le détail du premier produit (parcours, décision) est dans [`specs/specification-fonctionnelle-idv.md`](./specs/specification-fonctionnelle-idv.md). **Ordre de build IDV :** [`specs/roadmap-implementation-idv.md`](./specs/roadmap-implementation-idv.md). Guides d’implémentation : [`specs/guide-implementation-s1.md`](./specs/guide-implementation-s1.md) (livré), [`specs/guide-implementation-s2.md`](./specs/guide-implementation-s2.md).
 
-### Phase 1 — MVP (20 semaines)
+### Phase 1 — MVP
 
-3 moteurs : Document · Liveness · Face Match.
+Moteurs : Document (modèles proprio) · Liveness · Face Match · décision par **règles** Spring.
 
-Stack : Spring Boot, PostgreSQL, Next.js. OCR Textract, liveness Rekognition (ou challenge actif), face match, dashboard, API, webhooks, scoring par règles.
+Stack : Spring Boot, PostgreSQL, Next.js. Dataset + Ground Truth + endpoints SageMaker (détection, classification, authenticité). Lecture : Textract et/ou OCR proprio + MRZ déterministe. Biométrie : Rekognition en complément si le modèle liveness/match n’est pas encore au niveau. Dashboard, API, webhooks.
 
 | Sprint | Semaines | Livrable |
 |---|---|---|
 | 0 | 1–2 | Fondation : repo, Docker, CI, org / clés API |
 | 1 | 3–4 | Vérifications multi-tenant + lien KYC |
-| 2 | 5–6 | Hosted flow, capture document, S3 |
-| 3 | 7–8 | Textract, OCR normalisé, MRZ |
-| 4 | 9–10 | Liveness actif |
+| 2 | 5–6 | Hosted flow, capture document, S3 ; **amorçage dataset / annotation coins-type-fraude** |
+| 3 | 7–8 | **Inférence SageMaker** détection + classification ; lecture + MRZ ; pas de détecteur heuristique |
+| 4 | 9–10 | Authenticité / fraude document (modèle) ; liveness |
 | 5 | 11–12 | Face match, risk engine, décision auto |
 | 6 | 13–14 | Dashboard + revue manuelle |
 | 7 | 15–16 | Webhooks, sandbox, usage |
 | 8 | 17–18 | KMS, rétention, 2FA, isolation |
 | 9 | 19–20 | Staging AWS + go-live design partners |
 
-Hors V1 : SageMaker en production, OCR propriétaire, liveness passif, AML/KYB.
+Hors premier go-live : liveness passif, OCR 100 % proprio si Textract encore en lecture, AML/KYB, corridor documents élargi.
 
-### Phase 2 — IA propriétaire
+### Phase 2 — Élargissement IA
 
-- dataset + anonymisation ;
-- Ground Truth ;
-- classification / fraud / tampering custom ;
-- liveness custom si les métriques battent Rekognition ;
-- MLOps (registry, A/B, monitoring).
+- plus de pays / types / fraudes ;
+- réentraînement continu, A/B, monitoring dérive ;
+- liveness / embeddings propriétaires dès que les métriques battent le complément Rekognition ;
+- OCR propriétaire si encore hybride.
 
 ### Phase 3 — plateforme avancée
 
@@ -1050,14 +1043,17 @@ Le produit sera défini autour de cette progression :
 ```
                V1
                 │
-     AWS AI accélère le lancement
+     Plateforme (API, flow, isolation)
+     + dataset annoté
+     + modèles documentaires propriétaires
+     (détection, classification, authenticité)
+     AWS = infra + accélérateurs (GT, train, OCR lecture, bio complément)
                 │
                 ▼
                V2
                 │
-      Collecte de données
-      + annotation
-      + modèles propriétaires
+      Plus de classes, biométrie proprio,
+      OCR proprio, MLOps industriel
                 │
                 ▼
                V3
@@ -1067,4 +1063,4 @@ Le produit sera défini autour de cette progression :
       YOUR AI TECHNOLOGY
 ```
 
-L'objectif final est donc que AWS soit l'infrastructure et l'accélérateur IA, mais que les modèles de détection de fraude, de document intelligence et de liveness deviennent progressivement l'avantage technologique propriétaire.
+AWS est l’infrastructure et l’usine ML. L’avantage documentaire (détection, classification, authenticité / fraude) **n’attend pas** une génération heuristique : il est le cœur du premier pipeline d’analyse. La décision d’approbation / refus / revue reste des règles mesurables, pas un LLM juge.

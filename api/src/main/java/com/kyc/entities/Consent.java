@@ -76,4 +76,16 @@ public class Consent {
     public ConsentDecision getDecision() {
         return decision;
     }
+
+    public String getIpHash() {
+        return ipHash;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public String getTextVersion() {
+        return textVersion;
+    }
 }

@@ -1,0 +1,122 @@
+<!doctype html>
+<!--
+  Recogniz-Me — gabarit d'e-mail transactionnel (M0).
+
+  Les clients e-mail n'appliquent ni variables CSS ni feuilles externes :
+  les valeurs de tokens.css sont donc recopiées en dur ici. C'est la seule
+  surface autorisée à le faire. Toute évolution de palette se fait dans
+  tokens.css PUIS se reporte ici.
+
+  Jetons utilisés :
+    --rm-accent        #0f7a4d
+    --rm-text          #111a15
+    --rm-text-muted    #5a6b62
+    --rm-bg            #f4f7f5
+    --rm-surface       #ffffff
+    --rm-border        #dde5e0
+
+  Remplacements attendus : {{TITLE}}, {{PREHEADER}}, {{BODY}},
+  {{CTA_LABEL}}, {{CTA_URL}}, {{FOOTER_NOTE}}
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>{{TITLE}}</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f7f5;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0;">{{PREHEADER}}</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f7f5;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+            <!-- En-tête : marque -->
+            <tr>
+              <td style="padding:0 0 20px 0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding-right:10px; line-height:0;">
+                      <img
+                        src="https://recogniz.me/email/logo-40.png"
+                        width="26"
+                        height="26"
+                        alt="Recogniz-Me"
+                        style="display:block; border:0; border-radius:8px;"
+                      />
+                    </td>
+                    <td style="font-size:15px; font-weight:600; color:#111a15;">Recogniz-Me</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Contenu -->
+            <tr>
+              <td
+                style="
+                  padding:28px;
+                  background-color:#ffffff;
+                  border:1px solid #dde5e0;
+                  border-radius:14px;
+                  font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+                  font-size:16px;
+                  line-height:1.55;
+                  color:#111a15;
+                "
+              >
+                <h1 style="margin:0 0 16px 0; font-size:22px; line-height:1.25; font-weight:650; color:#111a15;">
+                  {{TITLE}}
+                </h1>
+
+                <p style="margin:0 0 24px 0;">{{BODY}}</p>
+
+                <!-- CTA : le vert n'habille que l'action -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color:#0f7a4d; border-radius:10px;">
+                      <a
+                        href="{{CTA_URL}}"
+                        style="
+                          display:inline-block;
+                          padding:12px 20px;
+                          font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+                          font-size:16px;
+                          font-weight:550;
+                          color:#ffffff;
+                          text-decoration:none;
+                        "
+                        >{{CTA_LABEL}}</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:24px 0 0 0; font-size:14px; color:#5a6b62;">
+                  Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
+                  <span style="word-break:break-all; color:#0b6340;">{{CTA_URL}}</span>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Pied -->
+            <tr>
+              <td
+                style="
+                  padding:20px 4px 0 4px;
+                  font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+                  font-size:13px;
+                  line-height:1.5;
+                  color:#5a6b62;
+                "
+              >
+                {{FOOTER_NOTE}}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Recogniz-Me</title>
+  <rect width="512" height="512" rx="144" fill="#0f7a4d" />
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="24" />
+  <path
+    d="M171.2 354.4L171.2 152.8A103.2 60.8 0 0 1 171.2 274.4M197.6 272.8L247.2 341.6L352.8 191.2"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="41.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

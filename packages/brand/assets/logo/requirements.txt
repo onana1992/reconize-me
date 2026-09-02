@@ -1,0 +1,4 @@
+# Dépendances de build.py et check.py. Outillage de design : rien de tout ceci
+# n'est requis pour construire ou exécuter le produit.
+pillow==12.2.0
+numpy==2.2.6

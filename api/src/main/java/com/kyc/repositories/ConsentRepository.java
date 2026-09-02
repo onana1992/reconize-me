@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConsentRepository extends JpaRepository<Consent, UUID> {
 
-    boolean existsByVerificationId(UUID verificationId);
+    boolean existsByVerificationIdAndOrganizationId(UUID verificationId, UUID organizationId);
 
-    Optional<Consent> findByVerificationId(UUID verificationId);
+    Optional<Consent> findByVerificationIdAndOrganizationId(UUID verificationId, UUID organizationId);
 }

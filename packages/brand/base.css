@@ -1,0 +1,258 @@
+/*
+ * Recogniz-Me — base commune (M0).
+ * Éléments et composants partagés par toutes les surfaces.
+ * Dépend de tokens.css, qui doit être importé avant.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--rm-bg);
+  color: var(--rm-text);
+  font-family: var(--rm-font-sans);
+  font-size: var(--rm-text-base);
+  line-height: var(--rm-leading-normal);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  line-height: var(--rm-leading-tight);
+  letter-spacing: -0.01em;
+  font-weight: 650;
+}
+
+h1 {
+  font-size: var(--rm-text-2xl);
+  margin: var(--rm-space-2) 0 var(--rm-space-3);
+}
+
+h2 {
+  font-size: var(--rm-text-xl);
+  margin: 0 0 var(--rm-space-3);
+}
+
+p {
+  margin: 0 0 var(--rm-space-4);
+}
+
+a {
+  color: var(--rm-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--rm-accent-active);
+}
+
+code {
+  font-family: var(--rm-font-mono);
+  font-size: 0.92em;
+}
+
+/* Un seul anneau de focus pour tout le produit */
+:focus-visible {
+  outline: var(--rm-focus-width) solid var(--rm-focus);
+  outline-offset: var(--rm-focus-offset);
+  border-radius: var(--rm-radius-sm);
+}
+
+/* --- Boutons --- */
+
+button,
+.rm-button {
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rm-space-2);
+  padding: var(--rm-space-3) var(--rm-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-accent);
+  color: var(--rm-text-on-accent);
+  text-decoration: none;
+  transition: background-color 120ms ease-out;
+}
+
+button:hover:not(:disabled),
+.rm-button:hover {
+  background: var(--rm-accent-hover);
+}
+
+button:active:not(:disabled) {
+  background: var(--rm-accent-active);
+}
+
+button[data-variant="secondary"],
+.rm-button[data-variant="secondary"] {
+  background: var(--rm-surface);
+  color: var(--rm-text);
+  border-color: var(--rm-border-strong);
+}
+
+button[data-variant="secondary"]:hover:not(:disabled),
+.rm-button[data-variant="secondary"]:hover {
+  background: var(--rm-surface-sunken);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --- Champs --- */
+
+label {
+  display: grid;
+  gap: var(--rm-space-2);
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+  color: var(--rm-text-muted);
+}
+
+input {
+  font: inherit;
+  padding: var(--rm-space-3);
+  border: 1px solid var(--rm-border-strong);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+  color: var(--rm-text);
+}
+
+input::placeholder {
+  color: var(--rm-text-muted);
+}
+
+/* --- Listes de définitions (fiches) --- */
+
+dl {
+  margin: 0;
+}
+
+dt {
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+  color: var(--rm-text-muted);
+}
+
+dd {
+  margin: var(--rm-space-1) 0 0;
+}
+
+/* --- Composants de marque --- */
+
+.rm-eyebrow {
+  margin: 0;
+  font-size: var(--rm-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+}
+
+.rm-lead {
+  color: var(--rm-text-muted);
+}
+
+.rm-card {
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  box-shadow: var(--rm-shadow-sm);
+}
+
+.rm-card > :last-child {
+  margin-bottom: 0;
+}
+
+.rm-stack {
+  display: grid;
+  gap: var(--rm-space-4);
+}
+
+.rm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rm-space-3);
+}
+
+/* Badge de statut : couleur + libellé, jamais la couleur seule */
+.rm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  padding: var(--rm-space-1) var(--rm-space-3);
+  border-radius: var(--rm-radius-pill);
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+  background: var(--rm-tone-neutral-bg);
+  color: var(--rm-tone-neutral-fg);
+}
+
+.rm-badge::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: var(--rm-radius-pill);
+  background: currentColor;
+}
+
+.rm-badge[data-tone="info"] {
+  background: var(--rm-tone-info-bg);
+  color: var(--rm-tone-info-fg);
+}
+
+.rm-badge[data-tone="progress"] {
+  background: var(--rm-tone-progress-bg);
+  color: var(--rm-tone-progress-fg);
+}
+
+.rm-badge[data-tone="success"] {
+  background: var(--rm-tone-success-bg);
+  color: var(--rm-tone-success-fg);
+}
+
+.rm-badge[data-tone="warning"] {
+  background: var(--rm-tone-warning-bg);
+  color: var(--rm-tone-warning-fg);
+}
+
+.rm-badge[data-tone="danger"] {
+  background: var(--rm-tone-danger-bg);
+  color: var(--rm-tone-danger-fg);
+}
+
+.rm-alert {
+  margin: 0 0 var(--rm-space-4);
+  padding: var(--rm-space-3) var(--rm-space-4);
+  border: 1px solid var(--rm-tone-danger-fg);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-tone-danger-bg);
+  color: var(--rm-tone-danger-fg);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-url {
+  word-break: break-all;
+}
+
+.rm-skeleton {
+  border-radius: var(--rm-radius-sm);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-logo-mark {
+  flex: none;
+}

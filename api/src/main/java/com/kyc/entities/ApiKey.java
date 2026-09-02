@@ -53,6 +53,10 @@ public class ApiKey {
         return keyHash;
     }
 
+    public String getKeyPrefix() {
+        return keyPrefix;
+    }
+
     public boolean isRevoked() {
         return revoked;
     }

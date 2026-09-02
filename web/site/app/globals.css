@@ -1,0 +1,83 @@
+/*
+ * Spécifique à la vitrine et à rien d'autre.
+ * Couleurs, espacements et composants viennent de @kyc/brand (RG-BRAND-01).
+ *
+ * Tailwind est importé sans Preflight : le reset vit déjà dans base.css, et
+ * un second reset casserait les compositions `.rm-*` encore en place.
+ * Les utilitaires sont hors couche pour l'emporter sur les `button { }` de
+ * base.css (une couche `@layer` perdrait face au CSS non couché).
+ */
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css";
+
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+
+/*
+ * Les valeurs restent dans tokens.css. Ici on ne fait que les exposer comme
+ * utilitaires (`bg-rm-ink`, `text-rm-text`, `rounded-rm-pill`).
+ */
+@theme inline {
+  --color-rm-ink: var(--rm-ink);
+  --color-rm-ink-raised: var(--rm-ink-raised);
+  --color-rm-ink-text: var(--rm-ink-text);
+  --color-rm-ink-muted: var(--rm-ink-muted);
+  --color-rm-surface: var(--rm-surface);
+  --color-rm-bg: var(--rm-bg);
+  --color-rm-text: var(--rm-text);
+  --color-rm-text-muted: var(--rm-text-muted);
+  --color-rm-text-on-accent: var(--rm-text-on-accent);
+  --color-rm-border: var(--rm-border);
+  --color-rm-border-strong: var(--rm-border-strong);
+  --color-rm-accent: var(--rm-accent);
+  --color-rm-accent-hover: var(--rm-accent-hover);
+  --color-rm-accent-subtle: var(--rm-accent-subtle);
+  --color-rm-link: var(--rm-link);
+  --color-rm-focus: var(--rm-focus);
+  --color-rm-tone-info-bg: var(--rm-tone-info-bg);
+  --color-rm-tone-info-fg: var(--rm-tone-info-fg);
+  --color-rm-tone-warning-bg: var(--rm-tone-warning-bg);
+  --color-rm-tone-warning-fg: var(--rm-tone-warning-fg);
+  --color-rm-tone-success-bg: var(--rm-tone-success-bg);
+  --color-rm-tone-success-fg: var(--rm-tone-success-fg);
+  --shadow-rm-md: var(--rm-shadow-md);
+  --shadow-rm-lg: var(--rm-shadow-lg);
+  --radius-rm-sm: var(--rm-radius-sm);
+  --radius-rm-md: var(--rm-radius-md);
+  --radius-rm-lg: var(--rm-radius-lg);
+  --radius-rm-pill: var(--rm-radius-pill);
+  --max-width-rm-wide: var(--rm-width-wide);
+  --font-sans: var(--rm-font-sans);
+  --ease-rm: var(--rm-ease);
+}
+
+/* Une ancre atteinte par un lien de sommaire ou par le lien d'évitement ne doit
+   pas se retrouver sous la barre de navigation collante. */
+:root {
+  --rm-header-utility: 2.5rem;
+  --rm-header-main: 4.25rem;
+  --rm-header-height: calc(var(--rm-header-utility) + var(--rm-header-main));
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+}
+
+#rm-content {
+  scroll-margin-top: var(--rm-header-height);
+}
+
+#rm-content:focus {
+  outline: none;
+}
+
+/* Le hero porte déjà sa propre respiration ; une bande qui ouvre une page
+   intérieure, non — sans ça elle colle à la barre de navigation. */
+#rm-content > .rm-band:first-child {
+  padding-top: var(--rm-space-9);
+}

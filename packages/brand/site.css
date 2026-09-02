@@ -1,0 +1,2678 @@
+/*
+ * Recogniz-Me — atmosphère vitrine.
+ * Dépend de tokens.css et base.css, importés avant.
+ *
+ * Concept : « la preuve se construit ».
+ *
+ * Le site ne met pas en scène la menace, il met en scène la fabrication de la
+ * preuve. D'où un vocabulaire visuel propre, réutilisé partout et défini une
+ * seule fois ici :
+ *
+ *   .rm-frame    le cadre de capture — quatre équerres. Ce qui entre dedans
+ *                devient une preuve.
+ *   .rm-doc      le fragment documentaire — une pièce d'identité abstraite,
+ *                dessinée. Aucun visage, aucune photo : ni banque d'images,
+ *                ni fausse personne.
+ *   .rm-signals  les signaux — la sortie réelle du produit, étiquetée.
+ *   .rm-verdict  la décision — trois issues, jamais un score nu.
+ *   .rm-band     la bande — l'unité de rythme : papier, calcaire ou encre.
+ *
+ * Le vert reste réservé à ce qui agit et à ce qui est approuvé (RG-BRAND-02).
+ * Les sections d'encre ne sont pas un thème sombre : c'est du contraste
+ * éditorial, et leur texte a son propre jeu de tokens.
+ */
+
+body {
+  background: var(--rm-surface);
+  /* Le grotesque de marque supporte mal les chiffres tabulaires par défaut :
+     les tarifs et les quotas s'alignent mal sans cette option. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.rm-site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.rm-site main {
+  flex: 1;
+}
+
+/* --- Gouttière commune ---------------------------------------------------
+   Une seule largeur pour tout le site. `data-width="text"` resserre sur la
+   largeur de lecture confortable pour le texte long. */
+
+.rm-shell {
+  width: 100%;
+  max-width: var(--rm-width-wide);
+  margin: 0 auto;
+  padding: 0 var(--rm-space-5);
+}
+
+.rm-shell[data-width="text"] {
+  max-width: calc(var(--rm-width-content) + 2 * var(--rm-space-5));
+}
+
+@media (min-width: 48rem) {
+  .rm-shell {
+    padding: 0 var(--rm-space-7);
+  }
+
+  .rm-shell[data-width="text"] {
+    max-width: calc(var(--rm-width-content) + 2 * var(--rm-space-7));
+  }
+}
+
+/* --- Lien d'évitement --- */
+
+.rm-skip {
+  position: absolute;
+  left: var(--rm-space-4);
+  top: calc(-1 * var(--rm-space-9));
+  z-index: 20;
+  padding: var(--rm-space-3) var(--rm-space-4);
+  background: var(--rm-surface);
+  border: 1px solid var(--rm-border-strong);
+  border-radius: var(--rm-radius-md);
+  font-weight: 600;
+  box-shadow: var(--rm-shadow-md);
+  transition: top var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-skip:focus-visible {
+  top: var(--rm-space-3);
+}
+
+/* =======================================================================
+ * Typographie de la vitrine
+ * ===================================================================== */
+
+.rm-site h1,
+.rm-site h2,
+.rm-site h3 {
+  text-wrap: balance;
+}
+
+.rm-title {
+  margin: 0 0 var(--rm-space-5);
+  font-size: var(--rm-display-2);
+  line-height: var(--rm-leading-display);
+  letter-spacing: var(--rm-tracking-display);
+  font-weight: 620;
+}
+
+.rm-title[data-size="hero"] {
+  font-size: var(--rm-display-1);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.rm-title[data-size="sub"] {
+  font-size: var(--rm-display-3);
+  letter-spacing: -0.02em;
+}
+
+/* Le lead n'est pas un paragraphe secondaire : c'est la seconde phrase du
+   titre. Plus grand que le corps, plus court qu'un paragraphe. */
+.rm-lead {
+  max-width: 44ch;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-lg);
+  line-height: 1.5;
+}
+
+.rm-lead[data-size="hero"] {
+  max-width: 58ch;
+  font-size: clamp(1.125rem, 1.03rem + 0.4vw, 1.3rem);
+}
+
+/* Sur-titre : un filet le précède, pour ancrer la composition à gauche. */
+.rm-eyebrow[data-rule="true"] {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+}
+
+.rm-eyebrow[data-rule="true"]::before {
+  content: "";
+  width: var(--rm-space-6);
+  height: 1px;
+  flex: none;
+  background: var(--rm-accent);
+}
+
+/* Chiffre de section, posé dans le sur-titre plutôt qu'au-dessus : en gros
+   chiffre isolé, il se confondait avec la numérotation des étapes qui suit. */
+.rm-eyebrow-index {
+  color: var(--rm-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rm-eyebrow-index::after {
+  content: "/";
+  margin-left: var(--rm-space-2);
+  color: var(--rm-border-strong);
+}
+
+.rm-hairline {
+  height: 1px;
+  margin: var(--rm-space-7) 0;
+  border: 0;
+  background: var(--rm-border);
+}
+
+/* =======================================================================
+ * Bandes — l'unité de rythme vertical
+ * ===================================================================== */
+
+.rm-band {
+  position: relative;
+  padding: var(--rm-space-10) 0;
+  isolation: isolate;
+}
+
+@media (min-width: 62rem) {
+  .rm-band {
+    padding: var(--rm-space-11) 0;
+  }
+}
+
+.rm-band[data-tight="true"] {
+  padding-top: var(--rm-space-9);
+  padding-bottom: var(--rm-space-9);
+}
+
+.rm-band[data-tone="stone"] {
+  background: var(--rm-bg);
+}
+
+.rm-band[data-tone="stone"] + .rm-band[data-tone="stone"] {
+  padding-top: 0;
+}
+
+.rm-band[data-tone="ink"] {
+  background: var(--rm-ink);
+  color: var(--rm-ink-text);
+}
+
+/* Sur l'encre, tout le jeu de couleurs bascule d'un bloc : aucune page n'a
+   à savoir qu'elle est sur fond sombre. */
+.rm-band[data-tone="ink"] .rm-lead,
+.rm-band[data-tone="ink"] .rm-eyebrow,
+.rm-band[data-tone="ink"] .rm-hint {
+  color: var(--rm-ink-muted);
+}
+
+.rm-band[data-tone="ink"] .rm-eyebrow[data-rule="true"]::before {
+  background: var(--rm-accent-on-ink);
+}
+
+.rm-band[data-tone="ink"] .rm-eyebrow-index {
+  color: var(--rm-ink-text);
+}
+
+.rm-band[data-tone="ink"] .rm-eyebrow-index::after {
+  color: var(--rm-ink-border);
+}
+
+.rm-band[data-tone="ink"] a:not(.rm-button) {
+  color: var(--rm-accent-on-ink);
+}
+
+.rm-band[data-tone="ink"] .rm-hairline {
+  background: var(--rm-ink-border);
+}
+
+.rm-band[data-tone="ink"] :focus-visible {
+  outline-color: var(--rm-accent-on-ink);
+}
+
+/* Trame de relevé : le plan de travail sous le contenu. Dessinée en dégradés
+   répétés, donc aucune requête et aucun poids. */
+.rm-band[data-mesh="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, var(--rm-mesh-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rm-mesh-line) 1px, transparent 1px);
+  background-size: var(--rm-mesh-step) var(--rm-mesh-step);
+  /* La trame s'efface vers les bords : elle suggère un plan, elle ne quadrille
+     pas la page. */
+  mask-image: radial-gradient(115% 85% at 50% 0%, #000 25%, transparent 78%);
+}
+
+.rm-band[data-tone="ink"][data-mesh="true"]::before {
+  background-image:
+    linear-gradient(to right, var(--rm-mesh-line-ink) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rm-mesh-line-ink) 1px, transparent 1px);
+}
+
+/* Chapeau de bande : sur-titre, titre, lead. Aligné à gauche, jamais centré :
+   une page centrée se lit comme une plaquette, pas comme un produit. */
+.rm-band-head {
+  max-width: 46rem;
+  margin-bottom: var(--rm-space-8);
+}
+
+.rm-band-head > :last-child {
+  margin-bottom: 0;
+}
+
+/* Renvoi de fin de section (« voir la page sécurité »). */
+.rm-band-foot {
+  margin: var(--rm-space-7) 0 0;
+  padding-top: var(--rm-space-5);
+  border-top: 1px solid var(--rm-border);
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+  max-width: 60ch;
+}
+
+.rm-band[data-tone="ink"] .rm-band-foot {
+  border-top-color: var(--rm-ink-border);
+}
+
+.rm-band-foot > :last-child {
+  margin-bottom: 0;
+}
+
+/* Renvoi posé dans une colonne et non en fin de bande : le filet du dessus
+   ferait doublon avec la composition. */
+.rm-band-foot[data-plain="true"] {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Sous-titre dans une colonne : il ouvre un second bloc sans ouvrir une
+   nouvelle section, donc sans repartir de la marge d'un h2. */
+.rm-subhead {
+  margin: var(--rm-space-7) 0 var(--rm-space-4);
+  font-size: var(--rm-text-base);
+}
+
+/* =======================================================================
+ * Compositions asymétriques
+ * ===================================================================== */
+
+.rm-split {
+  display: grid;
+  gap: var(--rm-space-7);
+  align-items: start;
+}
+
+/* Sans ça, une colonne qui contient un bloc de code élargit sa piste jusqu'à
+   la plus longue ligne, et la grille sort de la gouttière — en emportant
+   l'autre colonne, puisqu'en dessous de 62 rem les deux partagent la même
+   piste. `overflow-x: auto` sur le `<pre>` ne suffit pas : il fait défiler,
+   mais ne réduit pas la largeur min-content que la piste doit contenir.
+   `min-width: 0` autorise la piste à descendre en dessous. */
+.rm-split > * {
+  min-width: 0;
+}
+
+@media (min-width: 62rem) {
+  .rm-split {
+    gap: var(--rm-space-9);
+  }
+
+  .rm-split[data-ratio="7-5"] {
+    grid-template-columns: 7fr 5fr;
+  }
+
+  .rm-split[data-ratio="5-7"] {
+    grid-template-columns: 5fr 7fr;
+  }
+
+  .rm-split[data-ratio="4-8"] {
+    grid-template-columns: 4fr 8fr;
+  }
+
+  .rm-split[data-ratio="8-4"] {
+    grid-template-columns: 8fr 4fr;
+  }
+
+  .rm-split[data-ratio="6-6"] {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Colonne collante : le titre reste en regard de la liste qui défile. */
+  .rm-split[data-sticky="true"] > :first-child {
+    position: sticky;
+    top: calc(var(--rm-header-height, 4.5rem) + var(--rm-space-6));
+  }
+}
+
+.rm-split > * > :last-child {
+  margin-bottom: 0;
+}
+
+/* =======================================================================
+ * Le cadre de capture
+ * ===================================================================== */
+
+.rm-frame {
+  --rm-frame-arm: 2rem;
+  --rm-frame-color: var(--rm-accent);
+  position: relative;
+  padding: var(--rm-space-5);
+}
+
+/* Les quatre équerres tiennent sur un seul calque, en aplats de dégradé.
+   Deux pseudo-éléments à bordures partielles n'en donnaient que deux, en
+   diagonale : ça ne cadre rien, et une mire n'en est une qu'à quatre angles.
+   Le trait est à 2 px sur le vert plein — à 1 px sur une teinte claire, il
+   disparaissait à l'écran. */
+.rm-frame::before {
+  --rm-frame-arm-image: linear-gradient(var(--rm-frame-color), var(--rm-frame-color)) no-repeat;
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    var(--rm-frame-arm-image) 0 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 0 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 100% / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 100% / 2px var(--rm-frame-arm);
+}
+
+.rm-band[data-tone="ink"] .rm-frame {
+  --rm-frame-color: var(--rm-accent-on-ink);
+}
+
+/* =======================================================================
+ * Le fragment documentaire
+ *
+ * Une pièce d'identité abstraite. La zone portrait est une trame, pas un
+ * visage : le site n'a pas de fausse personne à montrer, et une pièce réelle
+ * n'aurait rien à faire sur une page publique.
+ * ===================================================================== */
+
+.rm-doc {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  margin: 0;
+  gap: var(--rm-space-4);
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  box-shadow: var(--rm-shadow-lg);
+}
+
+.rm-doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+  padding-bottom: var(--rm-space-4);
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.rm-doc-kind {
+  margin: 0;
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-mono);
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+}
+
+.rm-doc-body {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--rm-space-4);
+  align-items: start;
+}
+
+@media (min-width: 30rem) {
+  .rm-doc-body {
+    grid-template-columns: 7rem 1fr;
+    gap: var(--rm-space-5);
+  }
+}
+
+/* Zone portrait : hachures régulières. Elle dit « ici, une image », sans en
+   être une. */
+.rm-doc-portrait {
+  aspect-ratio: 3 / 4;
+  border-radius: var(--rm-radius-sm);
+  border: 1px solid var(--rm-border);
+  background-color: var(--rm-accent-subtle);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--rm-green-200) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+.rm-doc-fields {
+  display: grid;
+  gap: var(--rm-space-3);
+}
+
+/* Champs caviardés : la longueur varie, sinon le bloc ressemble à un tableau. */
+.rm-doc-line {
+  height: 0.5rem;
+  border-radius: var(--rm-radius-pill);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-doc-line[data-width="full"] {
+  width: 100%;
+}
+
+.rm-doc-line[data-width="wide"] {
+  width: 82%;
+}
+
+.rm-doc-line[data-width="mid"] {
+  width: 64%;
+}
+
+.rm-doc-line[data-width="short"] {
+  width: 41%;
+}
+
+/* Bande de lecture optique, en monospace : le seul texte du fragment. */
+.rm-doc-mrz {
+  margin: 0;
+  padding: var(--rm-space-3);
+  border-radius: var(--rm-radius-sm);
+  background: var(--rm-bg);
+  color: var(--rm-text-muted);
+  font-family: var(--rm-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  line-height: 1.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  user-select: none;
+}
+
+/* Balayage de relevé : une seule ligne qui descend. Décoratif, donc masqué
+   aux lecteurs d'écran et supprimé si l'utilisateur refuse le mouvement. */
+.rm-doc-scan {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--rm-accent) 9%, transparent),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rm-doc-scan {
+    animation: rm-scan 4.8s var(--rm-ease) infinite;
+  }
+}
+
+@keyframes rm-scan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  12%,
+  62% {
+    opacity: 1;
+  }
+  74%,
+  100% {
+    transform: translateY(250%);
+    opacity: 0;
+  }
+}
+
+/* =======================================================================
+ * Les signaux
+ *
+ * La vraie sortie du produit : une ligne étiquetée, un état, jamais un score
+ * nu. L'état est porté par un libellé et par une forme, pas par la couleur
+ * seule (RG-BRAND-05).
+ * ===================================================================== */
+
+.rm-signals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--rm-border);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  overflow: hidden;
+}
+
+.rm-band[data-tone="ink"] .rm-signals {
+  background: var(--rm-ink-border);
+  border-color: var(--rm-ink-border);
+}
+
+.rm-signal {
+  display: grid;
+  grid-template-columns: 1.125rem 1fr auto;
+  gap: var(--rm-space-3);
+  align-items: center;
+  padding: var(--rm-space-3) var(--rm-space-4);
+  background: var(--rm-surface);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-band[data-tone="ink"] .rm-signal {
+  background: var(--rm-ink-raised);
+}
+
+/* Marqueur d'état : coche découpée au masque pour « vérifié », anneau pour
+   « à regarder », point pour « en attente ». Trois formes distinctes. */
+.rm-signal::before {
+  content: "";
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--rm-radius-pill);
+}
+
+.rm-signal[data-state="pass"]::before {
+  background-color: var(--rm-accent);
+  clip-path: polygon(12% 52%, 38% 78%, 88% 22%, 76% 12%, 38% 56%, 24% 40%);
+  border-radius: 0;
+}
+
+.rm-band[data-tone="ink"] .rm-signal[data-state="pass"]::before {
+  background-color: var(--rm-accent-on-ink);
+}
+
+.rm-signal[data-state="watch"]::before {
+  border: 2px solid var(--rm-tone-warning-fg);
+}
+
+.rm-signal[data-state="idle"]::before {
+  border: 2px solid var(--rm-border-strong);
+}
+
+.rm-band[data-tone="ink"] .rm-signal[data-state="idle"]::before {
+  border-color: var(--rm-ink-border);
+}
+
+.rm-signal-name {
+  min-width: 0;
+}
+
+/* Le code du signal : c'est un identifiant stable, il se lit en monospace. */
+.rm-signal-code {
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-text-muted);
+  white-space: nowrap;
+}
+
+.rm-band[data-tone="ink"] .rm-signal-code {
+  color: var(--rm-ink-muted);
+}
+
+/* =======================================================================
+ * La décision
+ * ===================================================================== */
+
+/* La couleur de texte est déclarée ici, et pas seulement héritée : la carte
+   pose son propre fond clair, donc elle doit poser son propre texte. Sans ça
+   elle n'est lisible que par accident de contexte — posée sur une bande
+   d'encre, elle héritait du blanc de la bande et son contenu disparaissait. */
+.rm-verdict {
+  display: grid;
+  gap: var(--rm-space-4);
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  color: var(--rm-text);
+}
+
+.rm-verdict-state {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  margin: 0;
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-sm);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-mono);
+  text-transform: uppercase;
+}
+
+.rm-verdict-state::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: none;
+  border-radius: var(--rm-radius-pill);
+  background: currentColor;
+}
+
+.rm-verdict[data-state="approved"] {
+  border-color: var(--rm-accent-border);
+}
+
+.rm-verdict[data-state="approved"] .rm-verdict-state {
+  color: var(--rm-tone-success-fg);
+}
+
+.rm-verdict[data-state="review"] .rm-verdict-state {
+  color: var(--rm-tone-warning-fg);
+}
+
+.rm-verdict[data-state="rejected"] .rm-verdict-state {
+  color: var(--rm-tone-danger-fg);
+}
+
+/* Le titre du verdict se style par sa classe, pas par sa balise : selon le
+   plan du document, il sort en titre de section ou en simple libellé. */
+.rm-verdict .rm-verdict-title {
+  margin: 0;
+  color: var(--rm-text);
+  font-size: var(--rm-text-lg);
+  font-weight: 600;
+  line-height: var(--rm-leading-tight);
+}
+
+.rm-verdict p {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+/* Les trois issues côte à côte. Le fond ne change pas d'une issue à l'autre :
+   un refus n'est pas un incident, c'est une réponse. Seule la bordure et le
+   ton du mot d'état diffèrent. */
+.rm-verdicts {
+  display: grid;
+  gap: var(--rm-space-5);
+}
+
+@media (min-width: 58rem) {
+  .rm-verdicts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.rm-verdicts .rm-verdict {
+  padding: var(--rm-space-6);
+  gap: var(--rm-space-3);
+}
+
+.rm-verdicts .rm-verdict[data-state="review"] {
+  border-color: var(--rm-tone-warning-fg);
+}
+
+.rm-verdicts .rm-verdict[data-state="rejected"] {
+  border-color: var(--rm-tone-danger-fg);
+}
+
+/* Raisons de la décision : des codes anglais stables, sans donnée personnelle. */
+.rm-reasons {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rm-space-2);
+  margin: 0;
+  padding: 0;
+}
+
+.rm-reasons > li {
+  padding: 0.15rem var(--rm-space-2);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-sm);
+  background: var(--rm-bg);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  color: var(--rm-text-muted);
+}
+
+/* =======================================================================
+ * Porteurs d'image
+ *
+ * Le site alterne quatre matières (charte §9.1) : photographie, produit réel,
+ * illustration technique, typographie. Ce bloc tient les trois premières.
+ *
+ * Règle commune : le ratio est déclaré, toujours. Une image sans ratio décale
+ * la mise en page au chargement, et le décalage se voit d'autant plus que
+ * l'image est grande.
+ * ===================================================================== */
+
+.rm-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-ink-raised);
+  isolation: isolate;
+}
+
+.rm-media[data-ratio="wide"] {
+  aspect-ratio: 16 / 9;
+}
+
+.rm-media[data-ratio="portrait"] {
+  aspect-ratio: 3 / 4;
+}
+
+.rm-media[data-ratio="square"] {
+  aspect-ratio: 1 / 1;
+}
+
+.rm-media[data-ratio="phone"] {
+  aspect-ratio: 9 / 19;
+}
+
+.rm-media[data-ratio="console"] {
+  aspect-ratio: 16 / 10;
+}
+
+.rm-media-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Le voile n'est pas un effet de style : sur une photographie, le contraste du
+   texte dépend de ce que la photo contient, donc il ne se calcule pas. Le
+   voile le rend déterministe, quelle que soit l'image posée dessous. */
+.rm-media[data-scrim="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgba(6, 20, 16, 0.88) 0%,
+    rgba(6, 20, 16, 0.55) 42%,
+    rgba(6, 20, 16, 0.15) 100%
+  );
+}
+
+.rm-media-layer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  padding: var(--rm-space-5);
+  color: var(--rm-ink-text);
+}
+
+/* Emplacement encore vide : une trame sur l'encre plutôt qu'un carré gris.
+   La photographie sous licence viendra s'y substituer sans toucher la
+   section (charte §9.2). */
+.rm-media[data-empty="true"] {
+  background-image:
+    linear-gradient(to right, var(--rm-mesh-line-ink) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rm-mesh-line-ink) 1px, transparent 1px);
+  background-size: var(--rm-mesh-step) var(--rm-mesh-step);
+}
+
+/* --- Cadre d'appareil ---
+   Le châssis est en CSS, pas en photographie : une photo de téléphone se date
+   au modèle et il faudrait la reprendre à chaque génération. */
+
+.rm-device {
+  position: relative;
+  margin: 0;
+  padding: 0.5rem;
+  width: min(15rem, 100%);
+  border: 1px solid var(--rm-ink-border);
+  border-radius: 1.9rem;
+  background: var(--rm-ink);
+  box-shadow: var(--rm-shadow-lg);
+}
+
+.rm-device[data-tilt="up"] {
+  transform: translateY(calc(-1 * var(--rm-space-5)));
+}
+
+.rm-device[data-tilt="down"] {
+  transform: translateY(var(--rm-space-5));
+}
+
+/* L'encoche : un trait posé sur le haut de l'écran. */
+.rm-device::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 1.05rem;
+  left: 50%;
+  width: 3.2rem;
+  height: 0.28rem;
+  transform: translateX(-50%);
+  border-radius: var(--rm-radius-pill);
+  background: var(--rm-ink-border);
+}
+
+.rm-device-screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9 / 19;
+  border-radius: 1.45rem;
+  background: var(--rm-surface);
+}
+
+/* --- Cadre d'écran applicatif ---
+   Une barre de fenêtre, puis l'écran. La barre ne mime pas un navigateur : ni
+   URL, ni onglets. Le visiteur de la vitrine ne doit pas croire qu'il est
+   déjà dans le produit. */
+
+.rm-screen {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  box-shadow: var(--rm-shadow-lg);
+}
+
+.rm-screen-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  padding: var(--rm-space-3) var(--rm-space-4);
+  border-bottom: 1px solid var(--rm-border);
+  background: var(--rm-bg);
+}
+
+.rm-screen-dots {
+  display: flex;
+  gap: 0.3rem;
+  flex: none;
+}
+
+/* Trois pastilles en un seul élément : des ombres portées plutôt que trois
+   nœuds vides dans le document. */
+.rm-screen-dots::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--rm-border-strong);
+  box-shadow:
+    0.8rem 0 0 var(--rm-border-strong),
+    1.6rem 0 0 var(--rm-border-strong);
+}
+
+.rm-screen-title {
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-text-muted);
+}
+
+.rm-screen-body {
+  position: relative;
+}
+
+.rm-band[data-tone="ink"] .rm-screen {
+  border-color: var(--rm-ink-border);
+  background: var(--rm-ink-raised);
+}
+
+.rm-band[data-tone="ink"] .rm-screen-bar {
+  border-bottom-color: var(--rm-ink-border);
+  background: var(--rm-ink);
+}
+
+.rm-band[data-tone="ink"] .rm-screen-title {
+  color: var(--rm-ink-muted);
+}
+
+/* --- Glyphe d'illustration --- */
+
+/* Le `viewBox` fait 48 unités : rendu à 40 px, un trait de 1,5 unité tombe à
+   1,25 px à l'écran. C'est la raison de ces valeurs apparemment fortes — elles
+   sont en unités du dessin, pas en pixels, et doivent être remontées chaque
+   fois que le glyphe est rendu plus petit que son `viewBox`. */
+.rm-glyph {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  color: var(--rm-accent);
+  stroke-width: 1.5;
+}
+
+.rm-band[data-tone="ink"] .rm-glyph,
+.rm-media-layer .rm-glyph {
+  color: var(--rm-accent-on-ink);
+}
+
+/* =======================================================================
+ * Onglets
+ *
+ * Ce que ça achète, c'est de la densité : trois couches d'architecture dans un
+ * écran au lieu de trois écrans de défilement.
+ * ===================================================================== */
+
+.rm-tabs {
+  display: grid;
+  gap: var(--rm-space-6);
+  margin-top: var(--rm-space-7);
+}
+
+.rm-tablist {
+  display: flex;
+  gap: var(--rm-space-2);
+  overflow-x: auto;
+  /* Le défilement horizontal des onglets ne doit pas montrer de barre sur
+     mobile : la liste se termine par un fondu, pas par un rail. */
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 0, #000 92%, transparent 100%);
+}
+
+.rm-tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.rm-tab {
+  flex: none;
+  padding: var(--rm-space-3) var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-pill);
+  background: var(--rm-surface);
+  color: var(--rm-text-muted);
+  font: inherit;
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--rm-duration-fast) var(--rm-ease),
+    border-color var(--rm-duration-fast) var(--rm-ease),
+    color var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-tab:hover {
+  color: var(--rm-text);
+  border-color: var(--rm-border-strong);
+}
+
+.rm-tab[aria-selected="true"] {
+  background: var(--rm-ink);
+  border-color: var(--rm-ink);
+  color: var(--rm-ink-text);
+}
+
+.rm-tab-index {
+  margin-right: var(--rm-space-2);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  opacity: 0.65;
+}
+
+/* Le panneau n'a pas de contour visible : son contenu porte déjà ses cartes.
+   Le focus, lui, reste dessiné — le panneau est focalisable. */
+.rm-tabpanel:focus-visible {
+  outline: 2px solid var(--rm-focus);
+  outline-offset: var(--rm-space-3);
+  border-radius: var(--rm-radius-sm);
+}
+
+/* Vertical à partir du bureau : la liste passe en colonne à gauche, comme un
+   sommaire. En dessous, elle reste horizontale — une colonne d'onglets sur un
+   écran de téléphone mangerait la moitié de la largeur. */
+@media (min-width: 64rem) {
+  .rm-tabs[data-orientation="vertical"] {
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+    gap: var(--rm-space-8);
+    align-items: start;
+  }
+
+  .rm-tabs[data-orientation="vertical"] .rm-tablist {
+    flex-direction: column;
+    gap: 0;
+    overflow: visible;
+    mask-image: none;
+  }
+
+  .rm-tabs[data-orientation="vertical"] .rm-tab {
+    padding: var(--rm-space-4) 0;
+    border: 0;
+    border-bottom: 1px solid var(--rm-border);
+    border-radius: 0;
+    background: none;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .rm-tabs[data-orientation="vertical"] .rm-tab[aria-selected="true"] {
+    background: none;
+    color: var(--rm-text);
+    border-bottom-color: var(--rm-accent);
+  }
+}
+
+.rm-band[data-tone="ink"] .rm-tab {
+  border-color: var(--rm-ink-border);
+  background: var(--rm-ink-raised);
+  color: var(--rm-ink-muted);
+}
+
+.rm-band[data-tone="ink"] .rm-tab:hover {
+  color: var(--rm-ink-text);
+  border-color: var(--rm-accent-on-ink);
+}
+
+.rm-band[data-tone="ink"] .rm-tab[aria-selected="true"] {
+  background: var(--rm-accent-on-ink);
+  border-color: var(--rm-accent-on-ink);
+  color: var(--rm-ink);
+}
+
+@media (min-width: 64rem) {
+  .rm-band[data-tone="ink"] .rm-tabs[data-orientation="vertical"] .rm-tab {
+    background: none;
+    border-bottom-color: var(--rm-ink-border);
+    color: var(--rm-ink-muted);
+  }
+
+  .rm-band[data-tone="ink"] .rm-tabs[data-orientation="vertical"] .rm-tab[aria-selected="true"] {
+    background: none;
+    color: var(--rm-ink-text);
+    border-bottom-color: var(--rm-accent-on-ink);
+  }
+}
+
+/* =======================================================================
+ * Le hero
+ * ===================================================================== */
+
+.rm-hero {
+  position: relative;
+  padding: var(--rm-space-9) 0 var(--rm-space-10);
+  isolation: isolate;
+}
+
+/* La trame descend depuis la barre de navigation et s'éteint avant le texte :
+   elle habille le haut de page sans concurrencer le titre. */
+.rm-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 34rem;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, var(--rm-mesh-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rm-mesh-line) 1px, transparent 1px);
+  background-size: var(--rm-mesh-step) var(--rm-mesh-step);
+  mask-image: radial-gradient(90% 100% at 82% 0%, #000 0%, transparent 72%);
+}
+
+/* --- Hero sur encre, image à fond perdu ---
+   L'ouverture de la page est le seul endroit où l'image passe devant le texte
+   en surface occupée. Elle sort de la gouttière et touche le bord droit : une
+   photographie sagement rangée dans la grille n'ouvre rien.
+   C'est aussi l'élément LCP, d'où `priority` côté composant. */
+
+.rm-hero[data-tone="ink"] {
+  background: var(--rm-ink);
+  color: var(--rm-ink-text);
+  padding-bottom: var(--rm-space-9);
+}
+
+.rm-hero[data-tone="ink"]::before {
+  background-image:
+    linear-gradient(to right, var(--rm-mesh-line-ink) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rm-mesh-line-ink) 1px, transparent 1px);
+}
+
+.rm-hero[data-tone="ink"] .rm-eyebrow,
+.rm-hero[data-tone="ink"] .rm-lead,
+.rm-hero[data-tone="ink"] .rm-hero-note {
+  color: var(--rm-ink-muted);
+}
+
+.rm-hero[data-tone="ink"] .rm-eyebrow[data-rule="true"]::before {
+  background: var(--rm-accent-on-ink);
+}
+
+.rm-hero[data-tone="ink"] a:not(.rm-button) {
+  color: var(--rm-accent-on-ink);
+}
+
+.rm-hero[data-tone="ink"] :focus-visible {
+  outline-color: var(--rm-accent-on-ink);
+}
+
+.rm-hero[data-tone="ink"] .rm-button[data-variant="secondary"] {
+  background: transparent;
+  color: var(--rm-ink-text);
+  border-color: var(--rm-ink-border);
+}
+
+.rm-hero[data-tone="ink"] .rm-button[data-variant="secondary"]:hover {
+  background: var(--rm-ink-raised);
+}
+
+/* L'image de fond du hero. Sous 64 rem elle passe derrière tout le bloc, en
+   voile appuyé : à cette largeur il n'y a pas de place pour deux colonnes, et
+   un texte posé sur une image sans voile n'a pas de contraste garanti. */
+.rm-hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.rm-hero-backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% 38%;
+}
+
+.rm-hero-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--rm-ink) 0%,
+    rgba(6, 20, 16, 0.92) 46%,
+    rgba(6, 20, 16, 0.62) 100%
+  );
+}
+
+@media (min-width: 64rem) {
+  /* Au bureau, l'image occupe le tiers droit : la copie a pris de la largeur,
+     le dégradé raccorde encore le fond sans passer sur le titre. */
+  .rm-hero-backdrop {
+    left: 50%;
+  }
+
+  .rm-hero-backdrop::after {
+    background: linear-gradient(
+      to right,
+      var(--rm-ink) 0%,
+      rgba(6, 20, 16, 0.42) 22%,
+      rgba(6, 20, 16, 0.08) 100%
+    );
+  }
+}
+
+.rm-hero-grid {
+  display: grid;
+  gap: var(--rm-space-8);
+  align-items: center;
+}
+
+@media (min-width: 64rem) {
+  .rm-hero {
+    padding: var(--rm-space-10) 0 var(--rm-space-11);
+  }
+
+  .rm-hero > .rm-shell {
+    max-width: var(--rm-width-hero);
+  }
+
+  .rm-hero-grid {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    gap: var(--rm-space-8);
+  }
+}
+
+.rm-hero-copy > :last-child {
+  margin-bottom: 0;
+}
+
+.rm-hero-note {
+  margin: var(--rm-space-5) 0 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+/* Composition du hero : l'image porte la promesse, la carte porte la sortie du
+   produit. Deux matières dans un écran, sans troisième objet entre elles. */
+.rm-hero-stage {
+  position: relative;
+}
+
+/* La carte est seule dans la colonne depuis que l'image a remplacé le cadre de
+   capture : elle se cale à droite, sans le décalage négatif qui servait à la
+   faire chevaucher la mire. */
+.rm-hero-stage .rm-verdict {
+  position: relative;
+  margin: 0 0 0 auto;
+  width: min(22rem, 100%);
+  box-shadow: var(--rm-shadow-lg);
+}
+
+/* =======================================================================
+ * Boutons — densité vitrine
+ * ===================================================================== */
+
+.rm-site .rm-button {
+  padding: 0.8rem var(--rm-space-5);
+  border-radius: var(--rm-radius-md);
+  font-weight: 600;
+  transition:
+    background-color var(--rm-duration-fast) var(--rm-ease),
+    transform var(--rm-duration-fast) var(--rm-ease),
+    box-shadow var(--rm-duration-fast) var(--rm-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rm-site .rm-button:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.rm-site .rm-button:not([data-variant]) {
+  box-shadow: 0 1px 2px rgba(6, 53, 35, 0.18);
+}
+
+.rm-site .rm-button:not([data-variant]):hover {
+  box-shadow: var(--rm-shadow-md);
+}
+
+/* Sur l'encre, le bouton secondaire doit rester lisible : bordure claire,
+   fond transparent. */
+.rm-band[data-tone="ink"] .rm-button[data-variant="secondary"] {
+  background: transparent;
+  color: var(--rm-ink-text);
+  border-color: var(--rm-ink-border);
+}
+
+.rm-band[data-tone="ink"] .rm-button[data-variant="secondary"]:hover {
+  background: var(--rm-ink-raised);
+  color: var(--rm-ink-text);
+}
+
+.rm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rm-space-3);
+  align-items: center;
+}
+
+/* Lien-action : la troisième hiérarchie, sans fabriquer un troisième bouton. */
+.rm-link-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rm-accent-border);
+  padding-bottom: 1px;
+}
+
+.rm-link-action::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-style: solid;
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+  transition: transform var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-link-action:hover::after {
+  transform: rotate(45deg) translate(2px, -2px);
+}
+
+/* =======================================================================
+ * Bande de confiance — des faits, pas des logos
+ * ===================================================================== */
+
+.rm-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rm-space-6);
+}
+
+@media (min-width: 40rem) {
+  .rm-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 62rem) {
+  .rm-facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--rm-space-5);
+  }
+}
+
+/* Chaque fait pend sous un filet : la structure vient de la règle, pas d'une
+   carte. C'est ce qui évite la grille de vignettes identiques. */
+.rm-fact {
+  padding-top: var(--rm-space-4);
+  border-top: 2px solid var(--rm-accent);
+}
+
+.rm-band[data-tone="ink"] .rm-fact {
+  border-top-color: var(--rm-accent-on-ink);
+}
+
+.rm-fact h3 {
+  margin: 0 0 var(--rm-space-2);
+  font-size: var(--rm-text-base);
+}
+
+.rm-fact p {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-band[data-tone="ink"] .rm-fact p {
+  color: var(--rm-ink-muted);
+}
+
+/* =======================================================================
+ * La bande de sous-traitants
+ *
+ * Elle occupe la place où un site de ce secteur met ses logos clients. Nous
+ * n'en avons pas, et un bandeau « ils nous font confiance » vide se remarque
+ * plus qu'il ne rassure.
+ *
+ * À la place : les traitements sous-traités, nommés. C'est l'inverse exact de
+ * l'argument « nos modèles sont les nôtres » que la concurrence met en avant,
+ * et c'est le seul des deux que nous puissions tenir — notre V1 appelle
+ * Textract et Rekognition. Le dire nous-mêmes vaut mieux que le laisser
+ * découvrir.
+ * ===================================================================== */
+
+.rm-vendors {
+  display: grid;
+  gap: var(--rm-space-5);
+  align-items: center;
+}
+
+@media (min-width: 62rem) {
+  .rm-vendors {
+    /* 22 rem et non 16 : à 16 le titre tombait sur trois lignes en coupant
+       « sous-traités » à son trait d'union. */
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    gap: var(--rm-space-7);
+  }
+}
+
+.rm-vendors-note {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-vendor-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rm-space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.rm-vendor {
+  display: grid;
+  gap: 0.15rem;
+  padding: var(--rm-space-3) var(--rm-space-4);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+}
+
+.rm-vendor b {
+  font-size: var(--rm-text-sm);
+  font-weight: 600;
+}
+
+.rm-vendor span {
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-text-muted);
+}
+
+/* =======================================================================
+ * Les chiffres
+ *
+ * Quatre nombres, et pas un de plus qui ne soit vérifiable aujourd'hui. Pas de
+ * « 99,6 % de précision » ni de « 3 000 clients » : ces chiffres-là se
+ * mesurent, et nous n'avons pas encore de quoi les mesurer. Ceux d'ici sont
+ * des propriétés du produit, invariables et contrôlables sur pièce.
+ * ===================================================================== */
+
+.rm-metrics {
+  list-style: none;
+  display: grid;
+  gap: var(--rm-space-6) var(--rm-space-5);
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 40rem) {
+  .rm-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rm-metric-value {
+  display: block;
+  font-size: var(--rm-display-2);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.rm-metric h3 {
+  margin: var(--rm-space-3) 0 var(--rm-space-2);
+  font-size: var(--rm-text-base);
+}
+
+.rm-metric p {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-band[data-tone="ink"] .rm-metric p {
+  color: var(--rm-ink-muted);
+}
+
+/* =======================================================================
+ * Les cartes d'enjeu
+ *
+ * Quatre bénéfices, en pleine image. C'est la section qui appelle le plus la
+ * photographie sous licence : les cadres sont dimensionnés pour la recevoir et
+ * portent en attendant un glyphe sur trame (charte §9.2).
+ * ===================================================================== */
+
+.rm-outcomes {
+  list-style: none;
+  display: grid;
+  gap: var(--rm-space-4);
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 40rem) {
+  .rm-outcomes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 68rem) {
+  .rm-outcomes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rm-outcome h3 {
+  margin: 0;
+  font-size: var(--rm-text-xl);
+  line-height: var(--rm-leading-tight);
+  color: var(--rm-ink-text);
+}
+
+.rm-outcome p {
+  margin: var(--rm-space-2) 0 0;
+  font-size: var(--rm-text-sm);
+  color: var(--rm-ink-muted);
+}
+
+/* Le glyphe monte en haut du cadre, le texte reste en bas : entre les deux,
+   la place de la photographie à venir. */
+.rm-outcome .rm-glyph {
+  margin-bottom: auto;
+}
+
+/* =======================================================================
+ * Le panneau de comparaison
+ *
+ * Deux colonnes : ce que nous garantissons, ce que nous ne prétendons pas.
+ * L'axe n'est pas « nous contre eux » — nous n'avons pas les moyens de cet
+ * argument-là — mais « ce qui est tenu contre ce qui ne l'est pas ». C'est la
+ * colonne vertébrale éditoriale de la page.
+ * ===================================================================== */
+
+.rm-compare {
+  display: grid;
+  gap: var(--rm-space-4);
+  margin-top: var(--rm-space-7);
+}
+
+@media (min-width: 56rem) {
+  .rm-compare {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--rm-space-5);
+  }
+}
+
+.rm-compare-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--rm-space-4);
+  padding: var(--rm-space-6);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+}
+
+/* La colonne des limites est en creux, pas en rouge : une limite assumée n'est
+   pas une erreur. Le rouge la ferait lire comme un défaut. */
+.rm-compare-panel[data-side="limits"] {
+  background: var(--rm-bg);
+}
+
+.rm-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+  flex-wrap: wrap;
+}
+
+.rm-compare-head h3 {
+  margin: 0;
+  font-size: var(--rm-text-lg);
+}
+
+.rm-compare-list {
+  list-style: none;
+  display: grid;
+  gap: var(--rm-space-3);
+  margin: 0;
+  padding: 0;
+  font-size: var(--rm-text-sm);
+}
+
+.rm-compare-list > li {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: var(--rm-space-3);
+  align-items: start;
+}
+
+/* Marque en masque CSS, comme la coche de `.rm-checklist` : zéro requête. */
+.rm-compare-list > li::before {
+  content: "";
+  width: 1.1rem;
+  height: 1.35rem;
+  background-color: var(--rm-accent);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 1.1rem 1.1rem;
+}
+
+.rm-compare-panel[data-side="limits"] .rm-compare-list > li::before {
+  background-color: var(--rm-text-muted);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* =======================================================================
+ * Les cartes de couche, dans les panneaux d'onglets
+ * ===================================================================== */
+
+.rm-layers {
+  display: grid;
+  gap: var(--rm-space-4);
+}
+
+@media (min-width: 46rem) {
+  .rm-layers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rm-layer {
+  display: grid;
+  align-content: start;
+  gap: var(--rm-space-2);
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+}
+
+.rm-layer h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  margin: 0;
+  font-size: var(--rm-text-base);
+}
+
+.rm-layer h3 .rm-glyph {
+  width: 1.75rem;
+  height: 1.75rem;
+  stroke-width: 2.2;
+}
+
+.rm-layer p {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+/* =======================================================================
+ * La figure d'étape du parcours
+ *
+ * L'appareil et les détections côte à côte : on voit ce que l'applicant a
+ * sous les yeux, et ce que le serveur en déduit, dans le même bloc.
+ * ===================================================================== */
+
+.rm-rung-figure {
+  display: grid;
+  gap: var(--rm-space-5);
+  align-items: start;
+}
+
+/* Requête de **conteneur** et non de viewport. La largeur disponible ici ne
+   se déduit pas de celle de l'écran : le corps d'étape est la troisième
+   colonne d'une échelle, elle-même posée dans une bande. Une règle
+   `@media (min-width: 46rem)` passait donc à deux colonnes sur un conteneur
+   de 315 px, la colonne des signaux s'écrasait à 2 px et ses lignes
+   débordaient de l'écran sans que rien ne défile. Le conteneur de référence
+   est déclaré sur `.rm-rung-body`. */
+@container (min-width: 30rem) {
+  .rm-rung-figure {
+    /* 15 rem en dur, et non `auto` : l'appareil est large de `min(15rem,
+       100%)`, or dans une piste auto-dimensionnée ce pourcentage ne peut pas
+       se résoudre — la piste tombait alors sur le contenu maximal de la
+       maquette et prenait 698 px sur 752, laissant 22 px aux signaux.
+       Une piste fixe supprime la circularité. */
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: var(--rm-space-6);
+  }
+}
+
+/* --- Maquette d'écran dans le cadre d'appareil ---
+   C'est un rendu de l'écran de consentement réel du parcours, pas une
+   invention : c'est le seul écran du flow qui existe aujourd'hui, la capture
+   pièce et le selfie arrivant en M4. Le composant accepte une capture à la
+   place le jour où elle existe (charte §9.2). */
+
+.rm-mock {
+  display: grid;
+  align-content: start;
+  gap: var(--rm-space-3);
+  height: 100%;
+  padding: var(--rm-space-6) var(--rm-space-4) var(--rm-space-4);
+  text-align: center;
+}
+
+.rm-mock-eyebrow {
+  margin: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: var(--rm-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--rm-accent);
+}
+
+.rm-mock h4 {
+  margin: 0;
+  font-size: var(--rm-text-base);
+}
+
+.rm-mock-body {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--rm-text-muted);
+}
+
+.rm-mock-button {
+  margin-top: auto;
+  padding: var(--rm-space-3);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-accent);
+  color: var(--rm-text-on-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.rm-mock-link {
+  font-size: 0.68rem;
+  color: var(--rm-text-muted);
+}
+
+.rm-band[data-tone="ink"] .rm-layer {
+  border-color: var(--rm-ink-border);
+  background: var(--rm-ink-raised);
+}
+
+.rm-band[data-tone="ink"] .rm-layer p {
+  color: var(--rm-ink-muted);
+}
+
+/* =======================================================================
+ * L'échelle — parcours en étapes, en composition éditoriale
+ * ===================================================================== */
+
+.rm-ladder {
+  list-style: none;
+  counter-reset: rm-rung;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.rm-rung {
+  counter-increment: rm-rung;
+  display: grid;
+  gap: var(--rm-space-3) var(--rm-space-6);
+  padding: var(--rm-space-6) 0;
+  border-top: 1px solid var(--rm-border);
+}
+
+.rm-rung:last-child {
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.rm-band[data-tone="ink"] .rm-rung {
+  border-color: var(--rm-ink-border);
+}
+
+@media (min-width: 48rem) {
+  .rm-rung {
+    grid-template-columns: 4rem minmax(0, 18rem) minmax(0, 1fr);
+    align-items: start;
+    padding: var(--rm-space-7) 0;
+  }
+}
+
+/* Le numéro est grand mais en filet : il donne l'échelle sans voler le titre. */
+.rm-rung::before {
+  content: "0" counter(rm-rung);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-lg);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-accent);
+}
+
+.rm-band[data-tone="ink"] .rm-rung::before {
+  color: var(--rm-accent-on-ink);
+}
+
+.rm-rung h3 {
+  margin: 0;
+  font-size: var(--rm-display-3);
+  letter-spacing: -0.02em;
+}
+
+.rm-rung-body {
+  display: grid;
+  gap: var(--rm-space-4);
+  /* Sert de référence aux requêtes de conteneur de `.rm-rung-figure`.
+     `inline-size` seulement : la hauteur reste libre. */
+  container-type: inline-size;
+}
+
+.rm-rung-body > * {
+  margin: 0;
+}
+
+.rm-rung-body > p {
+  color: var(--rm-text-muted);
+  max-width: 58ch;
+}
+
+.rm-band[data-tone="ink"] .rm-rung-body > p {
+  color: var(--rm-ink-muted);
+}
+
+/* =======================================================================
+ * Les facettes — rangées d'attributs, largeurs inégales
+ * ===================================================================== */
+
+.rm-facets {
+  display: grid;
+  gap: var(--rm-space-5);
+}
+
+@media (min-width: 48rem) {
+  .rm-facets {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  /* Deux tailles de facette : la grille cesse d'être un damier. */
+  .rm-facet {
+    grid-column: span 3;
+  }
+
+  .rm-facet[data-span="wide"] {
+    grid-column: span 4;
+  }
+
+  .rm-facet[data-span="narrow"] {
+    grid-column: span 2;
+  }
+
+  /* Une carte seule sur sa rangée prend toute la largeur : laissée en tiers,
+     elle ouvrait un vide de deux colonnes en fin de grille. */
+  .rm-facet[data-span="full"] {
+    grid-column: span 6;
+  }
+}
+
+.rm-facet {
+  display: grid;
+  gap: var(--rm-space-3);
+  align-content: start;
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  transition:
+    border-color var(--rm-duration) var(--rm-ease),
+    box-shadow var(--rm-duration) var(--rm-ease);
+}
+
+.rm-facet:hover {
+  border-color: var(--rm-border-strong);
+  box-shadow: var(--rm-shadow-md);
+}
+
+.rm-band[data-tone="ink"] .rm-facet {
+  background: var(--rm-ink-raised);
+  border-color: var(--rm-ink-border);
+}
+
+.rm-band[data-tone="ink"] .rm-facet:hover {
+  border-color: var(--rm-accent-on-ink);
+  box-shadow: var(--rm-shadow-ink);
+}
+
+.rm-facet > * {
+  margin: 0;
+}
+
+.rm-facet h3 {
+  font-size: var(--rm-text-base);
+}
+
+.rm-facet p {
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-band[data-tone="ink"] .rm-facet p {
+  color: var(--rm-ink-muted);
+}
+
+/* Glyphe de facette : un chiffre ou un sigle court en monospace. Pas d'icône
+   décorative — le produit n'a pas besoin d'un pictogramme de cadenas. */
+.rm-facet-glyph {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--rm-radius-sm);
+  background: var(--rm-accent-subtle);
+  color: var(--rm-accent);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.rm-band[data-tone="ink"] .rm-facet-glyph {
+  background: color-mix(in srgb, var(--rm-accent-on-ink) 16%, transparent);
+  color: var(--rm-accent-on-ink);
+}
+
+/* =======================================================================
+ * Cartes produit — la disponibilité pilote l'apparence
+ * ===================================================================== */
+
+.rm-catalog {
+  display: grid;
+  gap: var(--rm-space-5);
+}
+
+@media (min-width: 56rem) {
+  .rm-catalog {
+    /* Le produit vendable occupe plus de place que les deux annonces. */
+    grid-template-columns: 1.35fr 1fr 1fr;
+  }
+}
+
+.rm-offer {
+  display: grid;
+  gap: var(--rm-space-4);
+  align-content: start;
+  padding: var(--rm-space-6);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color var(--rm-duration) var(--rm-ease),
+    box-shadow var(--rm-duration) var(--rm-ease),
+    transform var(--rm-duration) var(--rm-ease);
+}
+
+.rm-offer:hover {
+  border-color: var(--rm-border-strong);
+  box-shadow: var(--rm-shadow-md);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rm-offer:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.rm-offer[data-available="true"] {
+  border-color: var(--rm-accent-border);
+}
+
+.rm-offer[data-available="true"]:hover {
+  border-color: var(--rm-accent);
+}
+
+/* Une annonce se lit comme une annonce : fond en retrait, pas de relief. */
+.rm-offer[data-available="false"] {
+  background: var(--rm-bg);
+  box-shadow: none;
+}
+
+.rm-offer > * {
+  margin: 0;
+}
+
+.rm-offer h3 {
+  font-size: var(--rm-display-3);
+  letter-spacing: -0.02em;
+}
+
+.rm-offer-tagline {
+  color: var(--rm-text);
+  font-size: var(--rm-text-base);
+  font-weight: 550;
+}
+
+.rm-offer p:last-of-type {
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-offer-more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  font-size: var(--rm-text-sm);
+  font-weight: 600;
+  color: var(--rm-link);
+}
+
+.rm-offer-more::after {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-style: solid;
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+  transition: transform var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-offer:hover .rm-offer-more::after {
+  transform: rotate(45deg) translate(2px, -2px);
+}
+
+/* =======================================================================
+ * Panneau de code — la section développeurs
+ * ===================================================================== */
+
+.rm-console {
+  border: 1px solid var(--rm-ink-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-ink-raised);
+  overflow: hidden;
+  box-shadow: var(--rm-shadow-ink);
+}
+
+.rm-console-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  padding: var(--rm-space-3) var(--rm-space-4);
+  border-bottom: 1px solid var(--rm-ink-border);
+  background: color-mix(in srgb, var(--rm-ink) 55%, transparent);
+}
+
+.rm-console-label {
+  margin: 0;
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-ink-muted);
+}
+
+.rm-console-method {
+  padding: 0.1rem var(--rm-space-2);
+  border-radius: var(--rm-radius-sm);
+  background: color-mix(in srgb, var(--rm-accent-on-ink) 18%, transparent);
+  color: var(--rm-accent-on-ink);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  font-weight: 700;
+  letter-spacing: var(--rm-tracking-mono);
+}
+
+.rm-console pre {
+  margin: 0;
+  padding: var(--rm-space-5);
+  overflow-x: auto;
+  color: var(--rm-ink-text);
+  font-family: var(--rm-font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.rm-console pre + .rm-console-bar {
+  border-top: 1px solid var(--rm-ink-border);
+  border-bottom: none;
+}
+
+/* Coloration minimale : les jetons sont marqués dans le JSX, pas devinés par
+   un moteur de coloration embarqué. Deux teintes suffisent à donner du
+   relief sans faire du sapin de Noël. */
+.rm-tok-key {
+  color: var(--rm-accent-on-ink);
+}
+
+.rm-tok-str {
+  color: #a5d6ff;
+}
+
+.rm-tok-mute {
+  color: var(--rm-ink-muted);
+}
+
+/* Bloc de code sur papier (page docs) */
+.rm-code {
+  margin: 0 0 var(--rm-space-4);
+  padding: var(--rm-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-bg);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-sm);
+  line-height: 1.7;
+}
+
+/* =======================================================================
+ * Tarifs
+ * ===================================================================== */
+
+.rm-plans {
+  display: grid;
+  gap: var(--rm-space-5);
+}
+
+@media (min-width: 52rem) {
+  .rm-plans {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.rm-plan {
+  display: grid;
+  gap: var(--rm-space-5);
+  align-content: start;
+  padding: var(--rm-space-6);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+}
+
+.rm-plan[data-featured="true"] {
+  border-color: var(--rm-accent-border);
+  box-shadow: var(--rm-shadow-md);
+}
+
+.rm-plan > * {
+  margin: 0;
+}
+
+.rm-plan-head {
+  display: grid;
+  gap: var(--rm-space-2);
+}
+
+.rm-plan-head h3 {
+  margin: 0;
+  font-size: var(--rm-display-3);
+  letter-spacing: -0.02em;
+}
+
+.rm-plan-head p {
+  margin: 0;
+  color: var(--rm-text-muted);
+}
+
+.rm-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--rm-space-2);
+  margin: 0;
+}
+
+.rm-price strong {
+  font-size: var(--rm-text-3xl);
+  font-weight: 620;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.rm-price span {
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+/* Ce que le prix comprend, en monospace : ce sont des quantités. */
+.rm-meter {
+  margin: 0;
+  padding-top: var(--rm-space-3);
+  border-top: 1px solid var(--rm-border);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-text-muted);
+}
+
+/* =======================================================================
+ * Listes à coche
+ * ===================================================================== */
+
+.rm-checklist {
+  list-style: none;
+  margin: 0 0 var(--rm-space-4);
+  padding: 0;
+  display: grid;
+  gap: var(--rm-space-3);
+}
+
+.rm-checklist > li {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: var(--rm-space-3);
+  align-items: start;
+}
+
+/* Coche découpée au masque : même geste que le sceau, aucune image à charger. */
+.rm-checklist > li::before {
+  content: "";
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+  background-color: var(--rm-accent);
+  clip-path: polygon(12% 52%, 38% 78%, 88% 22%, 76% 12%, 38% 56%, 24% 40%);
+}
+
+.rm-band[data-tone="ink"] .rm-checklist > li::before {
+  background-color: var(--rm-accent-on-ink);
+}
+
+/* Variante « ce que nous ne promettons pas » : la coche serait un contresens. */
+.rm-checklist[data-mark="none"] > li::before {
+  background-color: var(--rm-border-strong);
+  clip-path: none;
+  width: var(--rm-space-4);
+  height: 1px;
+  margin-top: 0.7rem;
+}
+
+/* =======================================================================
+ * Tableaux
+ * ===================================================================== */
+
+.rm-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface);
+}
+
+.rm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--rm-text-sm);
+}
+
+.rm-table th,
+.rm-table td {
+  padding: var(--rm-space-4) var(--rm-space-5);
+  text-align: left;
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.rm-table thead th {
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-mono);
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+  white-space: nowrap;
+  background: var(--rm-bg);
+}
+
+/* En-tête de ligne : c'est du contenu, il doit pouvoir passer à la ligne. */
+.rm-table tbody th {
+  font-weight: 600;
+}
+
+.rm-table tbody tr:last-child th,
+.rm-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rm-table code {
+  font-size: 0.8125rem;
+}
+
+/* =======================================================================
+ * Encarts
+ * ===================================================================== */
+
+/* « Ce produit n'est pas disponible » : un encart franc, pas un bandeau
+   promotionnel. Bordure à gauche, aucun vert — le vert dirait « prêt ». */
+.rm-notice {
+  margin: 0 0 var(--rm-space-5);
+  padding: var(--rm-space-5);
+  border: 1px solid var(--rm-border-strong);
+  border-left-width: 3px;
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-bg);
+  max-width: 46rem;
+}
+
+.rm-notice h2,
+.rm-notice h3 {
+  margin: 0 0 var(--rm-space-2);
+  font-size: var(--rm-text-base);
+}
+
+.rm-notice p {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-band[data-tone="ink"] .rm-notice {
+  background: var(--rm-ink-raised);
+  border-color: var(--rm-ink-border);
+}
+
+.rm-band[data-tone="ink"] .rm-notice p {
+  color: var(--rm-ink-muted);
+}
+
+.rm-hint {
+  margin: 0;
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-url {
+  word-break: break-all;
+}
+
+/* Lu, jamais vu. Sert aux états que la forme porte visuellement et que le
+   lecteur d'écran doit pourtant entendre (RG-BRAND-05). */
+.rm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =======================================================================
+ * Texte long : légal, sécurité
+ * ===================================================================== */
+
+.rm-prose {
+  max-width: var(--rm-width-content);
+}
+
+.rm-prose > h2 {
+  margin-top: var(--rm-space-8);
+  font-size: var(--rm-display-3);
+  letter-spacing: -0.02em;
+}
+
+.rm-prose > h2:first-child {
+  margin-top: 0;
+}
+
+.rm-prose h3 {
+  margin: var(--rm-space-6) 0 var(--rm-space-2);
+  font-size: var(--rm-text-base);
+}
+
+.rm-prose ul {
+  margin: 0 0 var(--rm-space-4);
+  padding-left: var(--rm-space-5);
+}
+
+.rm-prose li {
+  margin-bottom: var(--rm-space-2);
+}
+
+/* Article de document légal : numéroté, séparé d'un filet. Un document se
+   parcourt et se cite ; il ne se lit pas comme une page marketing. */
+.rm-clauses {
+  list-style: none;
+  counter-reset: rm-clause;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.rm-clause {
+  counter-increment: rm-clause;
+  display: grid;
+  gap: var(--rm-space-2) var(--rm-space-5);
+  padding: var(--rm-space-5) 0;
+  border-top: 1px solid var(--rm-border);
+}
+
+.rm-clause:last-child {
+  border-bottom: 1px solid var(--rm-border);
+}
+
+@media (min-width: 44rem) {
+  .rm-clause {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+}
+
+.rm-clause::before {
+  content: counter(rm-clause, decimal-leading-zero);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-mono);
+  color: var(--rm-text-muted);
+  padding-top: 0.35rem;
+}
+
+.rm-clause h2 {
+  margin: 0 0 var(--rm-space-2);
+  font-size: var(--rm-text-lg);
+}
+
+.rm-clause p {
+  margin: 0;
+  color: var(--rm-text-muted);
+}
+
+/* Question / réponse : une définition, pas un accordéon. Un accordéon cacherait
+   la réponse aux moteurs et au lecteur pressé. */
+.rm-qa {
+  margin: 0;
+  display: grid;
+}
+
+.rm-qa > div {
+  padding: var(--rm-space-5) 0;
+  border-top: 1px solid var(--rm-border);
+}
+
+.rm-qa > div:last-child {
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.rm-qa dt {
+  margin: 0 0 var(--rm-space-2);
+  color: var(--rm-text);
+  font-size: var(--rm-text-lg);
+  font-weight: 600;
+}
+
+.rm-qa dd {
+  margin: 0;
+  color: var(--rm-text-muted);
+  max-width: 62ch;
+}
+
+/* =======================================================================
+ * Formulaire de contact
+ * ===================================================================== */
+
+.rm-form {
+  display: grid;
+  gap: var(--rm-space-4);
+  max-width: var(--rm-width-form);
+}
+
+.rm-form input,
+.rm-form textarea {
+  transition:
+    border-color var(--rm-duration-fast) var(--rm-ease),
+    box-shadow var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-form input:hover,
+.rm-form textarea:hover {
+  border-color: var(--rm-text-muted);
+}
+
+.rm-form textarea {
+  font: inherit;
+  min-height: 9rem;
+  padding: var(--rm-space-3);
+  border: 1px solid var(--rm-border-strong);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+  color: var(--rm-text);
+  resize: vertical;
+}
+
+/* Piège à robots : hors flux et hors lecture d'écran, jamais `display:none`
+   (certains robots ignorent les champs masqués ainsi). */
+.rm-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =======================================================================
+ * Marque — lockup du pied de page. L'en-tête est en Tailwind.
+ * ===================================================================== */
+
+.rm-site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--rm-text);
+  text-decoration: none;
+  flex: none;
+}
+
+@media (max-width: 23.5rem) {
+  .rm-site-brand span {
+    display: none;
+  }
+}
+
+/* --- Bascule de langue (pied de page) --- */
+
+.rm-lang {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-pill);
+  background: var(--rm-bg);
+  font-size: var(--rm-text-xs);
+  font-weight: 700;
+}
+
+.rm-lang a {
+  padding: 0.2rem var(--rm-space-3);
+  border-radius: var(--rm-radius-pill);
+  color: var(--rm-text-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: var(--rm-tracking-eyebrow);
+  transition:
+    background-color var(--rm-duration-fast) var(--rm-ease),
+    color var(--rm-duration-fast) var(--rm-ease);
+}
+
+.rm-lang a:hover {
+  color: var(--rm-text);
+}
+
+.rm-lang a[aria-current="true"] {
+  background: var(--rm-surface);
+  color: var(--rm-text);
+  box-shadow: var(--rm-shadow-sm);
+}
+
+.rm-site-footer .rm-lang {
+  background: var(--rm-surface);
+}
+
+/* =======================================================================
+ * Pied de page
+ * ===================================================================== */
+
+.rm-site-footer {
+  padding: var(--rm-space-9) 0 var(--rm-space-6);
+  background: var(--rm-bg);
+  border-top: 1px solid var(--rm-border);
+  font-size: var(--rm-text-sm);
+}
+
+.rm-footer-grid {
+  display: grid;
+  gap: var(--rm-space-7);
+  margin-bottom: var(--rm-space-8);
+}
+
+@media (min-width: 40rem) {
+  .rm-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 62rem) {
+  .rm-footer-grid {
+    grid-template-columns: 1.6fr repeat(3, minmax(0, 1fr));
+    gap: var(--rm-space-8);
+  }
+}
+
+.rm-footer-col h2 {
+  margin: 0 0 var(--rm-space-4);
+  font-size: var(--rm-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--rm-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+}
+
+.rm-footer-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rm-space-3);
+}
+
+.rm-footer-col a {
+  color: var(--rm-text);
+  text-decoration: none;
+}
+
+.rm-footer-col a:hover {
+  color: var(--rm-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rm-footer-baseline {
+  margin: var(--rm-space-4) 0 0;
+  color: var(--rm-text-muted);
+  max-width: 26ch;
+  font-size: var(--rm-text-base);
+}
+
+.rm-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rm-space-4) var(--rm-space-6);
+  padding-top: var(--rm-space-5);
+  border-top: 1px solid var(--rm-border);
+  color: var(--rm-text-muted);
+  font-size: var(--rm-text-xs);
+}
+
+.rm-footer-bottom .rm-lang {
+  margin-right: auto;
+}
+
+/* =======================================================================
+ * Apparition au défilement
+ *
+ * Un seul geste : le contenu monte de quelques pixels et s'opacifie. L'état
+ * de départ n'est posé que si le navigateur accepte le mouvement — sans quoi
+ * un échec de script laisserait la page vide.
+ * ===================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .rm-reveal[data-revealed="false"] {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  .rm-reveal {
+    transition:
+      opacity var(--rm-duration-slow) var(--rm-ease),
+      transform var(--rm-duration-slow) var(--rm-ease);
+    transition-delay: var(--rm-reveal-delay, 0ms);
+  }
+}

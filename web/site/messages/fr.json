@@ -1,0 +1,1051 @@
+{
+  "meta": {
+    "siteName": "Recogniz-Me",
+    "baseline": "Une identité reconnue comme réelle.",
+    "titleTemplate": "%s — Recogniz-Me"
+  },
+  "a11y": {
+    "skipToContent": "Aller au contenu",
+    "mainNav": "Navigation principale",
+    "footerNav": "Navigation de pied de page",
+    "languageSwitch": "Langue du site",
+    "homeLink": "Recogniz-Me, retour à l’accueil",
+    "utilityNav": "Raccourcis du site",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "actions": {
+    "signup": "Créer un compte",
+    "viewDocs": "Voir la documentation",
+    "pricing": "Voir les tarifs",
+    "contact": "Nous écrire",
+    "notify": "Être prévenu de l’ouverture",
+    "security": "Sécurité et données",
+    "idvDetail": "Le produit en détail",
+    "readMore": "Voir la page",
+    "login": "Connexion"
+  },
+  "nav": {
+    "home": "Accueil",
+    "products": "Produits",
+    "identityVerification": "Vérification d’identité",
+    "biometricAuthentication": "Authentification biométrique",
+    "amlScreening": "Criblage AML",
+    "pricing": "Tarifs",
+    "services": "Services",
+    "company": "Entreprise",
+    "security": "Sécurité",
+    "docs": "Documentation",
+    "getVerified": "Comment se faire vérifier",
+    "contact": "Contact",
+    "terms": "Conditions générales",
+    "privacy": "Confidentialité",
+    "dpa": "Accord de traitement"
+  },
+  "badges": {
+    "available": "Disponible",
+    "roadmap": "Feuille de route"
+  },
+  "signalStates": {
+    "pass": "vérifié",
+    "watch": "à regarder",
+    "idle": "en attente"
+  },
+  "decisions": {
+    "approved": "Approuvée",
+    "rejected": "Refusée",
+    "review": "À revoir",
+    "recapture": "Reprise demandée"
+  },
+  "footer": {
+    "products": "Produits",
+    "resources": "Ressources",
+    "legal": "Légal",
+    "rights": "Tous droits réservés.",
+    "honesty": "Nous n’affichons aucune certification que nous n’avons pas obtenue."
+  },
+  "products": {
+    "idv": {
+      "name": "Vérification d’identité",
+      "tagline": "Une pièce, un visage, une décision motivée.",
+      "summary": "Le produit disponible aujourd’hui. Votre client photographie sa pièce d’identité et son visage ; vous recevez une décision et ses raisons."
+    },
+    "biometric": {
+      "name": "Authentification biométrique",
+      "tagline": "Reconnaître un client déjà vérifié.",
+      "summary": "Ré-authentifier une personne par son visage, sans lui redemander sa pièce d’identité. Sur notre feuille de route, pas encore livrable."
+    },
+    "aml": {
+      "name": "Criblage AML",
+      "tagline": "Personnes exposées, sanctions, presse défavorable.",
+      "summary": "Confronter une identité vérifiée aux listes de sanctions et aux registres de personnes politiquement exposées. Sur notre feuille de route, pas encore livrable."
+    }
+  },
+  "home": {
+    "metaTitle": "Vérification d’identité pour les entreprises",
+    "metaDescription": "Vérifiez une identité en temps réel : document, biométrie et décision, via API ou lien hébergé. Environnement de test gratuit.",
+    "title": "Vérification d’identité pilotée par l’IA, conçue pour votre activité",
+    "lead": "Contrôles d’identité, biométrie et entreprise, depuis une seule plateforme. Conçue pour s’adapter à votre façon de travailler.",
+    "heroNote": "Environnement de test gratuit, sans carte bancaire.",
+    "hero": {
+      "verdictTitle": "Décision rendue",
+      "verdictSummary": "Trois contrôles concordants, et les raisons conservées avec le dossier.",
+      "signalsLabel": "Signaux de la décision",
+      "signalDocument": "Pièce authentique et en cours de validité",
+      "signalFace": "Visage correspondant au document",
+      "signalPresence": "Personne réellement présente"
+    },
+    "vendors": {
+      "title": "Nos traitements sous-traités, nommés",
+      "note": "D’autres mettent ici les logos de leurs clients. Nous mettons la liste de ce que nous ne faisons pas nous-mêmes — c’est plus utile, et c’est vérifiable dans notre accord de traitement.",
+      "items": [
+        { "role": "Lecture du document", "service": "AWS Textract AnalyzeID" },
+        { "role": "Présence réelle", "service": "AWS Rekognition Face Liveness" },
+        { "role": "Comparaison au visage", "service": "AWS Rekognition CompareFaces" },
+        { "role": "Hébergement et stockage", "service": "AWS, région européenne" }
+      ]
+    },
+    "numerals": {
+      "metrics": "01",
+      "benefits": "02",
+      "steps": "03",
+      "product": "04",
+      "decision": "05",
+      "architecture": "06",
+      "compare": "07",
+      "trust": "08",
+      "catalog": "09"
+    },
+    "metricsEyebrow": "Les chiffres",
+    "metricsTitle": "Quatre chiffres que nous pouvons tenir",
+    "metricsLead": "Vous ne lirez pas de taux de précision sur cette page. Un taux se mesure sur un volume que nous n’avons pas encore traité, et l’annoncer avant serait une invention. Voici, à la place, des propriétés du produit — invariables et contrôlables sur pièce.",
+    "metrics": [
+      {
+        "value": "1",
+        "title": "Appel pour démarrer",
+        "body": "Un POST crée la vérification et renvoie le lien à transmettre. Il n’y a pas de deuxième appel obligatoire avant la décision."
+      },
+      {
+        "value": "2",
+        "title": "Langues servies",
+        "body": "Français et anglais, sur le parcours comme sur ce site. Le parcours suit la langue du navigateur de votre client."
+      },
+      {
+        "value": "0 €",
+        "title": "Coût de l’environnement de test",
+        "body": "Le sandbox répond sur des jeux de données fixes, sans appel de traitement facturé. Aucune carte bancaire à l’inscription."
+      },
+      {
+        "value": "0",
+        "title": "Média dans les notifications",
+        "body": "Ni photo ni pièce jointe dans une notification ou une réponse d’API. Uniquement des liens signés de courte durée."
+      }
+    ],
+    "metricsScreenTitle": "POST /v1/verifications",
+    "benefitsEyebrow": "Ce que ça change",
+    "benefitsTitle": "Quatre raisons de vérifier plutôt que de déclarer",
+    "benefits": [
+      {
+        "glyph": "frame",
+        "title": "Moins d’abandons à l’entrée",
+        "body": "Les contrôles de qualité tournent pendant la capture. Une photo inexploitable est reprise sur place, pas refusée dix minutes plus tard par courriel."
+      },
+      {
+        "glyph": "ledger",
+        "title": "De quoi se justifier plus tard",
+        "body": "Le consentement horodaté, la version du texte accepté, les signaux et la décision sont conservés ensemble. C’est ce qui se montre à un régulateur."
+      },
+      {
+        "glyph": "match",
+        "title": "Le porteur, pas seulement la pièce",
+        "body": "Une pièce authentique dans les mains de quelqu’un d’autre ne passe pas : le visage est comparé au document et la présence réelle est contrôlée."
+      },
+      {
+        "glyph": "api",
+        "title": "Une intégration, pas un projet",
+        "body": "Un POST, un GET, une clé de test dès l’inscription. Le passage en production ne change pas votre code, seulement le préfixe de la clé."
+      }
+    ],
+    "stepsEyebrow": "Le parcours",
+    "stepsTitle": "Trois étapes, une seule intégration à écrire",
+    "stepsLead": "Vous créez, votre client capture, vous décidez de la suite. Le reste — cadrage, reprises, langues — est notre affaire.",
+    "steps": {
+      "create": {
+        "title": "Vous créez une vérification",
+        "body": "Un appel API, ou un clic dans la console. Vous recevez un lien à durée limitée, à transmettre par le canal que vous voulez.",
+        "detailLabel": "Éléments de l’appel"
+      },
+      "capture": {
+        "title": "Votre client suit le lien",
+        "body": "Consentement, photo de la pièce, puis selfie, depuis son téléphone. Les contrôles de qualité tournent pendant la capture : une photo inexploitable est reprise sur place, pas refusée dix minutes plus tard.",
+        "deviceLabel": "L’écran de consentement du parcours, tel que votre client le voit sur son téléphone",
+        "mockTitle": "Vérifions votre identité",
+        "mockBody": "Nous allons vous demander une photo de votre pièce d’identité, puis un selfie. Vos images servent uniquement à cette vérification.",
+        "mockAccept": "J’accepte et je continue",
+        "mockDecline": "Je refuse",
+        "detailLabel": "Détections pendant la capture",
+        "signalBlur": "Flou détecté, reprise demandée",
+        "signalUnusable": "Image inexploitable",
+        "signalUnsupported": "Type de document non pris en charge"
+      },
+      "decide": {
+        "title": "Vous recevez la décision",
+        "body": "Le traitement est asynchrone : vous interrogez la vérification, ou vous attendez la notification envoyée à votre point d’entrée. Comptez quelques minutes.",
+        "verdictSummary": "Statut terminal, raisons conservées, et aucun média dans la notification."
+      }
+    },
+    "productEyebrow": "Les contrôles",
+    "productTitle": "Ce que nous contrôlons, nommément",
+    "productLead": "Pas de boîte noire annoncée comme telle. Chaque contrôle a un nom, un état et un code, et se retrouve tel quel dans la réponse de l’API.",
+    "capabilities": [
+      {
+        "glyph": "01",
+        "title": "Lecture du document",
+        "body": "Les champs d’identité sont extraits de la pièce photographiée. Quand une bande de lecture optique est présente, son propre calcul de contrôle est vérifié, et un écart avec les champs lus devient un signal."
+      },
+      {
+        "glyph": "02",
+        "title": "Validité",
+        "body": "Une pièce périmée est refusée, avec la raison. Contrôle déterministe, pas une estimation."
+      },
+      {
+        "glyph": "03",
+        "title": "Comparaison au visage",
+        "body": "Le selfie est comparé à la photo du document. Le score n’est pas rendu tel quel : il alimente la décision, qui est ce que vous recevez."
+      },
+      {
+        "glyph": "04",
+        "title": "Présence réelle",
+        "body": "Un contrôle de présence écarte la photo d’écran et le portrait imprimé présenté à la caméra."
+      },
+      {
+        "glyph": "05",
+        "title": "Règles de décision",
+        "body": "Les seuils et leur enchaînement sont versionnés côté serveur. Deux dossiers identiques rendent la même décision."
+      }
+    ],
+    "decisionEyebrow": "La décision",
+    "decisionTitle": "Trois issues, jamais un score nu",
+    "decisionLead": "Un score seul ne se défend ni devant un client mécontent, ni devant un régulateur. Vous recevez une issue exploitable et les raisons qui l’ont produite.",
+    "outcomes": {
+      "approvedTitle": "Le dossier tient",
+      "approvedBody": "Pièce prise en charge et en cours de validité, lectures cohérentes, visage correspondant, présence confirmée.",
+      "reviewTitle": "Zone grise",
+      "reviewBody": "Comparaison limite, bande de lecture partielle. Votre équipe tranche depuis la console, avec les extraits et les signaux sous les yeux.",
+      "rejectedTitle": "Contrôle bloquant",
+      "rejectedBody": "Document hors corridor, pièce expirée, visage différent, ou plafond d’essais atteint.",
+      "reasonsLabel": "Raisons renvoyées avec la décision",
+      "note": "Les raisons sont des codes en anglais, sans donnée personnelle : elles se journalisent et se montrent à votre équipe support sans précaution particulière. Leur liste est documentée et versionnée avec l’API — nous ne la présentons pas comme figée tant qu’elle ne l’est pas."
+    },
+    "architectureEyebrow": "L’architecture",
+    "architectureTitle": "Trois surfaces, une seule source de vérité",
+    "architectureLead": "Vous branchez ce dont vous avez besoin. Le lien hébergé sans écrire d’interface, l’API si vous pilotez tout, la console pour votre équipe — les trois lisent la même vérification.",
+    "architectureTabsLabel": "Surfaces de l’architecture",
+    "architecture": [
+      {
+        "key": "api",
+        "index": "01",
+        "label": "L’API",
+        "cards": [
+          {
+            "glyph": "api",
+            "title": "Deux appels suffisent",
+            "body": "Un POST pour créer la vérification, un GET pour lire la décision. Le reste de la surface est optionnel."
+          },
+          {
+            "glyph": "shield",
+            "title": "Une clé, un jeton Bearer",
+            "body": "Le préfixe de la clé dit l’environnement. Passer en production ne change rien d’autre dans votre code."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Idempotence par en-tête",
+            "body": "Rejouer un appel après une coupure réseau renvoie la vérification déjà créée, pas un doublon facturé."
+          },
+          {
+            "glyph": "webhook",
+            "title": "Notification à la décision",
+            "body": "Un point d’entrée signé reçoit le statut terminal. Aucun média dedans, uniquement des identifiants et des motifs."
+          }
+        ]
+      },
+      {
+        "key": "hosted",
+        "index": "02",
+        "label": "Le lien hébergé",
+        "cards": [
+          {
+            "glyph": "link",
+            "title": "Un lien à durée limitée",
+            "body": "Vous le transmettez par le canal que vous voulez : courriel, SMS, redirection depuis votre propre parcours."
+          },
+          {
+            "glyph": "frame",
+            "title": "La capture est notre affaire",
+            "body": "Cadrage, reprises, messages d’erreur, compatibilité des navigateurs. Vous n’écrivez aucune interface."
+          },
+          {
+            "glyph": "match",
+            "title": "Rien à installer",
+            "body": "Votre client ouvre le lien dans son navigateur. Pas d’application, et aucun compte à créer chez nous."
+          },
+          {
+            "glyph": "console",
+            "title": "Français et anglais",
+            "body": "Le parcours suit la langue du navigateur. Deux langues réellement servies, pas une traduction promise."
+          }
+        ]
+      },
+      {
+        "key": "console",
+        "index": "03",
+        "label": "La console",
+        "cards": [
+          {
+            "glyph": "console",
+            "title": "Créer sans écrire de code",
+            "body": "Une vérification se lance depuis l’interface. C’est le chemin d’un essai, ou d’un cas isolé à traiter à la main."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Relire une décision",
+            "body": "Le statut, les signaux et les motifs sont consultables sur le dossier, avec les extraits qui les ont produits."
+          },
+          {
+            "glyph": "shield",
+            "title": "Cloisonnement par organisation",
+            "body": "Une vérification appartient à une organisation. Une autre organisation obtient une page introuvable."
+          },
+          {
+            "glyph": "frame",
+            "title": "Médias sous accès temporaire",
+            "body": "Même depuis la console, une image passe par un lien signé qui expire. Il n’existe pas d’URL permanente."
+          }
+        ]
+      }
+    ],
+    "compareEyebrow": "Le contrat",
+    "compareTitle": "Ce que nous tenons, ce que nous ne prétendons pas",
+    "compareLead": "Un fournisseur de vérification qui n’énonce que ses forces vous oblige à découvrir ses limites en production. Les voici avant la signature.",
+    "compare": {
+      "heldTitle": "Ce que nous tenons",
+      "heldBadge": "Vérifiable",
+      "held": [
+        "Une décision motivée, jamais un score nu : approuvée, refusée ou à revoir, avec ses motifs.",
+        "Des règles de décision versionnées côté serveur : deux dossiers identiques rendent la même décision.",
+        "Un consentement horodaté, avec la version du texte accepté, conservé avec le dossier.",
+        "Aucune donnée personnelle dans nos journaux : des identifiants techniques, des statuts, des durées.",
+        "Un environnement de test gratuit et déterministe, rejouable dans votre intégration continue."
+      ],
+      "limitsTitle": "Ce que nous ne prétendons pas",
+      "limitsBadge": "Limites assumées",
+      "limits": [
+        "Nous n’entraînons pas nos propres modèles : la lecture et la biométrie sont sous-traitées, et nommées plus haut.",
+        "Le corridor documentaire est court. Un document hors corridor est refusé comme non pris en charge, pas deviné.",
+        "La décision n’est pas instantanée : le traitement est asynchrone, comptez quelques minutes.",
+        "Nous n’affichons aucune certification, parce que nous n’en avons obtenu aucune à ce jour.",
+        "Les codes de motif sont documentés mais encore en cours de stabilisation : ils sont versionnés avec l’API."
+      ]
+    },
+    "devRequestLabel": "Créer une vérification",
+    "devResponseLabel": "Réponse — le lien à envoyer à votre client",
+    "trustEyebrow": "Données",
+    "trustTitle": "Ce qui est déjà en place",
+    "trustLead": "Des choix techniques vérifiables. Vous ne trouverez pas de logo de certification sur ce site, parce que nous n’en avons obtenu aucun.",
+    "trust": [
+      {
+        "title": "Cloisonnement par organisation",
+        "body": "Une vérification appartient à une organisation. Une autre organisation obtient une page introuvable, pas un refus d’accès : un refus confirmerait que la ressource existe."
+      },
+      {
+        "title": "Aucune donnée personnelle dans les journaux",
+        "body": "Nos journaux contiennent des identifiants techniques, des statuts et des durées. Jamais un nom, un numéro de pièce ni une image."
+      },
+      {
+        "title": "Médias sous accès temporaire",
+        "body": "Les photos ne sont jamais servies par une URL permanente. Chaque consultation, y compris depuis notre console, passe par un lien signé qui expire."
+      },
+      {
+        "title": "Consentement horodaté",
+        "body": "Votre client accepte le traitement avant la première photo. La version du texte accepté et la date sont conservées : c’est ce qui permet de le démontrer plus tard."
+      }
+    ],
+    "catalogEyebrow": "La gamme",
+    "catalogTitle": "Un produit à vendre, deux à annoncer",
+    "catalogLead": "Nous préférons le dire que le laisser croire : seule la vérification d’identité est souscriptible aujourd’hui.",
+    "catalogNote": "L’authentification biométrique et le criblage AML ne sont ni activables, ni tarifés, ni exposés en API. Aucune date d’ouverture n’est annoncée.",
+    "closingEyebrow": "Essayer",
+    "closingTitle": "Votre première vérification, sans parler à un commercial",
+    "closingBody": "Créez un compte, récupérez la clé de test et lancez le parcours complet en sandbox. Aucun appel facturé, aucune carte demandée.",
+    "closingNote": "Un contact commercial existe. Ce n’est pas le chemin d’entrée.",
+    "closingListTitle": "Ce que vous avez en main tout de suite",
+    "closingPoints": [
+      "Clé de test dès l’adresse e-mail vérifiée",
+      "Résultats déterministes, rejouables dans vos tests automatisés",
+      "Aucune donnée personnelle réelle à manipuler pour intégrer"
+    ]
+  },
+  "idv": {
+    "metaTitle": "Vérification d’identité et de document",
+    "metaDescription": "Parcours de vérification hébergé, comparaison du visage à la pièce d’identité, décision motivée en quelques minutes. Corridor de documents testé et environnement sandbox gratuit.",
+    "eyebrow": "Produit disponible",
+    "heroLead": "Votre client photographie sa pièce d’identité et son visage. Vous recevez une décision motivée, et de quoi la justifier plus tard.",
+    "heroFacts": [
+      {
+        "title": "Parcours hébergé",
+        "body": "Nous tenons la capture, les reprises et les langues. Vous n’écrivez aucune interface."
+      },
+      {
+        "title": "Décision en quelques minutes",
+        "body": "Le traitement est asynchrone. Le statut devient terminal quand la décision est rendue."
+      },
+      {
+        "title": "Corridor testé",
+        "body": "Une liste courte de pays et de types de documents, parce qu’elle correspond à ce qui est réellement lu."
+      }
+    ],
+    "numerals": {
+      "problem": "01",
+      "journey": "02",
+      "decision": "03",
+      "corridor": "04",
+      "integration": "05"
+    },
+    "problemEyebrow": "Le problème",
+    "problemTitle": "À distance, un nom saisi ne prouve rien",
+    "problemBody": "Il faut relier trois choses : un document authentique, un visage présent, et la même personne derrière les deux. Une seule des trois ne suffit pas.",
+    "insufficientTitle": "Ce qui ne prouve rien tout seul",
+    "insufficient": [
+      "Un formulaire d’identité rempli à la main",
+      "Une photo de pièce d’identité envoyée par e-mail",
+      "Un selfie sans document auquel le comparer"
+    ],
+    "insufficientNote": "Chacun de ces éléments s’emprunte, se rephotographie ou se retouche. C’est leur recoupement qui fait la preuve.",
+    "journeyEyebrow": "Le parcours",
+    "journeyTitle": "Ce que vit votre client",
+    "journeyLead": "Hébergé par nous, sur son téléphone, en français ou en anglais selon son navigateur.",
+    "journeyNote": "Le parcours n’est pas habillé aux couleurs de votre organisation : c’est hors périmètre aujourd’hui, et nous ne le vendons pas comme une option existante.",
+    "journeySteps": {
+      "consent": {
+        "title": "Consentement",
+        "body": "Le traitement est expliqué et accepté avant la première photo. Un refus est enregistré et clôt la vérification.",
+        "note": "La version du texte accepté et la date sont conservées."
+      },
+      "document": {
+        "title": "Capture de la pièce",
+        "body": "Cadrage guidé, contrôle de netteté et de lisibilité immédiat. Une photo inexploitable est reprise sur place plutôt que refusée plus tard.",
+        "docKind": "Pièce d’identité",
+        "docLabel": "Illustration : une pièce d’identité schématique, avec sa zone photo, ses champs et sa bande de lecture optique. Aucune pièce réelle, aucun visage.",
+        "docFields": "Champs à lire"
+      },
+      "face": {
+        "title": "Capture du visage",
+        "body": "Un selfie, avec un contrôle de présence pour écarter la photo d’écran et le portrait imprimé présenté à la caméra.",
+        "note": "Aucun visage n’est enrôlé pour une réutilisation ultérieure : ce serait le produit d’authentification biométrique, qui n’existe pas encore."
+      },
+      "analysis": {
+        "title": "Analyse",
+        "body": "Lecture des champs, contrôles de cohérence, comparaison du visage, puis application des règles de décision.",
+        "signalsLabel": "Signaux de l’analyse",
+        "signalFields": "Champs d’identité lus sur la pièce",
+        "signalMrz": "Bande de lecture optique cohérente",
+        "signalExpiry": "Pièce en cours de validité",
+        "signalFace": "Visage correspondant à la photo du document"
+      }
+    },
+    "decisionEyebrow": "La décision",
+    "decisionTitle": "Ce que dit chaque issue",
+    "decisionLead": "Quatre suites possibles, dont une qui n’est pas une décision : la reprise.",
+    "decisionAside": "La zone grise n’est pas un défaut du produit. C’est le cas où seule votre équipe peut trancher.",
+    "decisionNote": "Les raisons sont persistées avec le dossier, en codes anglais stables et sans donnée personnelle.",
+    "decisions": {
+      "approved": "La pièce est prise en charge, lisible et en cours de validité, et le visage correspond à celui du document.",
+      "rejected": "Un contrôle bloquant a échoué : consentement refusé, document hors corridor, pièce expirée, visage différent, ou plafond d’essais atteint. La raison accompagne la décision.",
+      "review": "Le résultat est ambigu — comparaison limite, bande de lecture partielle. Votre analyste tranche depuis la console.",
+      "recapture": "Ce n’est pas une décision, c’est une demande : la photo est inexploitable ou une face manque, et le parcours redonne la main à votre client."
+    },
+    "corridorEyebrow": "Documents",
+    "corridorTitle": "Le corridor, tel qu’il est",
+    "corridorLead": "La liste est courte parce qu’elle est testée. Elle s’allongera quand un corridor sera réellement validé, pas avant.",
+    "corridorColumns": {
+      "country": "Pays",
+      "document": "Document",
+      "reading": "Lecture"
+    },
+    "corridorRows": [
+      {
+        "country": "France",
+        "document": "Passeport",
+        "reading": "Champs et bande de lecture optique"
+      },
+      {
+        "country": "France",
+        "document": "Carte nationale d’identité",
+        "reading": "Champs"
+      },
+      {
+        "country": "Canada",
+        "document": "Passeport",
+        "reading": "Champs et bande de lecture optique"
+      }
+    ],
+    "corridorNote": "Un document hors de cette liste est refusé, avec la raison correspondante. Vous ne trouverez pas de « et le reste du monde » sous ce tableau, ni de compte de documents pris en charge.",
+    "integrationEyebrow": "Intégrer",
+    "integrationTitle": "Deux voies, une seule à écrire",
+    "integrationLead": "Le lien hébergé suffit à la plupart des intégrations. L’API sert à piloter et à lire.",
+    "integration": {
+      "hostedTitle": "Lien hébergé",
+      "hostedBody": "Vous créez la vérification et envoyez le lien reçu. Le parcours, les reprises, les langues et les contrôles de qualité sont notre affaire. C’est la voie la plus rapide, et celle que nous recommandons.",
+      "apiTitle": "API",
+      "apiBody": "Vous lisez les statuts et les décisions depuis votre back-office, et vous déclenchez vos propres traitements à la notification."
+    },
+    "sandboxEyebrow": "Sandbox",
+    "sandboxTitle": "Écrivez votre intégration avant d’avoir un client",
+    "sandboxBody": "Tout compte démarre avec une clé de test. L’environnement sandbox rend des résultats déterministes : vous rejouez vos cas — approuvé, refusé, à revoir — sans facture et sans données réelles.",
+    "sandbox": [
+      "Une clé de test dès la création du compte",
+      "Des cas reproductibles pour vos tests automatisés",
+      "Aucune donnée personnelle réelle à manipuler pour intégrer",
+      "Le passage en production ne change que la clé"
+    ]
+  },
+  "biometric": {
+    "metaTitle": "Authentification biométrique",
+    "metaDescription": "Ré-authentifier un client déjà vérifié par son visage. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et ne peut pas être souscrit.",
+    "eyebrow": "Feuille de route",
+    "noticeTitle": "Ce produit n’est pas disponible",
+    "noticeBody": "Il ne peut être ni souscrit, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
+    "ideaEyebrow": "L’idée",
+    "problemTitle": "Reconnaître quelqu’un qu’on a déjà vérifié",
+    "problemBody": "Une fois une personne vérifiée, lui redemander sa pièce d’identité à chaque opération sensible coûte cher — à elle comme à vous.",
+    "problemDetail": "Reconnaître son visage suffirait à rétablir la confiance en quelques secondes : à la connexion depuis un nouvel appareil, avant un virement, ou après une réinitialisation de mot de passe. C’est le produit que nous voulons construire ensuite.",
+    "plannedTitle": "Les contrôles prévus",
+    "plannedLead": "Ils sont listés à l’état « en attente », parce qu’aucun n’est implémenté. Aucun code d’API n’existe encore pour eux, et nous n’en inventerons pas pour faire joli.",
+    "planned": [
+      "Rattacher un visage de référence à une identité déjà vérifiée",
+      "Confirmer une personne connue avant une opération sensible",
+      "Distinguer une personne présente d’une photo montrée à la caméra",
+      "Renvoyer une confirmation motivée, dans la même forme que la vérification d’identité"
+    ],
+    "notYetTitle": "Ce que nous ne promettons pas",
+    "notYet": [
+      "Aucune date d’ouverture n’est annoncée",
+      "Aucun tarif n’est publié",
+      "Aucun engagement de performance ne serait honnête à ce stade"
+    ],
+    "ctaTitle": "Ce sujet vous concerne ?",
+    "ctaBody": "Dites-nous votre cas d’usage. Nous prévenons les personnes intéressées quand le produit ouvre, et leurs contraintes orientent l’ordre des travaux.",
+    "availableInstead": "En attendant, c’est la vérification d’identité qui est disponible, et elle couvre l’entrée en relation."
+  },
+  "aml": {
+    "metaTitle": "Criblage AML",
+    "metaDescription": "Criblage sanctions, personnes politiquement exposées et presse défavorable. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et ne peut pas être souscrit.",
+    "eyebrow": "Feuille de route",
+    "noticeTitle": "Ce produit n’est pas disponible",
+    "noticeBody": "Il ne peut être ni souscrit, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
+    "ideaEyebrow": "L’idée",
+    "problemTitle": "Savoir si vous avez le droit d’entrer en relation",
+    "problemBody": "Vérifier qu’une identité est réelle ne dit pas si la réglementation vous autorise à ouvrir un compte à cette personne.",
+    "problemDetail": "Le criblage répond à cette seconde question, en confrontant une identité déjà vérifiée à des listes de sanctions, à des registres de personnes politiquement exposées et à la presse. C’est un produit de conformité, pas un produit de détection de fraude.",
+    "plannedTitle": "Les contrôles prévus",
+    "plannedLead": "Ils sont listés à l’état « en attente ». Les sources de données ne sont pas arrêtées, donc rien n’est implémenté et rien n’est promis.",
+    "planned": [
+      "Confronter une identité vérifiée aux listes de sanctions internationales",
+      "Signaler une personne politiquement exposée, ou un proche",
+      "Remonter la presse défavorable rattachée à la personne",
+      "Conserver la trace de chaque criblage pour votre dossier de conformité"
+    ],
+    "notYetTitle": "Ce que nous ne promettons pas",
+    "notYet": [
+      "Aucune date d’ouverture n’est annoncée",
+      "Aucun tarif n’est publié",
+      "Aucune couverture de listes n’est annoncée, faute de sources arrêtées"
+    ],
+    "ctaTitle": "Ce sujet vous concerne ?",
+    "ctaBody": "Dites-nous quelles obligations vous incombent. Ce sont elles qui décideront de la forme de ce produit, et de son rang dans nos priorités.",
+    "availableInstead": "En attendant, la vérification d’identité est disponible : c’est elle qui produit l’identité vérifiée sur laquelle un criblage viendra se brancher."
+  },
+  "pricing": {
+    "metaTitle": "Tarifs",
+    "metaDescription": "Sandbox gratuit pour intégrer et tester, plan Production à l’usage. Tarifs de la vérification d’identité Recogniz-Me.",
+    "eyebrow": "Tarifs",
+    "title": "Intégrez gratuitement, payez quand vous vérifiez pour de vrai",
+    "lead": "Un seul produit est facturé aujourd’hui : la vérification d’identité. L’environnement de test ne consomme pas votre forfait.",
+    "provisionalTitle": "Tarifs provisoires",
+    "provisionalBody": "Ces montants sont indicatifs et seront figés à l’ouverture des comptes Production. Ils ne constituent pas une offre contractuelle.",
+    "plansTitle": "Les deux plans",
+    "plansNote": "L’authentification biométrique et le criblage AML n’ont pas de ligne tarifaire : ils ne sont pas disponibles, donc ils ne sont pas vendus.",
+    "perMonth": "par mois",
+    "free": "Gratuit",
+    "includedLabel": "vérifications incluses par mois",
+    "overageLabel": "par vérification supplémentaire",
+    "sandbox": {
+      "badge": "Sans carte bancaire",
+      "name": "Sandbox",
+      "tagline": "Pour intégrer et tester",
+      "features": [
+        "Clé de test dès la création du compte",
+        "Résultats déterministes et reproductibles",
+        "Console et parcours hébergé complets",
+        "Aucune donnée réelle à fournir"
+      ]
+    },
+    "production": {
+      "badge": "Un seul plan payant",
+      "name": "Production",
+      "tagline": "Pour vérifier de vraies personnes",
+      "features": [
+        "Vérifications réelles avec décision motivée",
+        "File de revue pour les cas ambigus",
+        "Notifications de résultat vers votre back-office",
+        "Facturation et factures en libre-service"
+      ]
+    },
+    "numerals": {
+      "counted": "01",
+      "faq": "02"
+    },
+    "countedEyebrow": "Comptage",
+    "tableTitle": "Ce qui est compté, et ce qui ne l’est pas",
+    "tableLead": "Une vérification est comptée à sa création, une seule fois, quel que soit son résultat. Une reprise de photo dans le même parcours ne compte pas deux fois.",
+    "tableColumns": {
+      "item": "Élément",
+      "sandbox": "Sandbox",
+      "production": "Production"
+    },
+    "tableRows": [
+      {
+        "item": "Vérifications incluses par mois",
+        "sandbox": "50",
+        "production": "200"
+      },
+      {
+        "item": "Consomme le forfait payant",
+        "sandbox": "Non",
+        "production": "Oui"
+      },
+      {
+        "item": "Décision sur des données réelles",
+        "sandbox": "Non",
+        "production": "Oui"
+      },
+      {
+        "item": "Utilisateurs de la console",
+        "sandbox": "Illimités",
+        "production": "Illimités"
+      }
+    ],
+    "faqEyebrow": "Facturation",
+    "faqTitle": "Questions de facturation",
+    "faq": [
+      {
+        "term": "Qu’est-ce qu’une vérification comptée ?",
+        "detail": "Une vérification est comptée à sa création, une seule fois, quel que soit son résultat. Une reprise de photo dans le même parcours ne compte pas deux fois."
+      },
+      {
+        "term": "Et si mon client ne va pas au bout ?",
+        "detail": "La vérification reste comptée : le lien a été émis et le parcours mis à disposition. C’est aussi ce qui rend votre facture prévisible."
+      },
+      {
+        "term": "Le sandbox est-il facturé ?",
+        "detail": "Non. Les clés de test n’entament pas le forfait Production et ne déclenchent aucun traitement payant chez nos sous-traitants."
+      },
+      {
+        "term": "Et les deux autres produits ?",
+        "detail": "L’authentification biométrique et le criblage AML ne sont pas disponibles, donc pas tarifés. Aucune ligne de votre facture ne les concernera."
+      }
+    ],
+    "closingTitle": "Commencez par le sandbox",
+    "closingBody": "Vous n’avez pas besoin d’un plan payant pour intégrer, ni pour montrer le parcours complet à votre équipe.",
+    "closingNote": "Le passage en production se fait depuis la console, le jour où vous en avez besoin."
+  },
+  "security": {
+    "metaTitle": "Sécurité et données",
+    "metaDescription": "Cloisonnement par organisation, chiffrement, absence de données personnelles dans les journaux, durées de conservation. Ce que Recogniz-Me met en place et ce qu’il ne prétend pas avoir.",
+    "eyebrow": "Sécurité",
+    "title": "Ce que nous faisons des données que vous nous confiez",
+    "lead": "Une pièce d’identité et un visage sont parmi les données les plus sensibles qu’une plateforme puisse traiter. Cette page décrit nos choix techniques, sans vocabulaire de certification.",
+    "pillars": [
+      {
+        "title": "Cloisonnement",
+        "body": "Une organisation ne voit rien d’une autre. Une ressource étrangère répond comme une ressource inexistante."
+      },
+      {
+        "title": "Journaux sans identité",
+        "body": "Identifiants techniques, statuts, durées. Ni nom, ni numéro de pièce, ni image."
+      },
+      {
+        "title": "Médias temporaires",
+        "body": "Aucune URL permanente. Chaque consultation passe par un lien signé qui expire."
+      }
+    ],
+    "numerals": {
+      "measures": "01",
+      "logs": "02",
+      "retention": "03",
+      "claims": "04"
+    },
+    "measuresEyebrow": "Mesures",
+    "measuresTitle": "Les choix qui tiennent le service",
+    "measuresLead": "Cinq points, décrits pour ce qu’ils font. Les engagements contractuels correspondants vivent dans l’accord de traitement des données.",
+    "isolationTitle": "Cloisonnement des clients",
+    "isolationBody": "Chaque vérification appartient à une organisation. Toute lecture est filtrée par l’organisation de la clé qui la demande. Une ressource d’un autre client renvoie une page introuvable et non un refus d’accès : un refus confirmerait que la ressource existe.",
+    "keysTitle": "Clés d’API",
+    "keysBody": "Les clés sont stockées sous forme de condensat : nous ne pouvons pas les relire. Le secret d’une clé n’est affiché qu’une fois, à sa création. Les clés de test et les clés de production sont distinctes, et une clé de production est refusée si l’abonnement n’est pas actif.",
+    "mediaTitle": "Documents et photos",
+    "mediaBody": "Les médias sont déposés dans un stockage privé. Aucune URL permanente n’est publiée : chaque consultation, y compris depuis notre console, passe par un lien signé de courte durée. Le contenu binaire ne circule jamais dans nos réponses métier ni dans nos notifications.",
+    "transitTitle": "Chiffrement",
+    "transitBody": "Les échanges se font en HTTPS. Les médias et la base de données sont chiffrés au repos par le stockage sous-jacent. Les liens de parcours sont des jetons à durée de vie courte, invalidés après usage.",
+    "consentTitle": "Consentement et information",
+    "consentBody": "Le parcours recueille le consentement explicite de la personne avant toute capture, dans sa langue. La version du texte accepté, la date et une empreinte de l’adresse IP sont conservées : c’est ce qui permet de démontrer plus tard que le consentement a bien été recueilli.",
+    "logsEyebrow": "Journaux",
+    "logsTitle": "Ce que nous écrivons, et ce que nous n’écrivons pas",
+    "logsBody": "Nos journaux servent à exploiter le service, pas à conserver de l’identité. Ils contiennent des identifiants techniques, des statuts et des durées. Cette règle vaut aussi pour nos traces d’erreur : un incident se diagnostique avec un identifiant de requête, pas avec le nom d’une personne.",
+    "logsNever": "Ce que nos journaux ne contiennent jamais",
+    "logsNeverItems": [
+      "Nom, date de naissance, numéro de pièce",
+      "Image de document ou de visage",
+      "Mot de passe, secret de clé d’API, jeton de lien hébergé",
+      "Numéro de carte bancaire — nous n’en stockons aucun"
+    ],
+    "retentionEyebrow": "Conservation",
+    "retentionTitle": "Durées de conservation",
+    "retentionLead": "Les images et la décision ne suivent pas le même sort : c’est ce qui permet de garder ce qui sert à votre conformité sans garder les photos.",
+    "retentionColumns": {
+      "data": "Donnée",
+      "duration": "Conservation"
+    },
+    "retentionRows": [
+      {
+        "data": "Lien de parcours hébergé",
+        "duration": "1 heure, puis invalide"
+      },
+      {
+        "data": "Images de pièce et de visage",
+        "duration": "Supprimées sur demande ; sinon conservées le temps de justifier la décision"
+      },
+      {
+        "data": "Décision, raisons, trace d’audit",
+        "duration": "Conservées pour votre dossier de conformité"
+      },
+      {
+        "data": "Journaux techniques",
+        "duration": "Durée courte, sans donnée personnelle"
+      }
+    ],
+    "retentionNote": "Vous pouvez demander la suppression des médias d’une vérification. La décision et sa trace d’audit sont conservées séparément : c’est ce qui reste utile à votre conformité sans garder les images.",
+    "claimsEyebrow": "Vérité",
+    "claimsTitle": "Ce que nous ne prétendons pas",
+    "claimsBody": "Cette page ne remplace pas un audit. Nous préférons l’écrire que le laisser deviner.",
+    "claims": [
+      "Nous ne détenons ni SOC 2, ni ISO 27001, ni certification de détection de présence réelle.",
+      "Nous n’annonçons pas de conformité qu’un auditeur n’a pas constatée.",
+      "Nous n’affichons pas le logo de certification d’un de nos sous-traitants comme s’il était le nôtre."
+    ],
+    "contactTitle": "Signaler une vulnérabilité",
+    "contactBody": "Écrivez-nous. Nous répondons, nous corrigeons, et nous ne poursuivons pas une personne de bonne foi qui nous a prévenus."
+  },
+  "docs": {
+    "metaTitle": "Documentation",
+    "metaDescription": "Démarrer avec l’API Recogniz-Me : créer un compte, obtenir une clé sandbox, lancer une première vérification et lire la décision.",
+    "eyebrow": "Documentation",
+    "title": "Première vérification en trois appels",
+    "lead": "Cette page suffit à intégrer le parcours hébergé. La référence complète des champs vit dans la spécification OpenAPI.",
+    "heroNote": "Les exemples fonctionnent tels quels avec une clé de test.",
+    "requestLabel": "Créer une vérification",
+    "responseLabel": "Réponse — le lien à envoyer à votre client",
+    "authEyebrow": "Authentification",
+    "authTitle": "Une clé, deux environnements",
+    "authBody": "Toutes les requêtes portent votre clé en jeton Bearer. Une clé commençant par ky_test_ travaille en sandbox, une clé ky_live_ sur des données réelles. C’est la seule différence entre vos deux environnements.",
+    "authPoints": [
+      "Le secret d’une clé n’est affiché qu’une fois, à sa création.",
+      "Une clé de production est refusée si l’abonnement n’est pas actif.",
+      "Le cookie de session de la console n’authentifie jamais l’API publique."
+    ],
+    "numerals": {
+      "quickstart": "01",
+      "endpoints": "02",
+      "statuses": "03"
+    },
+    "quickstartEyebrow": "Démarrage",
+    "quickstartTitle": "Trois appels, dans l’ordre",
+    "quickstartLead": "Un compte, une création, une lecture. Rien d’autre n’est nécessaire pour un premier parcours complet.",
+    "step1Title": "Obtenir une clé sandbox",
+    "step1Body": "Créez un compte : une clé de test est émise à la vérification de votre adresse e-mail. Le secret n’est affiché qu’une fois — mettez-le dans votre gestionnaire de secrets, pas dans votre code.",
+    "step2Title": "Créer une vérification",
+    "step2Body": "La réponse contient l’identifiant de la vérification et le lien à envoyer à votre client. L’en-tête d’idempotence protège vos reprises réseau : rejouer le même appel ne crée pas de doublon.",
+    "step3Title": "Lire la décision",
+    "step3Body": "Interrogez la vérification, ou attendez la notification que nous enverrons à votre point d’entrée. Le statut est terminal quand il vaut approuvée, refusée, expirée ou annulée.",
+    "endpointsEyebrow": "API",
+    "endpointsTitle": "Points d’entrée",
+    "endpointsLead": "Quatre appels au périmètre actuel. Les envois de médias passent par des URL signées et par les routes du parcours, jamais par votre clé.",
+    "endpointsColumns": {
+      "endpoint": "Appel",
+      "role": "Rôle"
+    },
+    "endpointsRows": [
+      {
+        "endpoint": "POST /v1/verifications",
+        "role": "Créer une vérification et obtenir le lien du parcours"
+      },
+      {
+        "endpoint": "GET /v1/verifications",
+        "role": "Lister les vérifications de votre organisation"
+      },
+      {
+        "endpoint": "GET /v1/verifications/{id}",
+        "role": "Lire une vérification et son statut"
+      },
+      {
+        "endpoint": "POST /v1/verifications/{id}/cancel",
+        "role": "Annuler une vérification que le client n’a pas encore commencée"
+      }
+    ],
+    "statusesEyebrow": "Cycle de vie",
+    "statusesTitle": "Statuts",
+    "statusesLead": "Un statut terminal ne change plus. Tout le reste est transitoire, et vous pouvez l’afficher tel quel à votre équipe.",
+    "statusesColumns": {
+      "status": "Statut",
+      "meaning": "Signification"
+    },
+    "statusesRows": [
+      {
+        "status": "created",
+        "meaning": "Le lien est émis, votre client ne l’a pas encore ouvert"
+      },
+      {
+        "status": "pending_consent",
+        "meaning": "Le parcours est ouvert, le consentement n’est pas encore donné"
+      },
+      {
+        "status": "pending_applicant",
+        "meaning": "Consentement donné, captures en cours"
+      },
+      {
+        "status": "processing",
+        "meaning": "Analyse en cours"
+      },
+      {
+        "status": "approved",
+        "meaning": "Décision favorable — statut terminal"
+      },
+      {
+        "status": "rejected",
+        "meaning": "Décision défavorable, raisons fournies — statut terminal"
+      },
+      {
+        "status": "review",
+        "meaning": "En attente d’un arbitrage de votre équipe"
+      },
+      {
+        "status": "expired",
+        "meaning": "Le lien n’a pas été utilisé à temps — statut terminal"
+      }
+    ],
+    "errorsBody": "Les erreurs suivent une forme unique : un code stable, un message lisible, et l’identifiant de requête à nous transmettre en cas de doute. Une ressource appartenant à une autre organisation renvoie 404, jamais 403.",
+    "openapiEyebrow": "Référence",
+    "openapiTitle": "La spécification est servie par l’API",
+    "openapiBody": "Elle est donc toujours à jour par rapport à la version que vous appelez, contrairement à une page de documentation recopiée à la main.",
+    "openapiSchema": "Schéma OpenAPI",
+    "openapiExplorer": "Explorateur interactif",
+    "closingTitle": "Prêt à écrire le premier appel",
+    "closingBody": "Créez votre compte pour obtenir la clé de test, puis revenez copier la commande."
+  },
+  "contact": {
+    "metaTitle": "Contact",
+    "metaDescription": "Écrire à l’équipe Recogniz-Me : questions produit, sécurité, conformité, ou intérêt pour les produits de la feuille de route.",
+    "eyebrow": "Contact",
+    "title": "Parler à une personne",
+    "lead": "Vous n’avez pas besoin de nous parler pour essayer le produit : le compte et la clé de test sont en libre-service. Écrivez-nous pour tout le reste.",
+    "emailEyebrow": "Écrire",
+    "emailTitle": "Par e-mail, de préférence",
+    "emailBody": "C’est le plus direct, et vous gardez une trace de l’échange.",
+    "generalLabel": "Questions générales",
+    "privacyLabel": "Données personnelles",
+    "formTitle": "Ou par ce formulaire",
+    "nameLabel": "Nom",
+    "emailLabel": "E-mail professionnel",
+    "companyLabel": "Société",
+    "messageLabel": "Votre message",
+    "honeypotLabel": "Laissez ce champ vide",
+    "submit": "Envoyer",
+    "sending": "Envoi…",
+    "privacyNote": "Nous utilisons ces informations pour vous répondre. Rien d’autre.",
+    "successTitle": "Message reçu",
+    "successBody": "Nous revenons vers vous à l’adresse indiquée. Si votre demande est urgente, l’e-mail direct reste le plus rapide.",
+    "errorRequired": "Renseignez votre nom, votre e-mail et votre message.",
+    "errorEmail": "Cette adresse e-mail ne semble pas valide.",
+    "errorTooLong": "Votre message dépasse la longueur acceptée.",
+    "errorUnavailable": "L’envoi a échoué. Écrivez-nous directement par e-mail.",
+    "topicsTitle": "Ce sur quoi nous répondons vite",
+    "topics": [
+      {
+        "title": "Sécurité",
+        "body": "Signalement de vulnérabilité, questions sur le cloisonnement ou la conservation."
+      },
+      {
+        "title": "Conformité",
+        "body": "Accord de traitement des données, sous-traitants, localisation des traitements."
+      },
+      {
+        "title": "Feuille de route",
+        "body": "Authentification biométrique et criblage AML : dites-nous vos contraintes."
+      }
+    ]
+  },
+  "legal": {
+    "draftTitle": "Document en cours de relecture juridique",
+    "draftBody": "Cette page est un brouillon de travail publié pour transparence. Elle n’a pas encore été validée par un conseil juridique et ne fait pas foi. La version applicable vous sera présentée à la souscription.",
+    "lastUpdatedLabel": "Dernière mise à jour",
+    "lastUpdated": "2 septembre 2026",
+    "terms": {
+      "metaTitle": "Conditions générales",
+      "metaDescription": "Conditions générales d’utilisation du service de vérification d’identité Recogniz-Me. Brouillon en cours de relecture juridique.",
+      "eyebrow": "Légal",
+      "sections": [
+        {
+          "heading": "Objet",
+          "body": "Recogniz-Me fournit un service de vérification d’identité accessible par interface de programmation et par une console web. Les présentes conditions régissent l’usage de ce service par une organisation cliente et par les personnes qu’elle autorise."
+        },
+        {
+          "heading": "Compte et organisation",
+          "body": "L’accès suppose un compte nominatif rattaché à une organisation. Le client est responsable des accès qu’il accorde, de la confidentialité des clés d’API émises pour son organisation, et des usages faits sous ces clés."
+        },
+        {
+          "heading": "Usage attendu",
+          "body": "Le service s’utilise pour vérifier l’identité de personnes qui en ont été informées et qui y ont consenti. Il ne s’utilise pas pour surveiller une personne à son insu, ni pour constituer une base biométrique détachée d’une finalité de vérification."
+        },
+        {
+          "heading": "Environnements",
+          "body": "L’environnement de test rend des résultats simulés et ne doit pas recevoir de données personnelles réelles. L’environnement de production requiert un abonnement actif ; une clé de production est refusée en son absence."
+        },
+        {
+          "heading": "Nature de la décision",
+          "body": "Le service rend une décision motivée sur la base des éléments fournis. Cette décision est un élément d’appréciation : la responsabilité d’entrer ou non en relation avec une personne appartient au client. Aucun résultat n’est garanti exact dans tous les cas."
+        },
+        {
+          "heading": "Disponibilité",
+          "body": "Le service est fourni sans engagement de niveau de service contractuel à ce stade. Les interruptions planifiées sont annoncées quand elles sont prévisibles."
+        },
+        {
+          "heading": "Facturation",
+          "body": "Les vérifications sont comptées à leur création. L’abonnement est mensuel et résiliable ; la résiliation prend effet à la fin de la période en cours et ferme l’accès à l’environnement de production."
+        },
+        {
+          "heading": "Données personnelles",
+          "body": "Le client est responsable du traitement, Recogniz-Me agit comme sous-traitant. Les rôles, engagements et sous-traitants ultérieurs sont décrits dans l’accord de traitement des données."
+        },
+        {
+          "heading": "Résiliation pour manquement",
+          "body": "Un usage contraire à ces conditions, notamment un usage sans consentement des personnes concernées, peut entraîner la suspension immédiate de l’accès."
+        },
+        {
+          "heading": "Évolution des conditions",
+          "body": "Toute modification substantielle est notifiée avant son entrée en vigueur, avec un délai raisonnable pour résilier sans frais."
+        }
+      ]
+    },
+    "privacy": {
+      "metaTitle": "Politique de confidentialité",
+      "metaDescription": "Données traitées par Recogniz-Me, finalités, durées de conservation et droits des personnes. Brouillon en cours de relecture juridique.",
+      "eyebrow": "Légal",
+      "sections": [
+        {
+          "heading": "Deux situations à distinguer",
+          "body": "Cette politique couvre deux traitements distincts. D’une part les données des visiteurs de ce site et des utilisateurs de notre console, pour lesquelles Recogniz-Me est responsable. D’autre part les données des personnes vérifiées, que nous traitons pour le compte de nos clients, en qualité de sous-traitant : la finalité et la base légale sont alors définies par le client qui a demandé la vérification."
+        },
+        {
+          "heading": "Ce site",
+          "body": "Ce site est statique et ne dépose pas de cookie de mesure d’audience ni de publicité. Aucun traceur tiers n’est chargé, et les fontes sont servies depuis notre domaine. Le choix de langue est déduit des préférences envoyées par votre navigateur."
+        },
+        {
+          "heading": "Formulaire de contact",
+          "body": "Les informations que vous saisissez servent à répondre à votre message. Elles ne sont pas revendues, ni utilisées pour de la prospection sans rapport avec votre demande."
+        },
+        {
+          "heading": "Utilisateurs de la console",
+          "body": "Nous traitons une adresse e-mail, un nom, un mot de passe sous forme de condensat, et une trace des actions sensibles. Ces éléments servent à ouvrir l’accès, à sécuriser le compte et à répondre à une réclamation."
+        },
+        {
+          "heading": "Personnes vérifiées",
+          "body": "Pour une vérification, nous traitons les images de la pièce d’identité et du visage, les champs d’identité lus sur le document, les signaux techniques du contrôle, ainsi que la trace du consentement. Ces éléments servent exclusivement à rendre la décision demandée par notre client."
+        },
+        {
+          "heading": "Données biométriques",
+          "body": "La comparaison du visage à la photo du document constitue un traitement de données biométriques. Il repose sur le consentement explicite recueilli au début du parcours, dont la date et la version du texte sont conservées."
+        },
+        {
+          "heading": "Ce que nous ne conservons pas",
+          "body": "Nos journaux techniques ne contiennent aucune donnée personnelle : ni nom, ni numéro de pièce, ni image. Nous ne stockons aucun numéro de carte bancaire ; le paiement est traité par notre prestataire de paiement."
+        },
+        {
+          "heading": "Durées de conservation",
+          "body": "Les liens de parcours expirent en une heure. Les images sont supprimées sur demande du client responsable ; à défaut, elles sont conservées le temps de pouvoir justifier la décision. La décision, ses raisons et la trace d’audit sont conservées pour les besoins de conformité du client."
+        },
+        {
+          "heading": "Sous-traitants",
+          "body": "Nous recourons à des fournisseurs d’hébergement, de stockage, d’analyse documentaire et de comparaison faciale, ainsi qu’à un prestataire de paiement. La liste nominative et les localisations figurent dans l’accord de traitement des données."
+        },
+        {
+          "heading": "Vos droits",
+          "body": "Vous pouvez demander l’accès, la rectification, l’effacement ou la limitation du traitement vous concernant. Si votre vérification a été demandée par une entreprise, adressez-vous d’abord à elle : c’est elle qui décide de la finalité. Nous relayons et exécutons sa décision, et nous vous répondons directement si elle ne le fait pas."
+        }
+      ]
+    },
+    "dpa": {
+      "metaTitle": "Accord de traitement des données",
+      "metaDescription": "Trame de l’accord de traitement des données entre Recogniz-Me et ses clients. Brouillon en cours de relecture juridique ; version signée disponible sur demande.",
+      "eyebrow": "Légal",
+      "sections": [
+        {
+          "heading": "Rôles",
+          "body": "Le client est responsable du traitement : il détermine les personnes à vérifier et la finalité. Recogniz-Me est sous-traitant et n’agit que sur instruction du client, dans les limites du service souscrit."
+        },
+        {
+          "heading": "Objet et durée",
+          "body": "Le traitement a pour objet la vérification d’identité des personnes désignées par le client. Il dure le temps de la relation contractuelle, augmenté des durées de conservation nécessaires à la justification des décisions rendues."
+        },
+        {
+          "heading": "Catégories de données et de personnes",
+          "body": "Sont traitées les données d’identité et les données biométriques des personnes que le client soumet à vérification, ainsi que les données de compte des utilisateurs de la console du client."
+        },
+        {
+          "heading": "Instructions et limites",
+          "body": "Recogniz-Me n’utilise pas les données du client à d’autres fins que la fourniture du service. Elles ne sont ni revendues, ni exploitées pour entraîner un modèle sans un accord écrit distinct et spécifique."
+        },
+        {
+          "heading": "Mesures de sécurité",
+          "body": "Cloisonnement par organisation, chiffrement en transit et au repos, accès aux médias par lien signé de courte durée, journaux exempts de données personnelles, moindre privilège sur les accès internes. Le détail figure sur la page sécurité."
+        },
+        {
+          "heading": "Sous-traitants ultérieurs",
+          "body": "Le recours à des sous-traitants ultérieurs est autorisé sous réserve d’engagements équivalents. La liste nominative est communiquée, et toute addition est notifiée avec un délai permettant l’objection."
+        },
+        {
+          "heading": "Transferts",
+          "body": "Les localisations de traitement sont documentées. Tout transfert hors de l’Espace économique européen s’appuie sur un mécanisme de transfert reconnu."
+        },
+        {
+          "heading": "Assistance au responsable",
+          "body": "Recogniz-Me assiste le client pour répondre aux demandes d’exercice de droits, pour ses analyses d’impact, et notifie sans délai injustifié toute violation de données dont il a connaissance."
+        },
+        {
+          "heading": "Sort des données",
+          "body": "À la fin du contrat, les données sont supprimées ou restituées au choix du client, sous réserve des obligations légales de conservation qui pèseraient sur l’une des parties."
+        },
+        {
+          "heading": "Audit",
+          "body": "Le client peut demander les éléments documentaires attestant du respect de ces engagements. Un audit sur site s’organise à frais partagés et sans perturber le service des autres clients."
+        }
+      ],
+      "requestTitle": "Obtenir la version signable",
+      "requestBody": "Cette trame sert à préparer votre revue interne. Demandez-nous la version à signer, adaptée à votre périmètre."
+    }
+  },
+  "notFound": {
+    "metaTitle": "Page introuvable",
+    "title": "Cette page n’existe pas",
+    "body": "Le lien est peut-être ancien, ou l’adresse comporte une faute. L’accueil vous remettra sur le chemin.",
+    "action": "Retour à l’accueil"
+  }
+}

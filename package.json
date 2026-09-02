@@ -4,10 +4,13 @@
   "workspaces": [
     "web/console",
     "web/flow",
+    "web/site",
+    "packages/brand",
     "packages/capture-sdk"
   ],
   "scripts": {
     "dev:console": "npm run dev -w web/console",
-    "dev:flow": "npm run dev -w web/flow"
+    "dev:flow": "npm run dev -w web/flow",
+    "dev:site": "npm run dev -w web/site"
   }
 }
