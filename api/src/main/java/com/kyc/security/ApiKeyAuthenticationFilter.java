@@ -24,6 +24,8 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private static final List<String> PUBLIC = List.of(
             "/v1/health",
             "/v1/flow/**",
+            "/v1/account/**",
+            "/v1/console/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",

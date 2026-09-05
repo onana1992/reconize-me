@@ -24,6 +24,16 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
             throws IOException {
         ApiErrors.write(
-                request, response, objectMapper, HttpStatus.UNAUTHORIZED, "unauthorized", "Invalid or missing API key");
+                request,
+                response,
+                objectMapper,
+                HttpStatus.UNAUTHORIZED,
+                "unauthorized",
+                sessionPath(request) ? "Invalid or missing session" : "Invalid or missing API key");
+    }
+
+    private static boolean sessionPath(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/v1/console") || path.startsWith("/v1/account");
     }
 }

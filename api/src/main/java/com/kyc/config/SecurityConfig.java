@@ -3,9 +3,11 @@ package com.kyc.config;
 import com.kyc.security.ApiKeyAuthenticationFilter;
 import com.kyc.security.RestAccessDeniedHandler;
 import com.kyc.security.RestAuthenticationEntryPoint;
+import com.kyc.security.SessionAuthenticationFilter;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,7 +34,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
         config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("X-Request-Id"));
+        config.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/v1/**", config);
         return source;
@@ -42,6 +45,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ApiKeyAuthenticationFilter apiKeyAuthenticationFilter,
+            SessionAuthenticationFilter sessionAuthenticationFilter,
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler)
             throws Exception {
@@ -60,11 +64,28 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/signup")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/account/verify")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/verify/resend")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/login")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/password/forgot")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/password/reset")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/account/invites/accept")
+                        .permitAll()
+                        .requestMatchers("/v1/account/**", "/v1/console/**")
+                        .authenticated()
                         .requestMatchers("/v1/verifications/**")
                         .authenticated()
                         .anyRequest()
                         .permitAll())
-                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(sessionAuthenticationFilter, ApiKeyAuthenticationFilter.class);
         return http.build();
     }
 }

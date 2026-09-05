@@ -4,11 +4,14 @@
  * Ne pas écrire de valeur de couleur ici.
  */
 
-.rm-created {
-  margin-top: var(--rm-space-5);
+.rm-auth {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* Renvoi vers la fiche, détaché du bloc lien */
-.rm-created > p:last-of-type {
-  margin-top: var(--rm-space-5);
+.rm-auth-card,
+.rm-auth-setup,
+.su-card {
+  min-width: 0;
 }

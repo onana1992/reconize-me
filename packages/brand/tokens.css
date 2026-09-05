@@ -72,7 +72,7 @@
 
   /* Typographie — une seule famille.
      `--rm-font-brand` est le point d'accroche d'une fonte chargée par une
-     surface (la vitrine y met Inter via next/font). Non défini, la pile
+     surface (la vitrine y met Plus Jakarta Sans via next/font). Non défini, la pile
      système s'applique : console et flow restent inchangés. */
   --rm-font-sans: var(--rm-font-brand, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
   --rm-font-mono: var(--rm-font-brand-mono, ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace);

@@ -9,6 +9,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
@@ -17,6 +20,8 @@ import java.util.UUID;
                 @UniqueConstraint(
                         name = "uq_verifications_org_external",
                         columnNames = {"organization_id", "external_id"}))
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Verification {
 
     @Id
@@ -56,9 +61,6 @@ public class Verification {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    protected Verification() {
-    }
-
     public Verification(
             UUID id,
             UUID organizationId,
@@ -75,54 +77,6 @@ public class Verification {
         this.hostedExpiresAt = hostedExpiresAt;
         this.createdAt = now;
         this.updatedAt = now;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getExternalId() {
-        return externalId;
-    }
-
-    public VerificationStatus getStatus() {
-        return status;
-    }
-
-    public String getApplicantFirstName() {
-        return applicantFirstName;
-    }
-
-    public String getApplicantLastName() {
-        return applicantLastName;
-    }
-
-    public String getApplicantEmail() {
-        return applicantEmail;
-    }
-
-    public String getHostedTokenHash() {
-        return hostedTokenHash;
-    }
-
-    public Instant getHostedExpiresAt() {
-        return hostedExpiresAt;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public String getMetadata() {
-        return metadata;
     }
 
     public void setMetadata(String metadata) {

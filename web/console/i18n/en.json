@@ -1,0 +1,45 @@
+{
+  "common": {
+    "language": "Language",
+    "help": "Help & support"
+  },
+  "locale": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "signup": {
+    "title": "Create an account",
+    "lead": "Enter your email to create an account and get started.",
+    "leadInvite": "You’ve been invited. Enter your email to join the team.",
+    "email": "Email",
+    "emailPlaceholder": "your.name@email.com",
+    "submit": "Get started for free",
+    "pending": "Continue…",
+    "privacyBefore": "By continuing, I acknowledge ",
+    "privacyLink": "Recogniz-Me’s Privacy Notice",
+    "privacyAfter": ".",
+    "hasAccount": "Already have an account?",
+    "login": "Log in here"
+  },
+  "setup": {
+    "progress": "Step 1 of 4",
+    "title": "Set up your account",
+    "lead": "Enter your details to create a secure account and get started.",
+    "company": "Company name",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "password": "Password",
+    "passwordHint": "10 characters minimum.",
+    "termsBefore": "I accept the ",
+    "termsLink": "Terms of Service",
+    "termsBetween": " and the ",
+    "dpaLink": "Data Processing Agreement",
+    "termsAfter": ".",
+    "marketing": "I agree to receive news and offers from Recogniz-Me.",
+    "marketingHint": "Product news, integration tips and offers. You can unsubscribe at any time.",
+    "emailTaken": "An account with this email already exists.",
+    "back": "Back",
+    "continue": "Continue",
+    "pending": "Creating…"
+  }
+}

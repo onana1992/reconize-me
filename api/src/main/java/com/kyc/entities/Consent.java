@@ -8,9 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "consents")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Consent {
 
     @Id
@@ -41,9 +46,6 @@ public class Consent {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected Consent() {
-    }
-
     public Consent(
             UUID id,
             UUID organizationId,
@@ -63,29 +65,5 @@ public class Consent {
         this.ipHash = ipHash;
         this.userAgent = userAgent;
         this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getVerificationId() {
-        return verificationId;
-    }
-
-    public ConsentDecision getDecision() {
-        return decision;
-    }
-
-    public String getIpHash() {
-        return ipHash;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public String getTextVersion() {
-        return textVersion;
     }
 }

@@ -6,9 +6,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "api_keys")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ApiKey {
 
     @Id
@@ -29,35 +34,25 @@ public class ApiKey {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected ApiKey() {
-    }
+    @Column(name = "created_by_user_id")
+    private UUID createdByUserId;
 
     public ApiKey(UUID id, UUID organizationId, String keyPrefix, String keyHash, Instant createdAt) {
+        this(id, organizationId, keyPrefix, keyHash, createdAt, null);
+    }
+
+    public ApiKey(
+            UUID id, UUID organizationId, String keyPrefix, String keyHash, Instant createdAt, UUID createdByUserId) {
         this.id = id;
         this.organizationId = organizationId;
         this.keyPrefix = keyPrefix;
         this.keyHash = keyHash;
         this.revoked = false;
         this.createdAt = createdAt;
+        this.createdByUserId = createdByUserId;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getKeyHash() {
-        return keyHash;
-    }
-
-    public String getKeyPrefix() {
-        return keyPrefix;
-    }
-
-    public boolean isRevoked() {
-        return revoked;
+    public void revoke() {
+        this.revoked = true;
     }
 }

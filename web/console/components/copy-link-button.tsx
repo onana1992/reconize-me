@@ -18,7 +18,7 @@ export function CopyLinkButton({ url }: Props) {
   }
 
   return (
-    <button type="button" onClick={copy} aria-label="Copier le lien hosted flow">
+    <button type="button" data-variant="secondary" onClick={copy} aria-label="Copier le lien hosted flow">
       {copied ? "Copié" : "Copier le lien"}
     </button>
   );

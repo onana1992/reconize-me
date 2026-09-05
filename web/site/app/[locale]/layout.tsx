@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "@kyc/brand/tokens.css";
 import "@kyc/brand/base.css";
 import "@kyc/brand/site.css";
@@ -25,18 +25,18 @@ import { INDEXABLE } from "../../lib/site-config";
  * requête vers un tiers, aucun décalage de mise en page, et rien à demander au
  * visiteur en matière de cookies.
  *
- * Une seule famille de texte (RG-BRAND-03) : Inter, un néo-grotesque à grande
- * hauteur d'x — la voix typographique des plateformes d'identité et de
- * confiance. Le monospace n'est pas une seconde voix de marque, c'est l'outil
- * des codes, des quantités et des extraits d'API — il porte déjà son propre
- * token depuis M0.
+ * Une seule famille de texte (RG-BRAND-03) : Plus Jakarta Sans, un
+ * néo-grotesque plus distinctif qu'Inter, toujours lisible pour une
+ * plateforme d'identité. Le monospace n'est pas une seconde voix de marque,
+ * c'est l'outil des codes, des quantités et des extraits d'API — il porte
+ * déjà son propre token depuis M0.
  *
  * Les deux fontes sont branchées sur `--rm-font-brand` / `--rm-font-brand-mono`,
  * les points d'accroche prévus dans `tokens.css` : la vitrine habille la marque
  * sans qu'aucune valeur de token bouge, donc sans toucher console ni flow.
  */
-const sans = Inter({
-  subsets: ["latin"],
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
   display: "swap",
   variable: "--rm-font-brand",
 });

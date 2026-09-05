@@ -10,6 +10,8 @@
 **Documents liés**
 
 - [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) — *quand* (ordre de build)
+- [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte (architecture, données, UC, règles)
+- [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) — vision produit (moteurs IA propriétaires, hors MVP)
 - [`../specs/specification-fonctionnelle-idv.md`](../specs/specification-fonctionnelle-idv.md) — métier Identity & Document Verification
 - [`../specs/guide-implementation-s1.md`](../specs/guide-implementation-s1.md) — fondation livrée (session, lien, consentement)

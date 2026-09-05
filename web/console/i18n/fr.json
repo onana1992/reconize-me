@@ -1,0 +1,45 @@
+{
+  "common": {
+    "language": "Langue",
+    "help": "Aide et support"
+  },
+  "locale": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "signup": {
+    "title": "Créer un compte",
+    "lead": "Saisissez votre e-mail pour créer un compte et commencer.",
+    "leadInvite": "Vous avez été invité. Saisissez votre e-mail pour rejoindre l’équipe.",
+    "email": "E-mail",
+    "emailPlaceholder": "votre.nom@email.com",
+    "submit": "Commencer gratuitement",
+    "pending": "Suite…",
+    "privacyBefore": "En continuant, je reconnais avoir pris connaissance de ",
+    "privacyLink": "l’avis de confidentialité",
+    "privacyAfter": " de Recogniz-Me.",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "login": "Connectez-vous ici"
+  },
+  "setup": {
+    "progress": "Étape 1 sur 4",
+    "title": "Configurez votre compte",
+    "lead": "Saisissez vos informations pour créer un compte sécurisé et commencer.",
+    "company": "Nom de l’entreprise",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "password": "Mot de passe",
+    "passwordHint": "10 caractères minimum.",
+    "termsBefore": "J’accepte les ",
+    "termsLink": "conditions générales",
+    "termsBetween": " et l’",
+    "dpaLink": "accord de traitement des données",
+    "termsAfter": ".",
+    "marketing": "J’accepte de recevoir les actualités et offres de Recogniz-Me.",
+    "marketingHint": "Actualités produit, conseils d’intégration et offres. Désinscription possible à tout moment.",
+    "emailTaken": "Un compte existe déjà avec cet e-mail.",
+    "back": "Retour",
+    "continue": "Continuer",
+    "pending": "Création…"
+  }
+}

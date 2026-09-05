@@ -75,6 +75,11 @@ public class VerificationService {
     }
 
     public CreatedVerification create(ApiPrincipal principal, CreateVerificationRequest body, String idempotencyKey) {
+        return create(principal.organizationId(), "api_key", principal.apiKeyId(), body, idempotencyKey);
+    }
+
+    public CreatedVerification create(
+            UUID organizationId, String actorType, UUID actorId, CreateVerificationRequest body, String idempotencyKey) {
         CreateVerificationRequest request = normalize(body);
         String requestHash = requestHash(request);
         String key = blankToNull(idempotencyKey);
@@ -82,7 +87,8 @@ public class VerificationService {
             validateIdempotencyKey(key);
         }
 
-        Persisted persisted = transactionTemplate.execute(status -> persist(principal, request, requestHash, key));
+        Persisted persisted =
+                transactionTemplate.execute(status -> persist(organizationId, actorType, actorId, request, requestHash, key));
         if (persisted.replayed()) {
             String hostedUrl = hostedUrlFor(persisted.verification().getId());
             return new CreatedVerification(toResponse(persisted.verification(), hostedUrl), true);
@@ -100,14 +106,14 @@ public class VerificationService {
         } catch (RuntimeException e) {
             log.error(
                     "hosted token store unavailable organization_id={} verification_id={}",
-                    principal.organizationId(),
+                    organizationId,
                     persisted.verification().getId());
             throw ApiException.dependencyUnavailable("Hosted session store unavailable");
         }
 
         log.info(
                 "verification created organization_id={} verification_id={}",
-                principal.organizationId(),
+                organizationId,
                 persisted.verification().getId());
         return new CreatedVerification(
                 toResponse(persisted.verification(), properties.hostedUrl(persisted.token())), false);
@@ -155,8 +161,12 @@ public class VerificationService {
     }
 
     public VerificationResponse cancel(ApiPrincipal principal, UUID id) {
+        return cancel(principal.organizationId(), "api_key", principal.apiKeyId(), id);
+    }
+
+    public VerificationResponse cancel(UUID organizationId, String actorType, UUID actorId, UUID id) {
         Verification verification = transactionTemplate.execute(status -> {
-            Verification owned = requireOwned(id, principal.organizationId());
+            Verification owned = requireOwned(id, organizationId);
             if (owned.getStatus() != VerificationStatus.CREATED
                     && owned.getStatus() != VerificationStatus.PENDING_CONSENT) {
                 throw ApiException.conflict("invalid_status", "Verification cannot be cancelled");
@@ -164,9 +174,9 @@ public class VerificationService {
             Instant now = Instant.now();
             owned.transitionTo(VerificationStatus.CANCELLED, now);
             auditEventRepository.save(new AuditEvent(
-                    principal.organizationId(),
-                    "api_key",
-                    principal.apiKeyId(),
+                    organizationId,
+                    actorType,
+                    actorId,
                     "verification.cancelled",
                     "verification",
                     owned.getId(),
@@ -177,14 +187,18 @@ public class VerificationService {
         hostedTokenStore.delete(verification.getId());
         log.info(
                 "verification cancelled organization_id={} verification_id={}",
-                principal.organizationId(),
+                organizationId,
                 verification.getId());
         return toResponse(verification, null);
     }
 
     private Persisted persist(
-            ApiPrincipal principal, CreateVerificationRequest request, String requestHash, String idempotencyKey) {
-        UUID organizationId = principal.organizationId();
+            UUID organizationId,
+            String actorType,
+            UUID actorId,
+            CreateVerificationRequest request,
+            String requestHash,
+            String idempotencyKey) {
         Instant now = Instant.now();
 
         if (idempotencyKey != null) {
@@ -226,8 +240,8 @@ public class VerificationService {
 
         auditEventRepository.save(new AuditEvent(
                 organizationId,
-                "api_key",
-                principal.apiKeyId(),
+                actorType,
+                actorId,
                 "verification.created",
                 "verification",
                 verificationId,
@@ -235,8 +249,8 @@ public class VerificationService {
                 now));
         auditEventRepository.save(new AuditEvent(
                 organizationId,
-                "api_key",
-                principal.apiKeyId(),
+                actorType,
+                actorId,
                 "hosted_link.issued",
                 "verification",
                 verificationId,

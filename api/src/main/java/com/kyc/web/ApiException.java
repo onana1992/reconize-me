@@ -40,6 +40,22 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.GONE, code, message);
     }
 
+    public static ApiException unauthorized(String code, String message) {
+        return new ApiException(HttpStatus.UNAUTHORIZED, code, message);
+    }
+
+    public static ApiException forbidden(String code, String message) {
+        return new ApiException(HttpStatus.FORBIDDEN, code, message);
+    }
+
+    public static ApiException tooManyRequests() {
+        return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "rate_limited", "Too many attempts, try again later");
+    }
+
+    public static ApiException invalidOrExpiredToken() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "invalid_or_expired_token", "Invalid or expired token");
+    }
+
     public HttpStatus status() {
         return status;
     }

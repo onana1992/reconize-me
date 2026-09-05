@@ -1,29 +1,29 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Wordmark } from "@kyc/brand";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "@kyc/brand/tokens.css";
 import "@kyc/brand/base.css";
 import "@kyc/brand/console.css";
 import "./globals.css";
+import { getLocale, I18nProvider } from "../i18n";
+
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--rm-font-brand",
+});
 
 export const metadata: Metadata = {
   title: "Recogniz-Me Console",
   description: "Dashboard SaaS — vérifications d’identité Recogniz-Me",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+
   return (
-    <html lang="fr">
+    <html lang={locale} className={sans.variable}>
       <body>
-        <header className="rm-app-header">
-          <Link href="/" className="rm-app-brand">
-            <Wordmark size={26} />
-          </Link>
-          <nav className="rm-app-nav">
-            <Link href="/verifications/new">Nouvelle vérification</Link>
-          </nav>
-        </header>
-        <div className="rm-page">{children}</div>
+        <I18nProvider locale={locale}>{children}</I18nProvider>
       </body>
     </html>
   );

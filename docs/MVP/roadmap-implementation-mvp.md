@@ -11,6 +11,8 @@
 - [`../specs/specification-fonctionnelle-idv.md`](../specs/specification-fonctionnelle-idv.md) — métier IDV
 - [`../specs/guide-implementation-s1.md`](../specs/guide-implementation-s1.md) — fondation **livrée**
 - [`../specs/guide-implementation-s2.md`](../specs/guide-implementation-s2.md) — capture (à reprendre dans M4, **sans** dataset)
+- [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte (spécification as-built)
+- [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`charte-visuelle.md`](./charte-visuelle.md) — M0 **livré** (as-built)
 
 Ce document dit **quand** et **dans quel ordre** on construit le MVP. Le *quoi* reste dans le CDC. Un sprint n’est pas vert sans son **livrable démontrable**.
@@ -69,7 +71,7 @@ S1 fondation (fait)
 | **S1** | IDV | Session, isolation, lien, consentement | **Livré** |
 | **M0** | Marque | Charte + tokens sur console et flow existants | **Livré** ([charte](./charte-visuelle.md)) |
 | **M1** | Vitrine | Site public, pages CDC §8.1, CTA compte | **Livré** (`web/site`, FR + EN) |
-| **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | à faire |
+| **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | **Livré** ([spec](./specification-m2-compte-client.md)) |
 | **M3** | Souscription | Checkout test → Production → `ky_live_` → usage | à faire |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
 | **M5** | IDV live | Textract + Rekognition + webhook résultat | à faire |
@@ -165,6 +167,9 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 **Durée :** 2 semaines.  
 **CDC :** §9. **Objectif O3.**  
 **Prérequis :** S1, M0. Peut ∥ M1.
+
+**Spécification :** [`specification-m2-compte-client.md`](./specification-m2-compte-client.md).  
+**Comment construire :** [`guide-implementation-m2.md`](./guide-implementation-m2.md).
 
 **Livrable :** inscription → e-mail vérifié → login → organisation Sandbox → clé `ky_test_` **affichée une fois** → console (création de vérif S1) **inaccessible sans session**.
 
@@ -403,7 +408,7 @@ Ordre conseillé, **pas** dans le MVP :
 
 - Changement de périmètre → version du **CDC**, pas un commentaire de PR.
 - Glissement d’un critère (ex. Liveness) → CDC §17 **puis** cette roadmap.
-- Prochain sprint à ouvrir : **M2 — compte client**.
+- Prochain sprint à ouvrir : **M3 — souscription**.
 
 **Journal des changements de périmètre**
 

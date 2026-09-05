@@ -7,10 +7,15 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "idempotency_keys")
 @IdClass(IdempotencyKeyId.class)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IdempotencyKey {
 
     @Id
@@ -30,8 +35,6 @@ public class IdempotencyKey {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected IdempotencyKey() {}
-
     public IdempotencyKey(
             UUID organizationId, String keyValue, String requestHash, UUID verificationId, Instant createdAt) {
         this.organizationId = organizationId;
@@ -39,25 +42,5 @@ public class IdempotencyKey {
         this.requestHash = requestHash;
         this.verificationId = verificationId;
         this.createdAt = createdAt;
-    }
-
-    public UUID getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getKeyValue() {
-        return keyValue;
-    }
-
-    public String getRequestHash() {
-        return requestHash;
-    }
-
-    public UUID getVerificationId() {
-        return verificationId;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 }

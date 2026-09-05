@@ -8,9 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "audit_events")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AuditEvent {
 
     @Id
@@ -41,9 +46,6 @@ public class AuditEvent {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected AuditEvent() {
-    }
-
     public AuditEvent(
             UUID organizationId,
             String actorType,
@@ -61,37 +63,5 @@ public class AuditEvent {
         this.resourceId = resourceId;
         this.payload = payload;
         this.createdAt = createdAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public UUID getOrganizationId() {
-        return organizationId;
-    }
-
-    public String getActorType() {
-        return actorType;
-    }
-
-    public UUID getActorId() {
-        return actorId;
-    }
-
-    public String getAction() {
-        return action;
-    }
-
-    public String getResourceType() {
-        return resourceType;
-    }
-
-    public UUID getResourceId() {
-        return resourceId;
-    }
-
-    public String getPayload() {
-        return payload;
     }
 }
