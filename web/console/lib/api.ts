@@ -116,7 +116,7 @@ export async function accountApiWithCookies<T>(
     const setCookie =
       setCookies.find((value) => value.startsWith("rm_session=")) ?? response.headers.get("set-cookie");
     if (!response.ok) {
-      return { ...parseError(response), setCookie };
+      return { ...(await parseError(response)), setCookie };
     }
     return { ...(await readBody<T>(response)), setCookie };
   } catch {

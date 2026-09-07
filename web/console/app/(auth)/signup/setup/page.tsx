@@ -17,23 +17,15 @@ export default async function SignupSetupPage({
     redirect(invite ? `/signup?invite=${encodeURIComponent(invite)}` : "/signup");
   }
 
+  const lead = (invite ? t("setup.leadInvite") : t("setup.leadWithEmail")).replace(
+    "{email}",
+    email,
+  );
+
   return (
     <main className="su-card">
-      <div
-        className="su-progress"
-        role="progressbar"
-        aria-valuemin={1}
-        aria-valuemax={4}
-        aria-valuenow={1}
-        aria-label={t("setup.progress")}
-      >
-        <span data-on="true" />
-        <span />
-        <span />
-        <span />
-      </div>
       <h1>{t("setup.title")}</h1>
-      <p className="su-lead">{t("setup.lead")}</p>
+      <p className="su-lead">{lead}</p>
       <SetupForm email={email} invite={invite} />
     </main>
   );

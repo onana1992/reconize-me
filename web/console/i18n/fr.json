@@ -1,7 +1,12 @@
 {
   "common": {
     "language": "Langue",
-    "help": "Aide et support"
+    "help": "Aide et support",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "copy": "Copier",
+    "copied": "Copié",
+    "copyKey": "Copier la clé"
   },
   "locale": {
     "fr": "Français",
@@ -22,14 +27,16 @@
     "login": "Connectez-vous ici"
   },
   "setup": {
-    "progress": "Étape 1 sur 4",
     "title": "Configurez votre compte",
     "lead": "Saisissez vos informations pour créer un compte sécurisé et commencer.",
+    "leadWithEmail": "Saisissez vos informations pour créer un compte sécurisé associé à {email}.",
+    "leadInvite": "Vous avez été invité. Complétez vos informations pour {email} afin de rejoindre l’équipe.",
+    "email": "E-mail",
     "company": "Nom de l’entreprise",
     "firstName": "Prénom",
     "lastName": "Nom",
     "password": "Mot de passe",
-    "passwordHint": "10 caractères minimum.",
+    "passwordHint": "12 caractères min., avec majuscule, minuscule, chiffre et caractère spécial.",
     "termsBefore": "J’accepte les ",
     "termsLink": "conditions générales",
     "termsBetween": " et l’",
@@ -38,8 +45,67 @@
     "marketing": "J’accepte de recevoir les actualités et offres de Recogniz-Me.",
     "marketingHint": "Actualités produit, conseils d’intégration et offres. Désinscription possible à tout moment.",
     "emailTaken": "Un compte existe déjà avec cet e-mail.",
+    "invalidToken": "Invitation invalide ou expirée.",
+    "validation": "Vérifiez le formulaire et réessayez.",
     "back": "Retour",
     "continue": "Continuer",
     "pending": "Création…"
+  },
+  "verifyPending": {
+    "title": "Vérifiez votre boîte mail",
+    "lead": "Un lien de confirmation a été envoyé. Ouvrez-le pour activer le compte.",
+    "leadWithEmail": "Un lien de confirmation a été envoyé à {email}. Ouvrez-le pour activer le compte.",
+    "resend": "Renvoyer l’e-mail",
+    "resent": "Si le compte n’est pas encore vérifié, un nouveau lien a été envoyé.",
+    "login": "Connexion"
+  },
+  "login": {
+    "title": "Connexion",
+    "lead": "Accédez à la console de votre organisation.",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "pending": "Connexion…",
+    "forgot": "Mot de passe oublié",
+    "signup": "Créer un compte",
+    "emailUnverified": "Vérifiez votre e-mail avant de vous connecter.",
+    "invalidCredentials": "Identifiants invalides.",
+    "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes."
+  },
+  "forgot": {
+    "title": "Mot de passe oublié",
+    "lead": "Indiquez l’e-mail du compte. Si un compte existe, un lien sera envoyé.",
+    "email": "E-mail",
+    "submit": "Envoyer le lien",
+    "pending": "Envoi…",
+    "sent": "Si un compte existe, un e-mail de réinitialisation a été envoyé.",
+    "back": "Retour à la connexion"
+  },
+  "reset": {
+    "title": "Nouveau mot de passe",
+    "lead": "Choisissez un nouveau mot de passe pour accéder à la console.",
+    "missingToken": "Lien incomplet. Demandez un nouvel e-mail.",
+    "password": "Nouveau mot de passe",
+    "passwordHint": "12 caractères min., avec majuscule, minuscule, chiffre et caractère spécial.",
+    "submit": "Réinitialiser",
+    "pending": "Enregistrement…",
+    "invalidToken": "Lien invalide ou expiré.",
+    "done": "Mot de passe mis à jour.",
+    "login": "Se connecter",
+    "back": "Connexion"
+  },
+  "verify": {
+    "title": "E-mail confirmé",
+    "lead": "Votre compte est activé. Vous pouvez vous connecter à la console.",
+    "leadKey": "Votre clé API Sandbox n’est affichée qu’une fois. Copiez-la maintenant.",
+    "missingTitle": "Vérification",
+    "missingToken": "Lien incomplet. Demandez un nouvel e-mail de confirmation.",
+    "invalidTitle": "Lien invalide",
+    "invalidLead": "Ce lien de confirmation ne peut plus être utilisé.",
+    "invalidToken": "Ce lien a déjà été utilisé ou a expiré.",
+    "keyTitle": "Clé API Sandbox",
+    "activated": "Votre compte est activé. Vous pouvez vous connecter.",
+    "login": "Se connecter",
+    "signup": "Créer un compte"
   }
 }

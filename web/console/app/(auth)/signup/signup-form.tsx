@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useT } from "../../../i18n/client";
+import { RequiredMark } from "../../../components/required-mark";
 
 export function SignupForm({ invite, email = "" }: { invite: string; email?: string }) {
   const t = useT();
@@ -24,7 +25,10 @@ export function SignupForm({ invite, email = "" }: { invite: string; email?: str
   return (
     <form onSubmit={onSubmit} className="rm-form">
       <label>
-        {t("signup.email")}
+        <span>
+          {t("signup.email")}
+          <RequiredMark />
+        </span>
         <input
           name="email"
           type="email"

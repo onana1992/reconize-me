@@ -30,7 +30,7 @@ class MemberCannotRevokeKeyTest {
         var ownerSignup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"owner-revoke@example.com","password":"password12","organization_name":"Revoke Co"}
+                                {"email":"owner-revoke@example.com","password":"Password12!x","organization_name":"Revoke Co"}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -42,7 +42,7 @@ class MemberCannotRevokeKeyTest {
         var ownerLogin = mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"owner-revoke@example.com","password":"password12"}
+                                {"email":"owner-revoke@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();
@@ -68,7 +68,7 @@ class MemberCannotRevokeKeyTest {
         var memberSignup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"member-revoke@example.com","password":"password12","organization_name":"Ignored","invite_token":"%s"}
+                                {"email":"member-revoke@example.com","password":"Password12!x","organization_name":"Ignored","invite_token":"%s"}
                                 """
                                 .formatted(invite)))
                 .andExpect(status().isCreated())
@@ -81,7 +81,7 @@ class MemberCannotRevokeKeyTest {
         var memberLogin = mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"member-revoke@example.com","password":"password12"}
+                                {"email":"member-revoke@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();

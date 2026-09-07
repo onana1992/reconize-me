@@ -6,9 +6,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(prefix = "kyc.mail", name = "mode", havingValue = "log", matchIfMissing = true)
 public class LoggingMailAdapter implements MailPort {
 
     private static final Logger log = LoggerFactory.getLogger(LoggingMailAdapter.class);
@@ -17,10 +19,10 @@ public class LoggingMailAdapter implements MailPort {
     private final Map<String, String> lastByTemplate = new ConcurrentHashMap<>();
 
     @Override
-    public void send(String correlationId, String template, String url) {
+    public void send(String to, String correlationId, String template, String url) {
         lastUrls.put(correlationId, url);
         lastByTemplate.put(template, url);
-        log.info("mail correlation_id={} template={} url={}", correlationId, template, url);
+        log.info("mail to={} correlation_id={} template={} url={}", to, correlationId, template, url);
     }
 
     @Override

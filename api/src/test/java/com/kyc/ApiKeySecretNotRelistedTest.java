@@ -30,7 +30,7 @@ class ApiKeySecretNotRelistedTest {
         var signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"keys@example.com","password":"password12","organization_name":"Keys"}
+                                {"email":"keys@example.com","password":"Password12!x","organization_name":"Keys"}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -39,7 +39,7 @@ class ApiKeySecretNotRelistedTest {
         var login = mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"keys@example.com","password":"password12"}
+                                {"email":"keys@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();

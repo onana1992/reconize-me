@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PasswordInput } from "../../../components/password-input";
+import { RequiredMark } from "../../../components/required-mark";
+import { useT } from "../../../i18n/client";
+import { NEW_PASSWORD_ATTRS } from "../../../lib/password";
 import { resetAction } from "../actions";
 
 export function ResetForm({ token }: { token: string }) {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState(false);
@@ -15,11 +20,7 @@ export function ResetForm({ token }: { token: string }) {
     const result = await resetAction(formData);
     setPending(false);
     if (!result.ok) {
-      setError(
-        result.code === "invalid_or_expired_token"
-          ? "Lien invalide ou expiré."
-          : result.message,
-      );
+      setError(result.code === "invalid_or_expired_token" ? t("reset.invalidToken") : result.message);
       return;
     }
     setDone(true);
@@ -28,7 +29,7 @@ export function ResetForm({ token }: { token: string }) {
   if (done) {
     return (
       <p className="rm-notice">
-        Mot de passe mis à jour. <Link href="/login">Se connecter</Link>
+        {t("reset.done")} <Link href="/login">{t("reset.login")}</Link>
       </p>
     );
   }
@@ -37,16 +38,18 @@ export function ResetForm({ token }: { token: string }) {
     <form action={onSubmit} className="rm-form">
       <input type="hidden" name="token" value={token} />
       <label>
-        Nouveau mot de passe
-        <input
+        <span>
+          {t("reset.password")}
+          <RequiredMark />
+        </span>
+        <PasswordInput
           name="password"
-          type="password"
           autoComplete="new-password"
           required
-          minLength={10}
-          maxLength={128}
+          title={t("reset.passwordHint")}
+          {...NEW_PASSWORD_ATTRS}
         />
-        <span className="rm-hint">10 caractères minimum.</span>
+        <span className="rm-hint rm-hint-danger">{t("reset.passwordHint")}</span>
       </label>
       {error ? (
         <p role="alert" className="rm-alert">
@@ -54,7 +57,7 @@ export function ResetForm({ token }: { token: string }) {
         </p>
       ) : null}
       <button type="submit" disabled={pending}>
-        {pending ? "Enregistrement…" : "Réinitialiser"}
+        {pending ? t("reset.pending") : t("reset.submit")}
       </button>
     </form>
   );

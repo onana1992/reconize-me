@@ -212,7 +212,7 @@ public class AccountService {
         String raw = CryptoTokens.randomHostedToken();
         passwordResetTokenRepository.save(
                 new PasswordResetToken(UUID.randomUUID(), user.getId(), hashToken(raw), now.plus(RESET_TTL)));
-        mailPort.send(user.getId().toString(), "password_reset", properties.consoleUrl("/reset?token=" + raw));
+        mailPort.send(user.getEmail(), user.getId().toString(), "password_reset", properties.consoleUrl("/reset?token=" + raw));
     }
 
     @Transactional
@@ -262,7 +262,7 @@ public class AccountService {
                 now.plus(INVITE_TTL),
                 now));
         String correlation = existing.map(user -> user.getId().toString()).orElse("invite:" + invite.getId());
-        mailPort.send(correlation, "team_invite", properties.consoleUrl("/signup?invite=" + raw));
+        mailPort.send(normalized, correlation, "team_invite", properties.consoleUrl("/signup?invite=" + raw));
         auditEventRepository.save(new AuditEvent(
                 organizationId, "user", actorUserId, "membership.invited", "membership_invite", invite.getId(), "{}", now));
         return invite;
@@ -285,7 +285,7 @@ public class AccountService {
         String raw = CryptoTokens.randomHostedToken();
         emailVerificationTokenRepository.save(
                 new EmailVerificationToken(UUID.randomUUID(), user.getId(), hashToken(raw), now.plus(VERIFY_TTL)));
-        mailPort.send(user.getId().toString(), "email_verify", properties.consoleUrl("/verify?token=" + raw));
+        mailPort.send(user.getEmail(), user.getId().toString(), "email_verify", properties.consoleUrl("/verify?token=" + raw));
     }
 
     private Optional<MembershipInvite> resolveInvite(String inviteToken, Instant now) {

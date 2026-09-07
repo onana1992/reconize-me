@@ -1,4 +1,10 @@
 {
+  "i18n-ally.localesPaths": ["web/console/i18n", "web/site/messages"],
+  "i18n-ally.pathMatcher": "{locale}.json",
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.sourceLanguage": "fr",
+  "i18n-ally.displayLanguage": "fr",
+  "i18n-ally.enabledParsers": ["json"],
   "java.debug.settings.forceBuildBeforeLaunch": true,
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.maven.enabled": true,
@@ -8,5 +14,6 @@
     "**/web/**",
     "**/.next/**",
     "**/packages/**"
-  ]
+  ],
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
 }

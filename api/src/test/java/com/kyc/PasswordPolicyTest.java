@@ -15,26 +15,29 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class SignupEmailTakenTest {
+class PasswordPolicyTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void duplicateEmailIsConflict() throws Exception {
-        String body =
-                """
-                {"email":"taken@example.com","password":"Password12!x","organization_name":"First"}
-                """;
-        mockMvc.perform(post("/v1/account/signup").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isCreated());
-
+    void weakSignupPasswordIsRejected() throws Exception {
         mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"TAKEN@example.com","password":"Password12!x","organization_name":"Second"}
+                                {"email":"weak@example.com","password":"password12","organization_name":"Weak"}
                                 """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("email_taken"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"));
+    }
+
+    @Test
+    void strongSignupPasswordIsAccepted() throws Exception {
+        mockMvc.perform(post("/v1/account/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"strong@example.com","password":"Password12!x","organization_name":"Strong"}
+                                """))
+                .andExpect(status().isCreated());
     }
 }

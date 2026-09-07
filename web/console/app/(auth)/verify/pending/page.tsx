@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "../../../../i18n";
 import { ResendForm } from "./resend-form";
 
 export default async function VerifyPendingPage({
@@ -7,18 +8,18 @@ export default async function VerifyPendingPage({
   searchParams: Promise<{ email?: string }>;
 }) {
   const email = (await searchParams).email ?? "";
+  const t = await getT();
+  const lead = email
+    ? t("verifyPending.leadWithEmail").replace("{email}", email)
+    : t("verifyPending.lead");
 
   return (
     <main className="rm-card rm-auth-card">
-      <h1>Vérifiez votre boîte mail</h1>
-      <p className="rm-lead">
-        {email
-          ? `Un lien de confirmation a été envoyé à ${email}. Ouvrez-le pour activer le compte.`
-          : "Un lien de confirmation a été envoyé. Ouvrez-le pour activer le compte."}
-      </p>
+      <h1>{t("verifyPending.title")}</h1>
+      <p className="rm-lead">{lead}</p>
       {email ? <ResendForm email={email} /> : null}
       <p className="rm-auth-links">
-        <Link href="/login">Connexion</Link>
+        <Link href="/login">{t("verifyPending.login")}</Link>
       </p>
     </main>
   );

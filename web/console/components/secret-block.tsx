@@ -7,7 +7,7 @@ type Props = {
   copyLabel?: string;
 };
 
-export function SecretBlock({ title, description, value, copyLabel = "Copier la clé" }: Props) {
+export function SecretBlock({ title, description, value, copyLabel }: Props) {
   return (
     <section className="rm-card rm-secret-card">
       <h2>{title}</h2>

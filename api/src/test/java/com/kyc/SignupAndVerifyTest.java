@@ -32,7 +32,7 @@ class SignupAndVerifyTest {
         MvcResult signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"owner@example.com","password":"password12","organization_name":"Acme"}
+                                {"email":"owner@example.com","password":"Password12!x","organization_name":"Acme"}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.user_id").exists())

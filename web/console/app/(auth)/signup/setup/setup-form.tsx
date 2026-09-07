@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { PasswordInput } from "../../../../components/password-input";
+import { RequiredMark } from "../../../../components/required-mark";
 import { useLocale, useT } from "../../../../i18n/client";
+import { NEW_PASSWORD_ATTRS } from "../../../../lib/password";
 import { siteDpaUrl, siteTermsUrl } from "../../../../lib/site";
 import { signupAction } from "../../actions";
 
@@ -22,7 +25,19 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
     const result = await signupAction(new FormData(event.currentTarget));
     setPending(false);
     if (!result.ok) {
-      setError(result.code === "email_taken" ? t("setup.emailTaken") : result.message);
+      if (result.code === "email_taken") {
+        setError(t("setup.emailTaken"));
+        return;
+      }
+      if (result.code === "invalid_or_expired_token") {
+        setError(t("setup.invalidToken"));
+        return;
+      }
+      if (result.code === "validation_error") {
+        setError(t("setup.validation"));
+        return;
+      }
+      setError(result.message);
       return;
     }
     router.push(`/verify/pending?email=${encodeURIComponent(email)}`);
@@ -30,31 +45,55 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
 
   return (
     <form onSubmit={onSubmit} className="su-form">
-      <input type="hidden" name="email" value={email} />
+      <label className="su-field">
+        <span>
+          {t("setup.email")}
+          <RequiredMark />
+        </span>
+        <input name="email" type="email" value={email} readOnly autoComplete="email" />
+      </label>
       {invite ? <input type="hidden" name="invite_token" value={invite} /> : null}
       {invite ? <input type="hidden" name="organization_name" value="Invited" /> : null}
 
       {invite ? null : (
         <label className="su-field">
-          {t("setup.company")}
+          <span>
+            {t("setup.company")}
+            <RequiredMark />
+          </span>
           <input name="organization_name" type="text" autoComplete="organization" required minLength={2} maxLength={100} />
         </label>
       )}
 
       <div className="su-row">
         <label className="su-field">
-          {t("setup.firstName")}
+          <span>
+            {t("setup.firstName")}
+            <RequiredMark />
+          </span>
           <input name="first_name" type="text" autoComplete="given-name" required minLength={1} maxLength={100} />
         </label>
         <label className="su-field">
-          {t("setup.lastName")}
+          <span>
+            {t("setup.lastName")}
+            <RequiredMark />
+          </span>
           <input name="last_name" type="text" autoComplete="family-name" required minLength={1} maxLength={100} />
         </label>
       </div>
 
       <label className="su-field">
-        {t("setup.password")}
-        <input name="password" type="password" autoComplete="new-password" required minLength={10} maxLength={128} />
+        <span>
+          {t("setup.password")}
+          <RequiredMark />
+        </span>
+        <PasswordInput
+          name="password"
+          autoComplete="new-password"
+          required
+          title={t("setup.passwordHint")}
+          {...NEW_PASSWORD_ATTRS}
+        />
         <span className="su-hint">{t("setup.passwordHint")}</span>
       </label>
 
@@ -71,6 +110,7 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
               {t("setup.dpaLink")}
             </a>
             {t("setup.termsAfter")}
+            <RequiredMark />
           </span>
         </label>
         <label className="su-check">

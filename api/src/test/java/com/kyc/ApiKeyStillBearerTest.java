@@ -49,7 +49,7 @@ class ApiKeyStillBearerTest {
         var signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"cookie@example.com","password":"password12","organization_name":"Cookie Org"}
+                                {"email":"cookie@example.com","password":"Password12!x","organization_name":"Cookie Org"}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -58,7 +58,7 @@ class ApiKeyStillBearerTest {
         var login = mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"cookie@example.com","password":"password12"}
+                                {"email":"cookie@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();

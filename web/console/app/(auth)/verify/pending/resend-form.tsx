@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "../../../../i18n/client";
 import { resendVerificationAction } from "../../actions";
 
 export function ResendForm({ email }: { email: string }) {
+  const t = useT();
   const [done, setDone] = useState(false);
 
   async function onSubmit(formData: FormData) {
@@ -15,11 +17,9 @@ export function ResendForm({ email }: { email: string }) {
     <form action={onSubmit} className="rm-form">
       <input type="hidden" name="email" value={email} />
       <button type="submit" data-variant="secondary">
-        Renvoyer l’e-mail
+        {t("verifyPending.resend")}
       </button>
-      {done ? (
-        <p className="rm-notice">Si le compte n’est pas encore vérifié, un nouveau lien a été envoyé.</p>
-      ) : null}
+      {done ? <p className="rm-notice">{t("verifyPending.resent")}</p> : null}
     </form>
   );
 }

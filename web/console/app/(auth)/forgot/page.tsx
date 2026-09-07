@@ -1,14 +1,17 @@
 import Link from "next/link";
+import { getT } from "../../../i18n";
 import { ForgotForm } from "./forgot-form";
 
-export default function ForgotPage() {
+export default async function ForgotPage() {
+  const t = await getT();
+
   return (
     <main className="rm-card rm-auth-card">
-      <h1>Mot de passe oublié</h1>
-      <p className="rm-lead">Indiquez l’e-mail du compte. Si un compte existe, un lien sera envoyé.</p>
+      <h1>{t("forgot.title")}</h1>
+      <p className="rm-lead">{t("forgot.lead")}</p>
       <ForgotForm />
       <p className="rm-auth-links">
-        <Link href="/login">Retour à la connexion</Link>
+        <Link href="/login">{t("forgot.back")}</Link>
       </p>
     </main>
   );

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { PasswordInput } from "../../../../components/password-input";
+import { RequiredMark } from "../../../../components/required-mark";
+import { NEW_PASSWORD_ATTRS } from "../../../../lib/password";
 import { changePasswordAction } from "../../verifications/actions";
 
 export function PasswordForm() {
@@ -24,13 +27,27 @@ export function PasswordForm() {
   return (
     <form action={onSubmit} className="rm-form">
       <label>
-        Mot de passe actuel
-        <input name="current_password" type="password" autoComplete="current-password" required />
+        <span>
+          Mot de passe actuel
+          <RequiredMark />
+        </span>
+        <PasswordInput name="current_password" autoComplete="current-password" required />
       </label>
       <label>
-        Nouveau mot de passe
-        <input name="new_password" type="password" autoComplete="new-password" required minLength={10} maxLength={128} />
-        <span className="rm-hint">10 caractères minimum.</span>
+        <span>
+          Nouveau mot de passe
+          <RequiredMark />
+        </span>
+        <PasswordInput
+          name="new_password"
+          autoComplete="new-password"
+          required
+          title="12 caractères min., avec majuscule, minuscule, chiffre et caractère spécial."
+          {...NEW_PASSWORD_ATTRS}
+        />
+        <span className="rm-hint rm-hint-danger">
+          12 caractères min., avec majuscule, minuscule, chiffre et caractère spécial.
+        </span>
       </label>
       {error ? (
         <p role="alert" className="rm-alert">

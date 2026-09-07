@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "../../../i18n";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -8,16 +9,17 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const next = params.next && params.next.startsWith("/") ? params.next : "/";
+  const t = await getT();
 
   return (
     <main className="rm-card rm-auth-card">
-      <h1>Connexion</h1>
-      <p className="rm-lead">Accédez à la console de votre organisation.</p>
+      <h1>{t("login.title")}</h1>
+      <p className="rm-lead">{t("login.lead")}</p>
       <LoginForm next={next} />
       <p className="rm-auth-links">
-        <Link href="/forgot">Mot de passe oublié</Link>
+        <Link href="/forgot">{t("login.forgot")}</Link>
         {" · "}
-        <Link href="/signup">Créer un compte</Link>
+        <Link href="/signup">{t("login.signup")}</Link>
       </p>
     </main>
   );

@@ -23,7 +23,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} className={sans.variable}>
       <body>
-        <I18nProvider locale={locale}>{children}</I18nProvider>
+        <I18nProvider key={locale} locale={locale}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

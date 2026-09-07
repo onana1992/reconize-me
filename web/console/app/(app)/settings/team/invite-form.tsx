@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { RequiredMark } from "../../../../components/required-mark";
 import { inviteMemberAction } from "../../verifications/actions";
 
 export function InviteForm() {
@@ -27,7 +28,10 @@ export function InviteForm() {
   return (
     <form action={onSubmit} className="rm-form">
       <label>
-        E-mail
+        <span>
+          E-mail
+          <RequiredMark />
+        </span>
         <input name="email" type="email" required maxLength={255} />
       </label>
       {error ? (

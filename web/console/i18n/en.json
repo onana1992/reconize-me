@@ -1,7 +1,12 @@
 {
   "common": {
     "language": "Language",
-    "help": "Help & support"
+    "help": "Help & support",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyKey": "Copy key"
   },
   "locale": {
     "fr": "Français",
@@ -22,14 +27,16 @@
     "login": "Log in here"
   },
   "setup": {
-    "progress": "Step 1 of 4",
     "title": "Set up your account",
     "lead": "Enter your details to create a secure account and get started.",
+    "leadWithEmail": "Enter your details to create a secure account for {email}.",
+    "leadInvite": "You’ve been invited. Complete your details for {email} to join the team.",
+    "email": "Email",
     "company": "Company name",
     "firstName": "First name",
     "lastName": "Last name",
     "password": "Password",
-    "passwordHint": "10 characters minimum.",
+    "passwordHint": "12 characters min., with uppercase, lowercase, a digit and a special character.",
     "termsBefore": "I accept the ",
     "termsLink": "Terms of Service",
     "termsBetween": " and the ",
@@ -38,8 +45,67 @@
     "marketing": "I agree to receive news and offers from Recogniz-Me.",
     "marketingHint": "Product news, integration tips and offers. You can unsubscribe at any time.",
     "emailTaken": "An account with this email already exists.",
+    "invalidToken": "Invalid or expired invitation.",
+    "validation": "Check the form and try again.",
     "back": "Back",
     "continue": "Continue",
     "pending": "Creating…"
+  },
+  "verifyPending": {
+    "title": "Check your inbox",
+    "lead": "A confirmation link has been sent. Open it to activate your account.",
+    "leadWithEmail": "A confirmation link has been sent to {email}. Open it to activate your account.",
+    "resend": "Resend email",
+    "resent": "If the account is not verified yet, a new link has been sent.",
+    "login": "Log in"
+  },
+  "login": {
+    "title": "Log in",
+    "lead": "Access your organization’s console.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "pending": "Signing in…",
+    "forgot": "Forgot password",
+    "signup": "Create an account",
+    "emailUnverified": "Verify your email before signing in.",
+    "invalidCredentials": "Invalid credentials.",
+    "rateLimited": "Too many attempts. Try again in a few minutes."
+  },
+  "forgot": {
+    "title": "Forgot password",
+    "lead": "Enter the email for the account. If an account exists, a reset link will be sent.",
+    "email": "Email",
+    "submit": "Send reset link",
+    "pending": "Sending…",
+    "sent": "If an account exists, a reset email has been sent.",
+    "back": "Back to log in"
+  },
+  "reset": {
+    "title": "New password",
+    "lead": "Choose a new password to access the console.",
+    "missingToken": "Incomplete link. Request a new email.",
+    "password": "New password",
+    "passwordHint": "12 characters min., with uppercase, lowercase, a digit and a special character.",
+    "submit": "Reset password",
+    "pending": "Saving…",
+    "invalidToken": "Invalid or expired link.",
+    "done": "Password updated.",
+    "login": "Log in",
+    "back": "Log in"
+  },
+  "verify": {
+    "title": "Email confirmed",
+    "lead": "Your account is active. You can sign in to the console.",
+    "leadKey": "Your Sandbox API key is shown only once. Copy it now.",
+    "missingTitle": "Verification",
+    "missingToken": "Incomplete link. Request a new confirmation email.",
+    "invalidTitle": "Invalid link",
+    "invalidLead": "This confirmation link cannot be used.",
+    "invalidToken": "This link has already been used or has expired.",
+    "keyTitle": "Sandbox API key",
+    "activated": "Your account is activated. You can log in.",
+    "login": "Log in",
+    "signup": "Create an account"
   }
 }

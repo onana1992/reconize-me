@@ -1,0 +1,53 @@
+<!--
+  Recogniz-Me — chrome e-mail.
+  Couleurs = tokens.css (inline : les clients mail ignorent :root).
+  #f4f7f5 bg · #ffffff surface · #0f7a4d accent · #111a15 texte · #5a6b62 muted
+-->
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recogniz-Me</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f7f5;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f5;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:560px;max-width:100%;background:#ffffff;border:1px solid #dde5e0;border-radius:14px;overflow:hidden;">
+            <tr>
+              <td style="height:4px;background:#0f7a4d;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 8px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td width="32" height="32" align="center" valign="middle" style="width:32px;height:32px;background:#0f7a4d;border-radius:9px;color:#ffffff;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;font-weight:700;line-height:32px;">
+                      RM
+                    </td>
+                    <td style="padding-left:12px;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;font-weight:650;letter-spacing:-0.01em;color:#111a15;">
+                      Recogniz-Me
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 32px 8px 32px;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;color:#111a15;font-size:16px;line-height:1.55;">
+                {{body}}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 28px 32px;">
+                {{redirect_notice}}
+                <p style="margin:24px 0 0 0;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:12px;line-height:1.5;color:#5a6b62;">
+                  © {{year}} Recogniz-Me — vérification d’identité. Si vous n’êtes pas à l’origine de cet e-mail, vous pouvez l’ignorer.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

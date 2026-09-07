@@ -46,7 +46,7 @@ class ConsoleIsolationTest {
         var signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"%s","password":"password12","organization_name":"%s"}
+                                {"email":"%s","password":"Password12!x","organization_name":"%s"}
                                 """
                                 .formatted(email, org)))
                 .andExpect(status().isCreated())
@@ -57,7 +57,7 @@ class ConsoleIsolationTest {
         var login = mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"%s","password":"password12"}
+                                {"email":"%s","password":"Password12!x"}
                                 """
                                 .formatted(email)))
                 .andExpect(status().isNoContent())

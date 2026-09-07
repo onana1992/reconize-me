@@ -38,7 +38,6 @@ export async function signupAction(formData: FormData): Promise<ApiResult<{ user
 }
 
 export async function loginAction(formData: FormData): Promise<ApiResult<void>> {
-  const next = String(formData.get("next") ?? "/").trim() || "/";
   const result = await accountApiWithCookies<void>("/v1/account/login", {
     method: "POST",
     body: JSON.stringify({
@@ -47,10 +46,10 @@ export async function loginAction(formData: FormData): Promise<ApiResult<void>> 
     }),
   });
   if (!result.ok) {
-    return result;
+    return { ok: false, status: result.status, code: result.code, message: result.message };
   }
   await setSession(result.setCookie);
-  redirect(next.startsWith("/") ? next : "/");
+  return { ok: true, data: undefined };
 }
 
 export async function logoutAction(): Promise<void> {

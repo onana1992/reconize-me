@@ -1,44 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { PasswordInput } from "../../../components/password-input";
+import { RequiredMark } from "../../../components/required-mark";
+import { useT } from "../../../i18n/client";
 import { loginAction } from "../actions";
 
 export function LoginForm({ next }: { next: string }) {
+  const t = useT();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function onSubmit(formData: FormData) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setPending(true);
     setError(null);
-    const result = await loginAction(formData);
-    setPending(false);
-    if (result && !result.ok) {
-      if (result.code === "email_unverified") {
-        setError("Vérifiez votre e-mail avant de vous connecter.");
+    try {
+      const result = await loginAction(new FormData(event.currentTarget));
+      if (!result.ok) {
+        if (result.code === "email_unverified") {
+          setError(t("login.emailUnverified"));
+          return;
+        }
+        if (result.code === "invalid_credentials") {
+          setError(t("login.invalidCredentials"));
+          return;
+        }
+        if (result.code === "rate_limited") {
+          setError(t("login.rateLimited"));
+          return;
+        }
+        setError(result.message);
         return;
       }
-      if (result.code === "invalid_credentials") {
-        setError("Identifiants invalides.");
-        return;
-      }
-      if (result.code === "rate_limited") {
-        setError("Trop de tentatives. Réessayez dans quelques minutes.");
-        return;
-      }
-      setError(result.message);
+      router.push(next);
+      router.refresh();
+    } finally {
+      setPending(false);
     }
   }
 
   return (
-    <form action={onSubmit} className="rm-form">
+    <form onSubmit={onSubmit} className="rm-form">
       <input type="hidden" name="next" value={next} />
       <label>
-        E-mail
+        <span>
+          {t("login.email")}
+          <RequiredMark />
+        </span>
         <input name="email" type="email" autoComplete="email" required maxLength={255} />
       </label>
       <label>
-        Mot de passe
-        <input name="password" type="password" autoComplete="current-password" required maxLength={128} />
+        <span>
+          {t("login.password")}
+          <RequiredMark />
+        </span>
+        <PasswordInput name="password" autoComplete="current-password" required maxLength={128} />
       </label>
       {error ? (
         <p role="alert" className="rm-alert">
@@ -46,7 +65,7 @@ export function LoginForm({ next }: { next: string }) {
         </p>
       ) : null}
       <button type="submit" disabled={pending}>
-        {pending ? "Connexion…" : "Se connecter"}
+        {pending ? t("login.pending") : t("login.submit")}
       </button>
     </form>
   );

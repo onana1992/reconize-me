@@ -33,7 +33,7 @@ class LoginUnverifiedTest {
         MvcResult signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"unverified@example.com","password":"password12","organization_name":"Wait"}
+                                {"email":"unverified@example.com","password":"Password12!x","organization_name":"Wait"}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -41,7 +41,7 @@ class LoginUnverifiedTest {
         mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"unverified@example.com","password":"password12"}
+                                {"email":"unverified@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("email_unverified"));
@@ -49,7 +49,7 @@ class LoginUnverifiedTest {
         mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"nobody@example.com","password":"password12"}
+                                {"email":"nobody@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("invalid_credentials"));
@@ -60,7 +60,7 @@ class LoginUnverifiedTest {
         mockMvc.perform(post("/v1/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"unverified@example.com","password":"password12"}
+                                {"email":"unverified@example.com","password":"Password12!x"}
                                 """))
                 .andExpect(status().isNoContent())
                 .andExpect(cookie().exists(SessionService.COOKIE_NAME))
