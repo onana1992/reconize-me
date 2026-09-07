@@ -17,7 +17,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Recogniz-Me API")
-                        .description("Vérification d’identité — une identité numérique reconnue comme réelle")
+                        .description("Plateforme Recogniz-Me — comptes, console et clés d’intégration")
                         .version("v1"))
                 .servers(List.of(new Server().url("/").description("Local")))
                 .components(new Components()

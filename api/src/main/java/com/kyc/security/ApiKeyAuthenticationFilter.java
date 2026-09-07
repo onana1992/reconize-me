@@ -23,7 +23,6 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private static final AntPathMatcher PATHS = new AntPathMatcher();
     private static final List<String> PUBLIC = List.of(
             "/v1/health",
-            "/v1/flow/**",
             "/v1/account/**",
             "/v1/console/**",
             "/swagger-ui.html",

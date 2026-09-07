@@ -54,8 +54,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleConflict(DataIntegrityViolationException ex, HttpServletRequest request) {
-        return ApiErrors.entity(
-                HttpStatus.CONFLICT, "external_id_conflict", "external_id already exists", request);
+        return ApiErrors.entity(HttpStatus.CONFLICT, "conflict", "Resource already exists", request);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

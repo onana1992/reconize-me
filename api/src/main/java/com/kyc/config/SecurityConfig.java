@@ -31,7 +31,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        config.setAllowedOrigins(List.of("http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));
@@ -58,7 +58,6 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 "/v1/health",
-                                "/v1/flow/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -79,8 +78,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/v1/account/invites/accept")
                         .permitAll()
                         .requestMatchers("/v1/account/**", "/v1/console/**")
-                        .authenticated()
-                        .requestMatchers("/v1/verifications/**")
                         .authenticated()
                         .anyRequest()
                         .permitAll())

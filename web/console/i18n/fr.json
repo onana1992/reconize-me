@@ -6,7 +6,8 @@
     "hidePassword": "Masquer le mot de passe",
     "copy": "Copier",
     "copied": "Copié",
-    "copyKey": "Copier la clé"
+    "copyKey": "Copier la clé",
+    "logout": "Déconnexion"
   },
   "locale": {
     "fr": "Français",
@@ -107,5 +108,57 @@
     "activated": "Votre compte est activé. Vous pouvez vous connecter.",
     "login": "Se connecter",
     "signup": "Créer un compte"
+  },
+  "console": {
+    "nav": {
+      "label": "Navigation principale",
+      "overview": "Vue d’ensemble",
+      "home": "Accueil",
+      "idv": "Identité",
+      "solutions": "Solutions",
+      "biometric": "Biométrie",
+      "aml": "AML",
+      "soon": "Bientôt",
+      "organization": "Organisation",
+      "keys": "Clés API",
+      "team": "Équipe",
+      "account": "Compte",
+      "collapse": "Réduire le menu",
+      "expand": "Développer le menu",
+      "open": "Ouvrir le menu",
+      "close": "Fermer le menu"
+    },
+    "top": {
+      "home": "Accueil",
+      "keys": "Clés API",
+      "team": "Équipe",
+      "account": "Compte"
+    },
+    "role": {
+      "owner": "Propriétaire",
+      "member": "Membre"
+    },
+    "plan": {
+      "sandbox": "Sandbox"
+    },
+    "home": {
+      "signedIn": "Connecté en tant que {email} · {role}",
+      "planLabel": "Plan",
+      "usageLabel": "Usage",
+      "usageValue": "0 / —",
+      "usageHint": "Jusqu’à la souscription.",
+      "roleLabel": "Rôle",
+      "twoFactor": "L’authentification à deux facteurs sera exigée plus tard.",
+      "orgTitle": "Organisation",
+      "keysLead": "Préfixes visibles. Le secret n’est montré qu’à l’émission.",
+      "teamLead": "Membres et invitations de l’organisation.",
+      "platformTitle": "Plateforme",
+      "platformLead": "Un back-office pour tous les services Recogniz-Me.",
+      "idvTitle": "Identity & Document Verification",
+      "idvCardLead": "Vérifier une identité à distance, de la session à la décision.",
+      "biometricLead": "Recomparaison d’un visage déjà enrôlé. Pas encore souscriptible.",
+      "amlLead": "Sanctions, PEP et médias adverses. Pas encore souscriptible.",
+      "waitlist": "Disponible plus tard sur cette console."
+    }
   }
 }

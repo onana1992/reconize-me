@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { RequiredMark } from "../../../../components/required-mark";
-import { inviteMemberAction } from "../../verifications/actions";
+import { inviteMemberAction } from "../actions";
 
 export function InviteForm() {
   const router = useRouter();

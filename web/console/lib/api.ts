@@ -1,27 +1,5 @@
 const API_BASE = process.env.API_BASE_URL ?? "http://localhost:8080";
 
-export type Applicant = {
-  first_name?: string | null;
-  last_name?: string | null;
-  email?: string | null;
-};
-
-export type Verification = {
-  id: string;
-  external_id?: string | null;
-  status: string;
-  applicant?: Applicant | null;
-  hosted_url: string | null;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type VerificationList = {
-  data: Verification[];
-  next_cursor?: string | null;
-};
-
 export type Me = {
   email: string;
   first_name?: string | null;
@@ -155,24 +133,6 @@ export async function consoleApi<T>(path: string, cookieHeader: string, init?: R
   } catch {
     return errorBody(503, "dependency_unavailable", "API indisponible");
   }
-}
-
-export function createVerification(
-  cookieHeader: string,
-  body: { external_id?: string; applicant?: Applicant },
-): Promise<ApiResult<Verification>> {
-  return consoleApi<Verification>("/v1/console/verifications", cookieHeader, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export function getVerification(cookieHeader: string, id: string): Promise<ApiResult<Verification>> {
-  return consoleApi<Verification>(`/v1/console/verifications/${encodeURIComponent(id)}`, cookieHeader);
-}
-
-export function listVerifications(cookieHeader: string): Promise<ApiResult<VerificationList>> {
-  return consoleApi<VerificationList>("/v1/console/verifications", cookieHeader);
 }
 
 export function getMeWithCookie(cookieHeader: string): Promise<ApiResult<Me>> {

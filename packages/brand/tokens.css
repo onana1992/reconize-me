@@ -153,6 +153,9 @@
   --rm-width-wide: 78rem;
   --rm-width-hero: 92rem;
 
+  /* Overlay — menus et sidebar mobile (console) */
+  --rm-overlay: color-mix(in srgb, var(--rm-neutral-900) 45%, transparent);
+
   /* Motion — une seule courbe, trois durées */
   --rm-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --rm-duration-fast: 140ms;

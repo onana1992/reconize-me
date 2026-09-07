@@ -7,9 +7,10 @@
 **Statut :** spécification métier détaillée — cible produit  
 **Documents liés :**
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) — vision produit
-- [`guide-implementation-s1.md`](./guide-implementation-s1.md) — S1 livré
-- [`guide-implementation-s2.md`](./guide-implementation-s2.md) — S2 capture
-- [`roadmap-implementation-idv.md`](./roadmap-implementation-idv.md) — ordre de build
+- [`specification-implementation-idv.md`](./specification-implementation-idv.md) — **comment reconstruire** (contrat d’implémentation actuel)
+- [`guide-implementation-s1.md`](./guide-implementation-s1.md) — archive S1 (code retiré)
+- [`guide-implementation-s2.md`](./guide-implementation-s2.md) — archive S2
+- [`roadmap-implementation-idv.md`](./roadmap-implementation-idv.md) — ordre de build vision
 
 Ce document décrit **uniquement** le produit Identity & Document Verification : ce qu’il prouve, pour qui, comment le parcours se déroule, comment on analyse, comment on tranche. Les détails d’implémentation restent dans les guides de sprint.
 
@@ -21,7 +22,7 @@ Identity & Document Verification est une **solution de confiance d’identité**
 
 Le client consomme un **résultat** : il n’a pas à opérer le parcours, traiter ni conserver les documents. Il crée une session, envoie un **lien hébergé**, relit le dossier et reçoit une **décision justifiée**.
 
-C’est le **premier produit de la gamme à livrer de bout en bout**. La fondation déjà en place (dossier isolé par organisation, lien jusqu’au consentement) en est le socle, pas le produit entier.
+C’est le **premier produit de la gamme à livrer de bout en bout**. La plateforme compte + console existe ; l’IDV (session, lien, consentement) est **à reconstruire** d’après [`specification-implementation-idv.md`](./specification-implementation-idv.md).
 
 **Ce que ce produit n’est pas**
 
@@ -177,7 +178,7 @@ Le parcours web **n’appelle pas** les moteurs d’analyse. Il capture. Les tra
 | Expirée | Lien ou session périmée | oui |
 | Annulée | Arrêt par l’organisation | oui |
 
-**Fondation livrée :** créée, consentement, en attente de capture, refusée (consentement), expirée, annulée. Les autres n’existent qu’avec la capture et la décision — ne pas les inventer en base avant le sprint qui les utilise.
+**Fondation :** à reconstruire (P1). Les autres n’existent qu’avec la capture et la décision — ne pas les inventer en base avant le sprint qui les utilise.
 
 **Annulation (fondation) :** autorisée tant que le dossier n’a pas dépassé le consentement. Ensuite : tant qu’il n’est pas trop avancé en traitement. Annuler **révoque le lien**.
 
@@ -559,11 +560,11 @@ Les règles plateforme (clé, isolation 404, PII, idempotence, lien) s’appliqu
 
 ## 20. Phasage
 
-L’ordre de build détaillé (sprints, modèles, kill criteria) est dans [`roadmap-implementation-idv.md`](./roadmap-implementation-idv.md). Comment construire : [`guide-implementation-s1.md`](./guide-implementation-s1.md), [`guide-implementation-s2.md`](./guide-implementation-s2.md).
+L’ordre de build détaillé (sprints, modèles, kill criteria) est dans [`roadmap-implementation-idv.md`](./roadmap-implementation-idv.md). Comment construire : [`specification-implementation-idv.md`](./specification-implementation-idv.md).
 
 | Phase | Contenu | Statut |
 |---|---|---|
-| Fondation | Session, isolation, lien, consentement, audit | **Livré** |
+| Fondation | Session, isolation, lien, consentement, audit | **à reconstruire** (P1) |
 | Capture | Caméra pièce, qualité, stockage | à venir |
 | Dataset | Corpus corridor V1, annotation | à venir (bloquant analyse) |
 | Document | Modèles proprio (détection, classification, authenticité), lecture, MRZ | à venir |

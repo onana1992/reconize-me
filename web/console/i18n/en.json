@@ -6,7 +6,8 @@
     "hidePassword": "Hide password",
     "copy": "Copy",
     "copied": "Copied",
-    "copyKey": "Copy key"
+    "copyKey": "Copy key",
+    "logout": "Log out"
   },
   "locale": {
     "fr": "Français",
@@ -107,5 +108,57 @@
     "activated": "Your account is activated. You can log in.",
     "login": "Log in",
     "signup": "Create an account"
+  },
+  "console": {
+    "nav": {
+      "label": "Main navigation",
+      "overview": "Overview",
+      "home": "Home",
+      "idv": "Identity",
+      "solutions": "Solutions",
+      "biometric": "Biometrics",
+      "aml": "AML",
+      "soon": "Coming soon",
+      "organization": "Organization",
+      "keys": "API keys",
+      "team": "Team",
+      "account": "Account",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu",
+      "open": "Open menu",
+      "close": "Close menu"
+    },
+    "top": {
+      "home": "Home",
+      "keys": "API keys",
+      "team": "Team",
+      "account": "Account"
+    },
+    "role": {
+      "owner": "Owner",
+      "member": "Member"
+    },
+    "plan": {
+      "sandbox": "Sandbox"
+    },
+    "home": {
+      "signedIn": "Signed in as {email} · {role}",
+      "planLabel": "Plan",
+      "usageLabel": "Usage",
+      "usageValue": "0 / —",
+      "usageHint": "Until you subscribe.",
+      "roleLabel": "Role",
+      "twoFactor": "Two-factor authentication will be required later.",
+      "orgTitle": "Organization",
+      "keysLead": "Prefixes are visible. The secret is shown only at issuance.",
+      "teamLead": "Organization members and pending invites.",
+      "platformTitle": "Platform",
+      "platformLead": "One back office for every Recogniz-Me service.",
+      "idvTitle": "Identity & Document Verification",
+      "idvCardLead": "Verify an identity remotely, from session to decision.",
+      "biometricLead": "Re-compare an enrolled face. Not yet available to subscribe.",
+      "amlLead": "Sanctions, PEPs and adverse media. Not yet available to subscribe.",
+      "waitlist": "Coming later on this console."
+    }
   }
 }

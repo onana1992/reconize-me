@@ -1,10 +1,11 @@
 package com.kyc;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.ports.MailPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ConsoleIsolationTest {
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -26,20 +29,21 @@ class ConsoleIsolationTest {
     private MailPort mailPort;
 
     @Test
-    void sessionACannotReadOrgBVerification() throws Exception {
+    void sessionSeesOwnOrganizationOnly() throws Exception {
         var a = session("iso-a@example.com", "Iso A");
-        var created = mockMvc.perform(post("/v1/console/verifications")
-                        .cookie(a)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isCreated())
-                .andReturn();
-        String verificationId = AccountSupport.field(created, "id");
-
         var b = session("iso-b@example.com", "Iso B");
-        mockMvc.perform(get("/v1/console/verifications/" + verificationId).cookie(b))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("not_found"));
+
+        String orgA = orgId(a);
+        String orgB = orgId(b);
+        assertNotEquals(orgA, orgB);
+    }
+
+    private String orgId(jakarta.servlet.http.Cookie cookie) throws Exception {
+        var result = mockMvc.perform(get("/v1/console/me").cookie(cookie)).andExpect(status().isOk()).andReturn();
+        return JSON.readTree(result.getResponse().getContentAsString())
+                .path("organization")
+                .path("id")
+                .asText();
     }
 
     private jakarta.servlet.http.Cookie session(String email, String org) throws Exception {

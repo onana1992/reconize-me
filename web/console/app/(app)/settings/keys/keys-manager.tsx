@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StatusBadge } from "@kyc/brand";
 import { SecretBlock } from "../../../../components/secret-block";
-import { createApiKeyAction, revokeApiKeyAction } from "../../verifications/actions";
+import { createApiKeyAction, revokeApiKeyAction } from "../actions";
 import type { ApiKeyItem, IssuedApiKey } from "../../../../lib/api";
 import { formatUtc } from "../../../../lib/status";
 

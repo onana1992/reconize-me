@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PasswordInput } from "../../../../components/password-input";
 import { RequiredMark } from "../../../../components/required-mark";
 import { NEW_PASSWORD_ATTRS } from "../../../../lib/password";
-import { changePasswordAction } from "../../verifications/actions";
+import { changePasswordAction } from "../actions";
 
 export function PasswordForm() {
   const [error, setError] = useState<string | null>(null);

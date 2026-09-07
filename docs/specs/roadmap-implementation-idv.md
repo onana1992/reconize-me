@@ -8,8 +8,9 @@
 **Documents liés :**
 - [`specification-fonctionnelle-idv.md`](./specification-fonctionnelle-idv.md) — spec métier
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) — vision et stack IA
-- [`guide-implementation-s1.md`](./guide-implementation-s1.md) — S1 livré
-- [`guide-implementation-s2.md`](./guide-implementation-s2.md) — S2 à construire
+- [`specification-implementation-idv.md`](./specification-implementation-idv.md) — comment reconstruire (P1–P3)
+- [`guide-implementation-s1.md`](./guide-implementation-s1.md) — archive S1 (code retiré)
+- [`guide-implementation-s2.md`](./guide-implementation-s2.md) — archive S2
 
 **Cycle en cours :** l’ordre de build immédiat est la [roadmap MVP SaaS](../MVP/roadmap-implementation-mvp.md) (M0–M6, AWS / stubs). Le présent document reste l’ordre **vision** (SageMaker). S3–S9 ne démarrent **pas** avant la fin de M6.
 

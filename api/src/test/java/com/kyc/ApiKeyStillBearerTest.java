@@ -45,7 +45,7 @@ class ApiKeyStillBearerTest {
     private ApiKeyRepository apiKeyRepository;
 
     @Test
-    void cookieDoesNotOpenVerificationsApi() throws Exception {
+    void cookieDoesNotOpenProductApi() throws Exception {
         var signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -78,7 +78,7 @@ class ApiKeyStillBearerTest {
                 now));
 
         mockMvc.perform(get("/v1/verifications").header("Authorization", "Bearer " + SEED))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("not_found"));
     }
 }

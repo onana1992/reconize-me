@@ -5,7 +5,7 @@
 **Sprint :** S2 — capture document, médias, qualité, dataset  
 **Version :** 1.0  
 **Date :** 31 août 2026  
-**Statut :** à implémenter (S1 livré)  
+**Statut :** **obsolète** — l’implémentation S1 a été retirée. Capture = palier P2 de [`specification-implementation-idv.md`](./specification-implementation-idv.md).  
 **Modules :** M2 Capture & médias · amorçage M3 Dataset  
 
 **Documents liés :**

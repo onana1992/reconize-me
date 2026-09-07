@@ -5,7 +5,7 @@
 **Sprint :** S1 — session, isolation, lien, consentement  
 **Version :** 1.0  
 **Date :** 31 août 2026  
-**Statut :** **livré** (as-built)  
+**Statut :** **obsolète** — implémentation retirée le 6 septembre 2026. Reconstruire d’après [`specification-implementation-idv.md`](./specification-implementation-idv.md) (palier P1). Ce fichier reste une archive des contrats S1.  
 **Modules :** M0 Plateforme · M1 Session & consentement  
 
 **Documents liés :**
