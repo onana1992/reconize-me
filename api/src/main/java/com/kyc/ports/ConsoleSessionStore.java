@@ -12,5 +12,7 @@ public interface ConsoleSessionStore {
 
     void delete(String sessionId);
 
+    void deleteByUserId(UUID userId);
+
     record Session(UUID userId, UUID organizationId, String role) {}
 }

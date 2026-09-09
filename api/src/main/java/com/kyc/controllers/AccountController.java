@@ -2,6 +2,7 @@ package com.kyc.controllers;
 
 import com.kyc.dto.account.AcceptInviteRequest;
 import com.kyc.dto.account.EmailRequest;
+import com.kyc.dto.account.InvitePreviewResponse;
 import com.kyc.dto.account.IssuedApiKeyResponse;
 import com.kyc.dto.account.LoginRequest;
 import com.kyc.dto.account.PasswordResetRequest;
@@ -99,6 +100,12 @@ public class AccountController {
     public ResponseEntity<Void> reset(@Valid @RequestBody PasswordResetRequest body) {
         accountService.reset(body.token(), body.password());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/invites")
+    @Operation(summary = "Vérifier qu’un jeton d’invitation est encore valide")
+    public InvitePreviewResponse peekInvite(@RequestParam String token) {
+        return accountService.peekInvite(token);
     }
 
     @PostMapping("/invites/accept")

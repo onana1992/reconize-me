@@ -6,11 +6,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const orgName = me.ok ? me.data.organization.name : "Console";
   const orgSlug = me.ok ? me.data.organization.slug : "";
   const email = me.ok ? me.data.email : "";
+  const firstName = me.ok ? (me.data.first_name ?? "") : "";
+  const lastName = me.ok ? (me.data.last_name ?? "") : "";
   const role = me.ok ? me.data.role : "";
   const plan = me.ok ? me.data.organization.plan : "";
+  const permissions = me.ok ? (me.data.permissions ?? []) : [];
 
   return (
-    <AppShell orgName={orgName} orgSlug={orgSlug} email={email} role={role} plan={plan}>
+    <AppShell
+      orgName={orgName}
+      orgSlug={orgSlug}
+      email={email}
+      firstName={firstName}
+      lastName={lastName}
+      role={role}
+      plan={plan}
+      permissions={permissions}
+    >
       {children}
     </AppShell>
   );

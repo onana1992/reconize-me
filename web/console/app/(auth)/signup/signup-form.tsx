@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { useT } from "../../../i18n/client";
 import { RequiredMark } from "../../../components/required-mark";
 
-export function SignupForm({ invite, email = "" }: { invite: string; email?: string }) {
+export function SignupForm({ email = "" }: { email?: string }) {
   const t = useT();
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -15,11 +15,7 @@ export function SignupForm({ invite, email = "" }: { invite: string; email?: str
     setPending(true);
     const formData = new FormData(event.currentTarget);
     const nextEmail = String(formData.get("email") ?? "").trim();
-    const params = new URLSearchParams({ email: nextEmail });
-    if (invite) {
-      params.set("invite", invite);
-    }
-    router.push(`/signup/setup?${params}`);
+    router.push(`/signup/setup?${new URLSearchParams({ email: nextEmail })}`);
   }
 
   return (

@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryConsoleSessionStore implements ConsoleSessionStore {
@@ -32,6 +33,11 @@ public class InMemoryConsoleSessionStore implements ConsoleSessionStore {
     @Override
     public void delete(String sessionId) {
         sessions.remove(sessionId);
+    }
+
+    @Override
+    public void deleteByUserId(UUID userId) {
+        sessions.entrySet().removeIf(entry -> entry.getValue().session().userId().equals(userId));
     }
 
     private record Entry(Session session, Instant expiresAt) {}

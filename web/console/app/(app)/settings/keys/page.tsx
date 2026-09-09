@@ -1,5 +1,4 @@
 import { PageHeader } from "../../../../components/page-header";
-import { SettingsNav } from "../../../../components/settings-nav";
 import { consoleApi, type ApiKeyItem } from "../../../../lib/api";
 import { requireMe, sessionCookieHeader } from "../../../../lib/session";
 import { KeysManager } from "./keys-manager";
@@ -8,7 +7,12 @@ export const dynamic = "force-dynamic";
 
 export default async function KeysPage() {
   const me = await requireMe();
-  const keys = await consoleApi<ApiKeyItem[]>("/v1/console/api-keys", await sessionCookieHeader());
+  const permissions = me.permissions ?? [];
+  const canRead = permissions.includes("API_KEY_READ");
+  const canWrite = permissions.includes("API_KEY_WRITE");
+  const keys = canRead
+    ? await consoleApi<ApiKeyItem[]>("/v1/console/api-keys", await sessionCookieHeader())
+    : null;
 
   return (
     <main>
@@ -17,13 +21,16 @@ export default async function KeysPage() {
         title="Clés API"
         lead="Le secret n’est affiché qu’à l’émission."
       />
-      <SettingsNav />
-      {!keys.ok ? (
+      {!canRead ? (
         <p role="alert" className="rm-alert">
-          {keys.message}
+          Votre rôle ne permet pas de voir les clés API.
+        </p>
+      ) : !keys?.ok ? (
+        <p role="alert" className="rm-alert">
+          {keys?.message ?? "Impossible de charger les clés."}
         </p>
       ) : (
-        <KeysManager keys={keys.data} isOwner={me.role === "owner"} />
+        <KeysManager keys={keys.data} canWrite={canWrite} />
       )}
     </main>
   );

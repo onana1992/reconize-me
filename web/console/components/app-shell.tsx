@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { Logo, Wordmark } from "@kyc/brand";
 import { useT } from "../i18n/client";
+import { displayName, initials, tRole } from "../lib/labels";
 import { LanguageMenu } from "./language-menu";
 import { LogoutButton } from "./logout-button";
 import { NavIcon, type IconName } from "./nav-icons";
@@ -16,16 +17,20 @@ export type AppShellProps = {
   orgName: string;
   orgSlug: string;
   email: string;
+  firstName: string;
+  lastName: string;
   role: string;
   plan: string;
+  permissions: string[];
   children: ReactNode;
 };
 
 type NavLink = {
   href: string;
-  labelKey: "console.nav.home" | "console.nav.keys" | "console.nav.team" | "console.nav.account";
+  labelKey: "console.nav.home" | "console.nav.keys" | "console.nav.team" | "console.nav.activity" | "console.nav.account";
   icon: IconName;
   match: (path: string) => boolean;
+  permission?: string;
 };
 
 type SoonItem = {
@@ -44,8 +49,21 @@ const SOON: SoonItem[] = [
 ];
 
 const ORG: NavLink[] = [
-  { href: "/settings/keys", labelKey: "console.nav.keys", icon: "key", match: (path) => path.startsWith("/settings/keys") },
+  {
+    href: "/settings/keys",
+    labelKey: "console.nav.keys",
+    icon: "key",
+    match: (path) => path.startsWith("/settings/keys"),
+    permission: "API_KEY_READ",
+  },
   { href: "/settings/team", labelKey: "console.nav.team", icon: "team", match: (path) => path.startsWith("/settings/team") },
+  {
+    href: "/settings/activity",
+    labelKey: "console.nav.activity",
+    icon: "activity",
+    match: (path) => path.startsWith("/settings/activity"),
+    permission: "AUDIT_READ",
+  },
   {
     href: "/settings/account",
     labelKey: "console.nav.account",
@@ -54,12 +72,15 @@ const ORG: NavLink[] = [
   },
 ];
 
-function sectionTitle(path: string): "console.top.home" | "console.top.keys" | "console.top.team" | "console.top.account" {
+function sectionTitle(path: string): "console.top.home" | "console.top.keys" | "console.top.team" | "console.top.activity" | "console.top.account" {
   if (path.startsWith("/settings/keys")) {
     return "console.top.keys";
   }
   if (path.startsWith("/settings/team")) {
     return "console.top.team";
+  }
+  if (path.startsWith("/settings/activity")) {
+    return "console.top.activity";
   }
   if (path.startsWith("/settings/account")) {
     return "console.top.account";
@@ -71,7 +92,17 @@ function isDesktop() {
   return window.matchMedia(DESKTOP_MQ).matches;
 }
 
-export function AppShell({ orgName, orgSlug, email, plan, children }: AppShellProps) {
+export function AppShell({
+  orgName,
+  orgSlug,
+  email,
+  firstName,
+  lastName,
+  role,
+  plan,
+  permissions,
+  children,
+}: AppShellProps) {
   const t = useT();
   const pathname = usePathname();
   const navId = useId();
@@ -141,6 +172,9 @@ export function AppShell({ orgName, orgSlug, email, plan, children }: AppShellPr
   const planLabel = plan === "sandbox" ? t("console.plan.sandbox") : plan;
   const initial = (orgName.trim().charAt(0) || "R").toUpperCase();
   const railCollapsed = desktop && collapsed;
+  const profileName = displayName(firstName, lastName, email);
+  const profileInitials = initials(firstName, lastName, email);
+  const profileRole = role ? tRole(t, role) : "";
 
   return (
     <div
@@ -162,12 +196,15 @@ export function AppShell({ orgName, orgSlug, email, plan, children }: AppShellPr
             ))}
           </NavGroup>
           <NavGroup label={t("console.nav.solutions")} collapsed={railCollapsed}>
-            {SOON.map((item) => (
+            {(permissions.includes("VERIFICATION_READ")
+              ? SOON
+              : SOON.filter((item) => item.labelKey !== "console.nav.idv")
+            ).map((item) => (
               <SoonNavItem key={item.labelKey} item={item} />
             ))}
           </NavGroup>
           <NavGroup label={t("console.nav.organization")} collapsed={railCollapsed}>
-            {ORG.map((item) => (
+            {ORG.filter((item) => !item.permission || permissions.includes(item.permission)).map((item) => (
               <NavItem key={item.href} item={item} pathname={pathname} collapsed={railCollapsed} />
             ))}
           </NavGroup>
@@ -207,6 +244,17 @@ export function AppShell({ orgName, orgSlug, email, plan, children }: AppShellPr
             <NavIcon name={desktop ? (collapsed ? "expand" : "collapse") : mobileOpen ? "close" : "menu"} />
           </button>
           <p className="rm-shell-crumb">{t(sectionTitle(pathname))}</p>
+          {email ? (
+            <Link href="/settings/account" className="rm-shell-profile" title={profileName}>
+              <span className="rm-shell-initial" aria-hidden="true">
+                {profileInitials}
+              </span>
+              <span className="rm-shell-profile-meta">
+                <span className="rm-shell-profile-name">{profileName}</span>
+                <span className="rm-shell-profile-role">{profileRole}</span>
+              </span>
+            </Link>
+          ) : null}
         </header>
         <div className="rm-page">{children}</div>
       </div>

@@ -6,4 +6,5 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record InviteRequest(@NotBlank @Email @Size(max = 255) String email) {}
+public record InviteRequest(
+        @NotBlank @Email @Size(max = 255) String email, @Size(max = 16) String role) {}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getT } from "../../../i18n";
+import { redirectHomeIfSignedIn, safeNextPath } from "../../../lib/session";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -8,7 +9,8 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const params = await searchParams;
-  const next = params.next && params.next.startsWith("/") ? params.next : "/";
+  const next = safeNextPath(params.next);
+  await redirectHomeIfSignedIn(next);
   const t = await getT();
 
   return (

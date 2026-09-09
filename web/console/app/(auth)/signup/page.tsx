@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getLocale, getT } from "../../../i18n";
+import { peekInvite } from "../../../lib/api";
+import { redirectHomeIfSignedIn } from "../../../lib/session";
 import { sitePrivacyUrl } from "../../../lib/site";
+import { InvalidInvite } from "./invalid-invite";
 import { SignupForm } from "./signup-form";
 
 export default async function SignupPage({
@@ -14,11 +18,25 @@ export default async function SignupPage({
   const locale = await getLocale();
   const t = await getT();
 
+  if (invite) {
+    const preview = await peekInvite(invite);
+    if (!preview.ok) {
+      return <InvalidInvite title={t("signup.invalidTitle")} lead={t("signup.invalidLead")} login={t("signup.login")} />;
+    }
+    const next = new URLSearchParams({
+      email: preview.data.email,
+      invite,
+    });
+    redirect(`/signup/setup?${next}`);
+  }
+
+  await redirectHomeIfSignedIn();
+
   return (
     <main className="rm-card rm-auth-card">
       <h1>{t("signup.title")}</h1>
-      <p className="rm-lead">{invite ? t("signup.leadInvite") : t("signup.lead")}</p>
-      <SignupForm invite={invite} email={email} />
+      <p className="rm-lead">{t("signup.lead")}</p>
+      <SignupForm email={email} />
       <p className="rm-auth-legal">
         {t("signup.privacyBefore")}
         <a href={sitePrivacyUrl(locale)} target="_blank" rel="noreferrer">

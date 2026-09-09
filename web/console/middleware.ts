@@ -13,10 +13,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  if (session && (pathname === "/login" || pathname === "/signup" || pathname.startsWith("/signup/"))) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
   return NextResponse.next();
 }
 

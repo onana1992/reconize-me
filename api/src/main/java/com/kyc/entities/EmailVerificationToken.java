@@ -31,11 +31,19 @@ public class EmailVerificationToken {
     @Column(name = "consumed_at")
     private Instant consumedAt;
 
+    @Column(name = "invite_id")
+    private UUID inviteId;
+
     public EmailVerificationToken(UUID id, UUID userId, String tokenHash, Instant expiresAt) {
+        this(id, userId, tokenHash, expiresAt, null);
+    }
+
+    public EmailVerificationToken(UUID id, UUID userId, String tokenHash, Instant expiresAt, UUID inviteId) {
         this.id = id;
         this.userId = userId;
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
+        this.inviteId = inviteId;
     }
 
     public boolean usable(Instant now) {

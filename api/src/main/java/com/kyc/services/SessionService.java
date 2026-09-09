@@ -1,11 +1,14 @@
 package com.kyc.services;
 
 import com.kyc.config.KycProperties;
+import com.kyc.entities.Membership;
 import com.kyc.ports.ConsoleSessionStore;
 import com.kyc.ports.ConsoleSessionStore.Session;
+import com.kyc.repositories.MembershipRepository;
 import com.kyc.security.ConsolePrincipal;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
@@ -17,10 +20,13 @@ public class SessionService {
     private static final Duration TTL = Duration.ofDays(7);
 
     private final ConsoleSessionStore store;
+    private final MembershipRepository membershipRepository;
     private final KycProperties properties;
 
-    public SessionService(ConsoleSessionStore store, KycProperties properties) {
+    public SessionService(
+            ConsoleSessionStore store, MembershipRepository membershipRepository, KycProperties properties) {
         this.store = store;
+        this.membershipRepository = membershipRepository;
         this.properties = properties;
     }
 
@@ -34,8 +40,7 @@ public class SessionService {
         if (raw == null || raw.isBlank()) {
             return Optional.empty();
         }
-        return store.find(hash(raw))
-                .map(session -> new ConsolePrincipal(session.userId(), session.organizationId(), session.role()));
+        return store.find(hash(raw)).flatMap(this::principalFromMembership);
     }
 
     public void invalidate(String raw) {
@@ -43,6 +48,10 @@ public class SessionService {
             return;
         }
         store.delete(hash(raw));
+    }
+
+    public void invalidateUser(UUID userId) {
+        store.deleteByUserId(userId);
     }
 
     public ResponseCookie cookie(String raw) {
@@ -67,6 +76,15 @@ public class SessionService {
 
     public static void write(jakarta.servlet.http.HttpServletResponse response, ResponseCookie cookie) {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private Optional<ConsolePrincipal> principalFromMembership(Session session) {
+        return membershipRepository
+                .findByUserId(session.userId())
+                .filter(membership -> membership.getOrganizationId().equals(session.organizationId()))
+                .filter(Membership::isActive)
+                .map(membership ->
+                        new ConsolePrincipal(session.userId(), membership.getOrganizationId(), membership.getRole()));
     }
 
     private String hash(String raw) {

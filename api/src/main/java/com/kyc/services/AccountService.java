@@ -1,6 +1,7 @@
 package com.kyc.services;
 
 import com.kyc.config.KycProperties;
+import com.kyc.dto.account.InvitePreviewResponse;
 import com.kyc.dto.account.IssuedApiKeyResponse;
 import com.kyc.dto.account.SignupResponse;
 import com.kyc.entities.AuditEvent;
@@ -19,6 +20,7 @@ import com.kyc.repositories.OrganizationRepository;
 import com.kyc.repositories.PasswordResetTokenRepository;
 import com.kyc.repositories.UserRepository;
 import com.kyc.security.ConsolePrincipal;
+import com.kyc.security.ConsoleRole;
 import com.kyc.web.ApiException;
 import java.time.Duration;
 import java.time.Instant;
@@ -121,8 +123,14 @@ public class AccountService {
                     invite.getOrganizationId(), "user", userId, "user.registered", "user", userId, "{}", now));
         }
 
-        issueVerificationMail(user, now);
+        issueVerificationMail(user, now, invite == null ? null : invite.getId());
         return new SignupResponse(userId);
+    }
+
+    public InvitePreviewResponse peekInvite(String inviteToken) {
+        Instant now = Instant.now();
+        MembershipInvite invite = resolveInvite(inviteToken, now).orElseThrow(ApiException::invalidOrExpiredToken);
+        return new InvitePreviewResponse(invite.getEmail(), invite.getRole(), invite.getExpiresAt());
     }
 
     @Transactional
@@ -134,20 +142,23 @@ public class AccountService {
                 .orElseThrow(ApiException::invalidOrExpiredToken);
 
         User user = userRepository.findById(token.getUserId()).orElseThrow(ApiException::invalidOrExpiredToken);
+        Membership membership = membershipRepository.findByUserId(user.getId()).orElse(null);
+        MembershipInvite inviteToAccept = null;
+        if (membership == null) {
+            inviteToAccept = requirePendingInviteForVerify(token, user, now);
+        }
+
         token.consume(now);
         if (!user.isVerified()) {
             user.markVerified(now);
         }
-
-        Membership membership = membershipRepository.findByUserId(user.getId()).orElse(null);
         if (membership == null) {
-            MembershipInvite invite = membershipInviteRepository
-                    .findFirstByEmailAndAcceptedAtIsNullOrderByCreatedAtDesc(user.getEmail())
-                    .filter(row -> row.pending(now))
-                    .orElseThrow(ApiException::invalidOrExpiredToken);
             membership = membershipRepository.save(new Membership(
-                    user.getId(), invite.getOrganizationId(), Membership.ROLE_MEMBER, now));
-            invite.accept(now);
+                    user.getId(),
+                    inviteToAccept.getOrganizationId(),
+                    ConsoleRole.fromInvite(inviteToAccept.getRole()),
+                    now));
+            inviteToAccept.accept(now);
         }
 
         auditEventRepository.save(new AuditEvent(
@@ -173,7 +184,7 @@ public class AccountService {
         if (user.isEmpty() || user.get().isVerified()) {
             return;
         }
-        issueVerificationMail(user.get(), Instant.now());
+        issueVerificationMail(user.get(), Instant.now(), pendingInviteId(user.get().getId()));
     }
 
     @Transactional
@@ -181,6 +192,9 @@ public class AccountService {
         String normalized = normalizeEmail(email);
         User user = userRepository.findByEmail(normalized).orElse(null);
         if (user == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            if (user != null) {
+                auditLoginFailed(user);
+            }
             log.info("user.login_failed");
             throw ApiException.unauthorized("invalid_credentials", INVALID_CREDENTIALS);
         }
@@ -190,6 +204,9 @@ public class AccountService {
         Membership membership = membershipRepository
                 .findByUserId(user.getId())
                 .orElseThrow(() -> ApiException.unauthorized("invalid_credentials", INVALID_CREDENTIALS));
+        if (!membership.isActive()) {
+            throw ApiException.forbidden("membership_disabled", "This membership is disabled");
+        }
         return sessionService.create(new ConsolePrincipal(user.getId(), membership.getOrganizationId(), membership.getRole()));
     }
 
@@ -240,32 +257,89 @@ public class AccountService {
         if (membershipRepository.existsByUserId(user.getId())) {
             throw ApiException.conflict("already_in_organization", "This account already belongs to an organization");
         }
-        membershipRepository.save(new Membership(user.getId(), invite.getOrganizationId(), Membership.ROLE_MEMBER, now));
+        membershipRepository.save(new Membership(
+                user.getId(), invite.getOrganizationId(), ConsoleRole.fromInvite(invite.getRole()), now));
         invite.accept(now);
     }
 
     @Transactional
-    public MembershipInvite createInvite(UUID organizationId, UUID actorUserId, String email) {
+    public MembershipInvite createInvite(UUID organizationId, UUID actorUserId, String email, String role) {
+        String assignedRole = ConsoleRole.requireInvitable(role).value();
         String normalized = normalizeEmail(email);
         Instant now = Instant.now();
         Optional<User> existing = userRepository.findByEmail(normalized);
         if (existing.isPresent() && membershipRepository.existsByOrganizationIdAndUserId(organizationId, existing.get().getId())) {
             throw ApiException.conflict("already_member", "This email is already a member");
         }
+        Optional<MembershipInvite> open = membershipInviteRepository.findByOrganizationIdAndPendingKey(organizationId, normalized);
+        if (open.isPresent() && open.get().pending(now)) {
+            throw ApiException.conflict("already_invited", "An invitation is already pending for this email");
+        }
         String raw = CryptoTokens.randomHostedToken();
-        MembershipInvite invite = membershipInviteRepository.save(new MembershipInvite(
-                UUID.randomUUID(),
-                organizationId,
-                normalized,
-                Membership.ROLE_MEMBER,
-                hashToken(raw),
-                now.plus(INVITE_TTL),
-                now));
-        String correlation = existing.map(user -> user.getId().toString()).orElse("invite:" + invite.getId());
-        mailPort.send(normalized, correlation, "team_invite", properties.consoleUrl("/signup?invite=" + raw));
-        auditEventRepository.save(new AuditEvent(
-                organizationId, "user", actorUserId, "membership.invited", "membership_invite", invite.getId(), "{}", now));
+        MembershipInvite invite;
+        if (open.isPresent() && open.get().open()) {
+            invite = open.get();
+            invite.rotate(hashToken(raw), now.plus(INVITE_TTL), assignedRole);
+        } else {
+            invite = membershipInviteRepository.save(new MembershipInvite(
+                    UUID.randomUUID(),
+                    organizationId,
+                    normalized,
+                    assignedRole,
+                    hashToken(raw),
+                    now.plus(INVITE_TTL),
+                    now));
+        }
+        sendInviteMail(invite, raw, actorUserId, "membership.invited", now);
         return invite;
+    }
+
+    @Transactional
+    public void resendInvite(UUID organizationId, UUID actorUserId, UUID inviteId) {
+        Instant now = Instant.now();
+        MembershipInvite invite = requireOpenInvite(organizationId, inviteId);
+        String raw = CryptoTokens.randomHostedToken();
+        invite.rotate(hashToken(raw), now.plus(INVITE_TTL));
+        sendInviteMail(invite, raw, actorUserId, "membership.invite_resent", now);
+    }
+
+    @Transactional
+    public void cancelInvite(UUID organizationId, UUID actorUserId, UUID inviteId) {
+        Instant now = Instant.now();
+        MembershipInvite invite = requireOpenInvite(organizationId, inviteId);
+        invite.cancel(now, hashToken(CryptoTokens.randomHostedToken()));
+        auditEventRepository.save(new AuditEvent(
+                organizationId,
+                "user",
+                actorUserId,
+                "membership.invite_cancelled",
+                "membership_invite",
+                invite.getId(),
+                "{}",
+                now));
+    }
+
+    private MembershipInvite requireOpenInvite(UUID organizationId, UUID inviteId) {
+        return membershipInviteRepository
+                .findById(inviteId)
+                .filter(row -> row.getOrganizationId().equals(organizationId) && row.open())
+                .orElseThrow(() -> ApiException.notFound("Invite not found"));
+    }
+
+    private void sendInviteMail(
+            MembershipInvite invite, String raw, UUID actorUserId, String action, Instant now) {
+        Optional<User> existing = userRepository.findByEmail(invite.getEmail());
+        String correlation = existing.map(user -> user.getId().toString()).orElse("invite:" + invite.getId());
+        mailPort.send(invite.getEmail(), correlation, "team_invite", properties.consoleUrl("/signup?invite=" + raw));
+        auditEventRepository.save(new AuditEvent(
+                invite.getOrganizationId(),
+                "user",
+                actorUserId,
+                action,
+                "membership_invite",
+                invite.getId(),
+                "{}",
+                now));
     }
 
     @Transactional
@@ -277,15 +351,47 @@ public class AccountService {
         user.setPasswordHash(passwordEncoder.encode(newPassword));
     }
 
-    private void issueVerificationMail(User user, Instant now) {
+    private void auditLoginFailed(User user) {
+        membershipRepository.findByUserId(user.getId()).ifPresent(membership -> auditEventRepository.save(new AuditEvent(
+                membership.getOrganizationId(),
+                "user",
+                user.getId(),
+                "user.login_failed",
+                "user",
+                user.getId(),
+                "{}",
+                Instant.now())));
+    }
+
+    private void issueVerificationMail(User user, Instant now, UUID inviteId) {
         for (EmailVerificationToken existing :
                 emailVerificationTokenRepository.findByUserIdAndConsumedAtIsNull(user.getId())) {
             existing.consume(now);
         }
         String raw = CryptoTokens.randomHostedToken();
-        emailVerificationTokenRepository.save(
-                new EmailVerificationToken(UUID.randomUUID(), user.getId(), hashToken(raw), now.plus(VERIFY_TTL)));
+        emailVerificationTokenRepository.save(new EmailVerificationToken(
+                UUID.randomUUID(), user.getId(), hashToken(raw), now.plus(VERIFY_TTL), inviteId));
         mailPort.send(user.getEmail(), user.getId().toString(), "email_verify", properties.consoleUrl("/verify?token=" + raw));
+    }
+
+    private UUID pendingInviteId(UUID userId) {
+        return emailVerificationTokenRepository
+                .findFirstByUserIdOrderByExpiresAtDesc(userId)
+                .map(EmailVerificationToken::getInviteId)
+                .orElse(null);
+    }
+
+    private MembershipInvite requirePendingInviteForVerify(EmailVerificationToken token, User user, Instant now) {
+        if (token.getInviteId() != null) {
+            return membershipInviteRepository
+                    .findById(token.getInviteId())
+                    .filter(row -> row.pending(now) && row.getEmail().equals(user.getEmail()))
+                    .orElseThrow(ApiException::invalidOrExpiredToken);
+        }
+        return membershipInviteRepository
+                .findFirstByEmailAndAcceptedAtIsNullAndCancelledAtIsNullOrderByCreatedAtDesc(user.getEmail())
+                .filter(row -> row.pending(now))
+                .orElseThrow(ApiException::invalidOrExpiredToken);
     }
 
     private Optional<MembershipInvite> resolveInvite(String inviteToken, Instant now) {

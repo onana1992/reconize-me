@@ -16,4 +16,8 @@ public interface MembershipRepository extends JpaRepository<Membership, Membersh
     boolean existsByUserId(UUID userId);
 
     boolean existsByOrganizationIdAndUserId(UUID organizationId, UUID userId);
+
+    long countByOrganizationIdAndRole(UUID organizationId, String role);
+
+    long countByOrganizationIdAndRoleAndStatus(UUID organizationId, String role, String status);
 }

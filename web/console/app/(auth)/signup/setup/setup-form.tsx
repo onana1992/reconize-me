@@ -16,7 +16,7 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const backQuery = new URLSearchParams({ email, ...(invite ? { invite } : {}) });
+  const backHref = invite ? "/login" : `/signup?${new URLSearchParams({ email })}`;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,8 +126,8 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
       ) : null}
 
       <div className="su-actions">
-        <Link href={`/signup?${backQuery}`} className="su-back">
-          ← {t("setup.back")}
+        <Link href={backHref} className="su-back">
+          ← {invite ? t("signup.login") : t("setup.back")}
         </Link>
         <button type="submit" className="su-submit" disabled={pending}>
           {pending ? t("setup.pending") : t("setup.continue")}

@@ -5,6 +5,7 @@ export type Me = {
   first_name?: string | null;
   last_name?: string | null;
   role: string;
+  permissions: string[];
   organization: { id: string; name: string; slug: string; plan: string };
 };
 
@@ -22,8 +23,24 @@ export type IssuedApiKey = {
 };
 
 export type Team = {
-  members: { id: string; email: string; role: string; created_at: string }[];
+  members: { id: string; email: string; role: string; status: string; created_at: string }[];
   invites: { id: string; email: string; role: string; expires_at: string }[];
+};
+
+export type AuditEvent = {
+  id: number;
+  action: string;
+  actor_type: string;
+  actor_id: string | null;
+  resource_type: string;
+  resource_id: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type AuditList = {
+  events: AuditEvent[];
+  next_cursor: string | null;
 };
 
 export type ApiResult<T> =
@@ -133,6 +150,16 @@ export async function consoleApi<T>(path: string, cookieHeader: string, init?: R
   } catch {
     return errorBody(503, "dependency_unavailable", "API indisponible");
   }
+}
+
+export type InvitePreview = {
+  email: string;
+  role: string;
+  expires_at: string;
+};
+
+export function peekInvite(token: string): Promise<ApiResult<InvitePreview>> {
+  return accountApi(`/v1/account/invites?token=${encodeURIComponent(token)}`);
 }
 
 export function getMeWithCookie(cookieHeader: string): Promise<ApiResult<Me>> {

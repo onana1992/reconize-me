@@ -2480,14 +2480,16 @@ body {
 }
 
 .rm-form input,
-.rm-form textarea {
+.rm-form textarea,
+.rm-form select {
   transition:
     border-color var(--rm-duration-fast) var(--rm-ease),
     box-shadow var(--rm-duration-fast) var(--rm-ease);
 }
 
 .rm-form input:hover,
-.rm-form textarea:hover {
+.rm-form textarea:hover,
+.rm-form select:hover {
   border-color: var(--rm-text-muted);
 }
 

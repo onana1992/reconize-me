@@ -7,9 +7,24 @@ import { requireMe } from "../../lib/session";
 export default async function HomePage() {
   const me = await requireMe();
   const t = await getT();
-  const role = me.role === "owner" ? t("console.role.owner") : me.role === "member" ? t("console.role.member") : me.role;
+  const roleKey =
+    me.role === "owner"
+      ? "console.role.owner"
+      : me.role === "admin"
+        ? "console.role.admin"
+        : me.role === "readonly"
+          ? "console.role.readonly"
+          : me.role === "developer"
+            ? "console.role.developer"
+            : me.role === "member"
+              ? "console.role.member"
+              : null;
+  const role = roleKey ? t(roleKey) : me.role;
   const planLabel = me.organization.plan === "sandbox" ? t("console.plan.sandbox") : me.organization.plan;
   const signedIn = t("console.home.signedIn").replace("{email}", me.email).replace("{role}", role);
+  const permissions = me.permissions ?? [];
+  const canReadKeys = permissions.includes("API_KEY_READ");
+  const canReadVerifications = permissions.includes("VERIFICATION_READ");
 
   return (
     <main className="rm-dash">
@@ -35,10 +50,12 @@ export default async function HomePage() {
       <section className="rm-section">
         <h2>{t("console.home.orgTitle")}</h2>
         <div className="rm-link-grid">
-          <Link href="/settings/keys" className="rm-card rm-link-card">
-            <h3>{t("console.nav.keys")}</h3>
-            <p>{t("console.home.keysLead")}</p>
-          </Link>
+          {canReadKeys ? (
+            <Link href="/settings/keys" className="rm-card rm-link-card">
+              <h3>{t("console.nav.keys")}</h3>
+              <p>{t("console.home.keysLead")}</p>
+            </Link>
+          ) : null}
           <Link href="/settings/team" className="rm-card rm-link-card">
             <h3>{t("console.nav.team")}</h3>
             <p>{t("console.home.teamLead")}</p>
@@ -49,13 +66,15 @@ export default async function HomePage() {
         <h2>{t("console.home.platformTitle")}</h2>
         <p className="rm-lead">{t("console.home.platformLead")}</p>
         <div className="rm-link-grid">
-          <div className="rm-card rm-link-card" data-soon="true" title={t("console.home.waitlist")}>
-            <p className="rm-card-meta">
-              <StatusBadge label={t("console.nav.soon")} tone="neutral" />
-            </p>
-            <h3>{t("console.home.idvTitle")}</h3>
-            <p>{t("console.home.idvCardLead")}</p>
-          </div>
+          {canReadVerifications ? (
+            <div className="rm-card rm-link-card" data-soon="true" title={t("console.home.waitlist")}>
+              <p className="rm-card-meta">
+                <StatusBadge label={t("console.nav.soon")} tone="neutral" />
+              </p>
+              <h3>{t("console.home.idvTitle")}</h3>
+              <p>{t("console.home.idvCardLead")}</p>
+            </div>
+          ) : null}
           <div className="rm-card rm-link-card" data-soon="true" title={t("console.home.waitlist")}>
             <p className="rm-card-meta">
               <StatusBadge label={t("console.nav.soon")} tone="neutral" />

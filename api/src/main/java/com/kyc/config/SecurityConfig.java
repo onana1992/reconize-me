@@ -32,7 +32,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));
         config.setAllowCredentials(true);
@@ -76,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/v1/account/password/reset")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/account/invites/accept")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/account/invites")
                         .permitAll()
                         .requestMatchers("/v1/account/**", "/v1/console/**")
                         .authenticated()

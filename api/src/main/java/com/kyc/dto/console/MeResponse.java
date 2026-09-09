@@ -1,6 +1,7 @@
 package com.kyc.dto.console;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import java.util.UUID;
 
 public record MeResponse(
@@ -8,7 +9,8 @@ public record MeResponse(
         @JsonProperty("first_name") String firstName,
         @JsonProperty("last_name") String lastName,
         OrganizationMe organization,
-        String role) {
+        String role,
+        List<String> permissions) {
 
     public record OrganizationMe(UUID id, String name, String slug, String plan) {}
 }

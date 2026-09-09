@@ -2,8 +2,8 @@
 
 **Plateforme :** Recogniz-Me  
 **Livrable :** premier service vendable (marque, vitrine, compte, souscription, IDV)  
-**Version du document :** 1.1 — M1 livré (as-built), vitrine bilingue  
-**Date :** 2 septembre 2026  
+**Version du document :** 1.2 — M2 livré ; cycle équipe T0–T4 livrés  
+**Date :** 7 septembre 2026  
 **Statut :** ordre de build du MVP  
 **Documents liés :**
 - [`cahier-des-charges-mvp.md`](./cahier-des-charges-mvp.md) — *quoi* (contrat métier)
@@ -11,8 +11,9 @@
 - [`../specs/specification-fonctionnelle-idv.md`](../specs/specification-fonctionnelle-idv.md) — métier IDV
 - [`../specs/guide-implementation-s1.md`](../specs/guide-implementation-s1.md) — fondation **livrée**
 - [`../specs/guide-implementation-s2.md`](../specs/guide-implementation-s2.md) — capture (à reprendre dans M4, **sans** dataset)
-- [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte (spécification as-built)
+- [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + équipe T (spécification as-built)
 - [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
+- [`roadmap-implementation-team.md`](./roadmap-implementation-team.md) — cycle T (équipe type Onfido / Veriff)
 - [`charte-visuelle.md`](./charte-visuelle.md) — M0 **livré** (as-built)
 
 Ce document dit **quand** et **dans quel ordre** on construit le MVP. Le *quoi* reste dans le CDC. Un sprint n’est pas vert sans son **livrable démontrable**.
@@ -56,6 +57,7 @@ S1 fondation (fait)
         │                     │                   │
         └──────────────► M2 comptes ──► M3 Stripe │
                               │                   │
+                              ├────────► T équipe (T1 ∥ M4 ; T2 avec M3)
                               ▼                   │
                          M4 capture + IDV stub ◄──┘ (tokens M0)
                               │
@@ -72,6 +74,7 @@ S1 fondation (fait)
 | **M0** | Marque | Charte + tokens sur console et flow existants | **Livré** ([charte](./charte-visuelle.md)) |
 | **M1** | Vitrine | Site public, pages CDC §8.1, CTA compte | **Livré** (`web/site`, FR + EN) |
 | **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | **Livré** ([spec](./specification-m2-compte-client.md)) |
+| **T** | Équipe | Cycle de vie puis rôles type Onfido / Veriff | **T0–T4 livrés** ([roadmap](./roadmap-implementation-team.md)) |
 | **M3** | Souscription | Checkout test → Production → `ky_live_` → usage | à faire |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
 | **M5** | IDV live | Textract + Rekognition + webhook résultat | à faire |
@@ -83,6 +86,8 @@ S1 fondation (fait)
 |---|---|
 | **M1 ∥ M2** | Tokens M0 fusionnés (même logo, mêmes actions) |
 | **M3** après M2 seulement | — |
+| **T1 ∥ M4** | M2 vert ; [roadmap équipe](./roadmap-implementation-team.md) |
+| **T2** avant ou avec **M3** | Helper de droits (`BILLING_*`) avant les routes Stripe |
 | **M4** après M2 (console authentifiée) ; capture peut démarrer dès M0 si la session S1 suffit, mais la **démo M4** se fait en compte connecté | Cookies console en place |
 | **M5** après **M4 et M3** | Stub métier vert **et** clés live existantes |
 | Contenu légal / tarifs | Rédaction dès M1 ; **prix figés avant M3** |

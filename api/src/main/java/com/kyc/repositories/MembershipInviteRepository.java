@@ -10,7 +10,10 @@ public interface MembershipInviteRepository extends JpaRepository<MembershipInvi
 
     Optional<MembershipInvite> findByTokenHash(String tokenHash);
 
-    List<MembershipInvite> findByOrganizationIdAndAcceptedAtIsNullOrderByCreatedAtAsc(UUID organizationId);
+    List<MembershipInvite> findByOrganizationIdAndAcceptedAtIsNullAndCancelledAtIsNullOrderByCreatedAtAsc(
+            UUID organizationId);
 
-    Optional<MembershipInvite> findFirstByEmailAndAcceptedAtIsNullOrderByCreatedAtDesc(String email);
+    Optional<MembershipInvite> findFirstByEmailAndAcceptedAtIsNullAndCancelledAtIsNullOrderByCreatedAtDesc(String email);
+
+    Optional<MembershipInvite> findByOrganizationIdAndPendingKey(UUID organizationId, String pendingKey);
 }

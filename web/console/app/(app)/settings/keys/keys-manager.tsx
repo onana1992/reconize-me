@@ -8,7 +8,7 @@ import { createApiKeyAction, revokeApiKeyAction } from "../actions";
 import type { ApiKeyItem, IssuedApiKey } from "../../../../lib/api";
 import { formatUtc } from "../../../../lib/status";
 
-export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: boolean }) {
+export function KeysManager({ keys, canWrite }: { keys: ApiKeyItem[]; canWrite: boolean }) {
   const router = useRouter();
   const [issued, setIssued] = useState<IssuedApiKey | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: bo
     const result = await createApiKeyAction();
     setPending(false);
     if (!result.ok) {
-      setError(result.code === "forbidden" ? "Seul le propriétaire peut émettre une clé." : result.message);
+      setError(result.code === "forbidden" ? "Vous n’avez pas le droit d’émettre une clé." : result.message);
       return;
     }
     setIssued(result.data);
@@ -31,7 +31,7 @@ export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: bo
     setError(null);
     const result = await revokeApiKeyAction(id);
     if (!result.ok) {
-      setError(result.code === "forbidden" ? "Seul le propriétaire peut révoquer une clé." : result.message);
+      setError(result.code === "forbidden" ? "Vous n’avez pas le droit de révoquer une clé." : result.message);
       return;
     }
     router.refresh();
@@ -46,7 +46,7 @@ export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: bo
           value={issued.key}
         />
       ) : null}
-      {isOwner ? (
+      {canWrite ? (
         <p>
           <button type="button" onClick={createKey} disabled={pending}>
             {pending ? "Émission…" : "Émettre une clé ky_test_"}
@@ -70,7 +70,7 @@ export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: bo
                 <th>Préfixe</th>
                 <th>Créée</th>
                 <th>État</th>
-                {isOwner ? <th></th> : null}
+                {canWrite ? <th></th> : null}
               </tr>
             </thead>
             <tbody>
@@ -83,7 +83,7 @@ export function KeysManager({ keys, isOwner }: { keys: ApiKeyItem[]; isOwner: bo
                   <td>
                     <StatusBadge label={key.revoked ? "Révoquée" : "Active"} tone={key.revoked ? "neutral" : "success"} />
                   </td>
-                  {isOwner ? (
+                  {canWrite ? (
                     <td>
                       {key.revoked ? null : (
                         <button type="button" data-variant="danger" onClick={() => revoke(key.id)}>

@@ -24,6 +24,10 @@ export function LoginForm({ next }: { next: string }) {
           setError(t("login.emailUnverified"));
           return;
         }
+        if (result.code === "membership_disabled") {
+          setError(t("login.membershipDisabled"));
+          return;
+        }
         if (result.code === "invalid_credentials") {
           setError(t("login.invalidCredentials"));
           return;

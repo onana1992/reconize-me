@@ -61,6 +61,7 @@ npm run check -w web/site   # parité des traductions, typecheck, build SSG, con
 
 - **MVP SaaS (contrat d’implémentation actuel)** : `docs/MVP/cahier-des-charges-mvp.md` — marque, vitrine, comptes, souscription, IDV via AWS / stubs
 - Roadmap MVP : `docs/MVP/roadmap-implementation-mvp.md`
+- Roadmap équipe (cycle T) : `docs/MVP/roadmap-implementation-team.md`
 - Charte visuelle (M0 livré) : `docs/MVP/charte-visuelle.md`
 - Cahier des charges (vision produit) : `docs/cahier-des-charges.md`
 - Identity & Document Verification (métier) : `docs/specs/specification-fonctionnelle-idv.md`
