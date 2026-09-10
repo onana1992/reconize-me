@@ -14,6 +14,8 @@
 - [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + équipe T (spécification as-built)
 - [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`roadmap-implementation-team.md`](./roadmap-implementation-team.md) — cycle T (équipe type Onfido / Veriff)
+- [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + IDV stub (*quoi*)
+- [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) — M4 ordre de build C1–C4
 - [`charte-visuelle.md`](./charte-visuelle.md) — M0 **livré** (as-built)
 
 Ce document dit **quand** et **dans quel ordre** on construit le MVP. Le *quoi* reste dans le CDC. Un sprint n’est pas vert sans son **livrable démontrable**.
@@ -245,6 +247,9 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 **Durée :** 2 semaines.  
 **CDC :** §11 (stub). **Objectif O5 (sandbox).**  
 **Prérequis :** S1, M2 (démo en compte). Tokens M0 sur le flow.
+
+**Spécification :** [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md).  
+**Ordre de build :** [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) (C1–C4).
 
 Reprend le [guide S2](../specs/guide-implementation-s2.md) pour la **capture pièce**, puis **étend** (le guide S2 s’arrête avant selfie et OCR) :
 

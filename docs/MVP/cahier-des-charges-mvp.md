@@ -11,6 +11,8 @@
 
 - [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) — *quand* (ordre de build)
 - [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + cycle équipe T0–T4 (architecture, données, UC, règles)
+- [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + pipeline IDV stub (sandbox)
+- [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) — M4 ordre de build C1–C4
 - [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) — vision produit (moteurs IA propriétaires, hors MVP)
 - [`../specs/specification-fonctionnelle-idv.md`](../specs/specification-fonctionnelle-idv.md) — métier Identity & Document Verification
