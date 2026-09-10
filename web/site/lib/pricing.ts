@@ -1,13 +1,6 @@
 /*
- * Chiffres de l'offre.
- *
- * Les montants et les quotas ne sont pas du texte : ils ne vivent pas dans les
- * dictionnaires, ils sont formatés par langue. Le gel des prix en M3 (roadmap
- * §6) ne touche que ce fichier.
- *
- * PROVISOIRE — devise et montants restent à figer avant le premier Checkout.
- * La page tarifs affiche l'avertissement correspondant tant que `PROVISIONAL`
- * est vrai.
+ * Organization credit is debited per live resource. Sandbox is always free.
+ * Amounts stay provisional until Stripe card Checkout (M3).
  */
 
 import type { Locale } from "./locales";
@@ -18,15 +11,9 @@ export const PROVISIONAL: boolean = true;
 const CURRENCY = "EUR";
 
 export const PRICING = {
-  sandbox: {
-    monthly: 0,
-    included: 50,
-  },
-  production: {
-    monthly: 49,
-    included: 200,
-    /** Au-delà du forfait, à l'unité. */
-    overage: 0.9,
+  identity: {
+    /** Prix unitaire d'une vérification live. Le sandbox est à 0. */
+    liveUnit: 0.9,
   },
 } as const;
 

@@ -1,9 +1,9 @@
 # Roadmap d’implémentation — MVP SaaS
 
 **Plateforme :** Recogniz-Me  
-**Livrable :** premier service vendable (marque, vitrine, compte, souscription, IDV)  
-**Version du document :** 1.2 — M2 livré ; cycle équipe T0–T4 livrés  
-**Date :** 7 septembre 2026  
+**Livrable :** premier service vendable (marque, vitrine, compte, crédit d’organisation, IDV)  
+**Version du document :** 1.4 — crédit d’organisation, recharge carte ; pas de facturation produit  
+**Date :** 9 septembre 2026  
 **Statut :** ordre de build du MVP  
 **Documents liés :**
 - [`cahier-des-charges-mvp.md`](./cahier-des-charges-mvp.md) — *quoi* (contrat métier)
@@ -24,7 +24,7 @@ La [roadmap IDV S3–S9](../specs/roadmap-implementation-idv.md) (SageMaker, dat
 
 ## 1. Cible
 
-**Happy path commercial :** un visiteur comprend l’offre sur la vitrine → crée un compte → obtient une clé sandbox → l’applicant va au bout du lien (pièce + visage) → une **décision justifiée** apparaît en console → le client passe en Production (Stripe) et crée une clé live.
+**Happy path commercial :** un visiteur comprend l’offre sur la vitrine → crée un compte → obtient une clé sandbox → l’applicant va au bout du lien (pièce + visage) → une **décision justifiée** apparaît en console → le client recharge par carte et crée une clé live.
 
 Sans ce chemin, le MVP n’est pas livré — même si un morceau d’IDV ou de design est « presque fini ».
 
@@ -39,7 +39,7 @@ Sans ce chemin, le MVP n’est pas livré — même si un morceau d’IDV ou de 
 5. **Un livrable démontrable par sprint.** Si le critère n’est pas là, on n’ouvre pas le sprint suivant de la même chaîne.
 6. **Vérité commerciale** — biométrie auth et AML restent des pages teaser ; jamais un bouton d’activation.
 
-**Kill (tout le MVP) :** fuite tenant ; PII, mot de passe, clé brute ou CB dans les logs ; paiement live sans CGU/privacy ; `ky_live_` sans abonnement actif ; vitrine qui vend AML / biométrie.
+**Kill (tout le MVP) :** fuite tenant ; PII, mot de passe, clé brute ou CB dans les logs ; paiement live sans CGU/privacy ; `ky_live_` sans crédit suffisant ; vitrine qui vend AML / biométrie.
 
 ---
 
@@ -75,7 +75,7 @@ S1 fondation (fait)
 | **M1** | Vitrine | Site public, pages CDC §8.1, CTA compte | **Livré** (`web/site`, FR + EN) |
 | **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | **Livré** ([spec](./specification-m2-compte-client.md)) |
 | **T** | Équipe | Cycle de vie puis rôles type Onfido / Veriff | **T0–T4 livrés** ([roadmap](./roadmap-implementation-team.md)) |
-| **M3** | Souscription | Checkout test → Production → `ky_live_` → usage | à faire |
+| **M3** | Facturation | Checkout carte test → crédit → `ky_live_` → débit à l’unité | à faire |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
 | **M5** | IDV live | Textract + Rekognition + webhook résultat | à faire |
 | **M6** | Go-live | Rate limit, rétention affichée, staging, 1 design partner sandbox | à faire |
@@ -134,19 +134,19 @@ Les exports PNG du logo ont suivi : générés par script, audités, décrits en
 |---|---|
 | Pages §8.1 (accueil, 3 produits, tarifs, sécurité, docs, légal, contact) | Blog, CMS |
 | **FR + EN** (arbitré en cours de sprint : l’anglais entre au périmètre, CDC v1.1 §8) | Troisième langue |
-| CTA primaire → signup console (URL M2 ; placeholder `/signup` acceptable tant que M2 n’est pas fusionné) | Checkout Stripe |
-| Teasers biométrie / AML **sans** essayer / souscrire | Certifications inventées |
+| CTA primaire → signup console (URL M2 ; placeholder `/signup` acceptable tant que M2 n’est pas fusionné) | Moyen de paiement Stripe |
+| Teasers biométrie / AML **sans** essayer / acheter | Certifications inventées |
 | SEO de base, OG, favicon charte | Appels API métier depuis la vitrine |
 
 **Travaux**
 
 - App Next.js `web/site`, SSG, tokens M0.
 - Copy : corridor **court et vrai** ; pas d’IA propriétaire ; délai « quelques minutes ».
-- `/pricing` : Sandbox + Production (montants **provisoires** jusqu’au freeze M3).
+- `/pricing` : sandbox gratuit, live IDV à l’unité (montants **provisoires** jusqu’au freeze M3).
 - Brouillons `/legal/terms`, `/privacy`, `/dpa` dans le repo.
 - Contact : e-mail ou formulaire + honeypot.
 
-**Démo :** parcours accueil → IDV → tarifs → teaser AML (pas de souscrire) → CTA compte.  
+**Démo :** parcours accueil → IDV → tarifs → teaser AML (pas de bouton d’achat) → CTA compte.  
 **Kill :** page qui présente AML ou biométrie comme activable ; « 200+ documents ».
 
 **As-built**
@@ -158,7 +158,7 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 | i18n | Dictionnaires JSON `messages/{fr,en}.json`, **sans dépendance** : le type `Messages` est inféré de `fr.json`, donc une clé absente en anglais casse le typecheck |
 | Routage | Segment `[locale]`, les deux langues préfixées ; middleware pour négocier `Accept-Language` sur une URL sans préfixe |
 | URL | Segments identiques dans les deux langues (CDC RG-SITE-04) : changer de langue conserve la page lue |
-| Tarifs | Montants et quotas dans `lib/pricing.ts`, formatés par `Intl` — le gel M3 ne touche qu’un fichier |
+| Tarifs | Prix unitaire IDV live dans `lib/pricing.ts`, formatés par `Intl` — le gel M3 ne touche qu’un fichier |
 | Contact | Honeypot + validation serveur ; acheminement par `CONTACT_WEBHOOK_URL`. **Sans cette variable le formulaire refuse d’envoyer** et renvoie vers l’e-mail direct, plutôt que d’afficher un faux succès |
 | Indexation | Refusée par défaut (`NEXT_PUBLIC_SITE_INDEXABLE`), pour qu’un aperçu ne soit pas indexé |
 | Garde-fous | `check:messages` (parité des clés, arité des listes, chaînes vides) et `check:seo` (canonique, `hreflang`, OG existante sur les 22 pages) |
@@ -182,7 +182,7 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 |---|---|
 | `User`, `Membership`, tokens e-mail / reset | SSO, 2FA, multi-org |
 | Signup, verify, login, logout, forgot password | Facturation (M3) |
-| Création org + slug unique + plan Sandbox | Clés `ky_live_` |
+| Création org + slug unique ; sandbox gratuit (pas un plan) | Clés `ky_live_` |
 | Cookie session httpOnly (console) ; API `/v1` **reste** Bearer | Auth API par cookie |
 | Rôles propriétaire / membre + invitation e-mail | SCIM, RBAC fin |
 | Écrans : login, signup, clés API (test), équipe, compte | |
@@ -199,7 +199,7 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 
 - Middleware : non authentifié → `/login`.
 - Brancher le CTA vitrine (M1) sur `/signup`.
-- Accueil : org + plan Sandbox (usage à 0 jusqu’à M3).
+- Accueil : org + sélecteur de services (usage à 0 jusqu’à M3).
 
 **Tests minimaux :** e-mail déjà pris ; session expirée ; membre ne révoque pas les clés ; isolation user A / org B.
 
@@ -208,35 +208,35 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 
 ---
 
-### M3 — Souscription
+### M3 — Crédit d’organisation (recharge carte)
 
 **Durée :** 1–2 semaines.  
 **CDC :** §10. **Objectif O4.**  
 **Prérequis :** M2. **Freeze pricing** avant le premier Checkout (voir §6).
 
-**Livrable :** Checkout Stripe **test** → org `active` Production → création `ky_live_` → `GET /v1/usage` = écran facturation. Résiliation / paiement refusé → plus de vérif live, sandbox OK.
+**Livrable :** Stripe Checkout **test** (carte) → crédit au ledger → `ky_live_` créable si solde ≥ une unité → solde / `GET /v1/usage` = écran `/settings/billing`. Solde insuffisant → plus de vérif live, sandbox OK.
 
 | In | Out |
 |---|---|
-| Produit Stripe : abonnement + forfait + overage (ou refus `quota_exceeded` si overage reporté) | Multi-devises, marketplace |
-| Webhooks Stripe signés, miroir `Subscription` | Stockage de CB |
-| Customer Portal (carte, factures, cancel) | Essai Production (optionnel, défaut : non) |
-| `GET /v1/usage` | Compteurs biométrie / AML |
-| Blocage `ky_live_` si pas `active` / `trialing` | SageMaker |
+| Checkout Stripe : packs de recharge **carte** | Abonnement, meter, facture d’usage, multi-devises |
+| Webhooks Stripe signés, miroir customer / session Checkout | Stockage de CB |
+| Ledger interne (source de vérité du **solde**) | Portail factures, virement, avoir ops, recharge auto |
+| `GET /v1/usage` par service (relevé, pas un encaissement) | Compteurs biométrie / AML |
+| Blocage `ky_live_` si solde < une unité | SageMaker |
 
 **Travaux**
 
-- Entités `Subscription`, `UsagePeriod`.
+- Entités `CreditAccount` / `CreditLedgerEntry` (pas de table « Plan »).
 - RG-SUB-01…07.
 - Comptage : **à la création** d’une vérif live (recommandation CDC) — figé ici.
-- Sandbox : quota bas, **ne consomme pas** le forfait payant.
-- Console : Facturation (plan, quota, lien portail).
-- `/pricing` vitrine : montants **réels** après freeze.
+- Sandbox : **jamais** débité.
+- Console : `/settings/billing` seulement (solde, recharge carte, ledger, consommation). Pas d’onglet facturation produit.
+- `/pricing` vitrine : montants **réels** après freeze. Canal MVP = carte.
 
-**Tests :** webhook rejoué (idempotence) ; `ky_live_` refusée en Sandbox ; quota live ; org B ne voit pas l’usage de A.
+**Tests :** webhook rejoué (idempotence) ; `ky_live_` refusée sans solde ; débit live ; org B ne voit pas le ledger de A.
 
-**Démo :** Stripe CLI / Dashboard test → clé live créée → une `POST /v1/verifications` live incrémente l’usage.  
-**Kill :** clé live sans abonnement ; webhook Stripe non signé.
+**Démo :** Stripe CLI Checkout test → solde crédité → clé live → une `POST /v1/verifications` live débite le crédit.  
+**Kill :** clé live sans crédit suffisant ; webhook Stripe non signé.
 
 ---
 
@@ -327,11 +327,11 @@ Chaque critère CDC §17 est **couvert par un sprint**. Le MVP n’est clos qu�
 |---|---|
 | 1 — Charte unique | M0, vérifié M1 |
 | 2 — Offre comprise, IDV vs bientôt | M1 |
-| 3 — `/pricing` = plans réels | M1 (provisoire) → M3 (figé) |
+| 3 — `/pricing` = sandbox gratuit + crédit + live à l’unité | M1 (provisoire) → M3 (figé) |
 | 4 — Compte + `ky_test_` | M2 |
-| 5 — Checkout → `ky_live_` | M3 |
-| 6 — Résiliation / échec paiement | M3 |
-| 7 — Usage API = console | M3 |
+| 5 — Recharge carte → crédit → `ky_live_` | M3 |
+| 6 — Solde insuffisant | M3 |
+| 7 — Solde / usage API = console | M3 |
 | 8 — IDV sandbox sans AWS | M4 |
 | 9 — IDV live AWS | M5 |
 | 10 — Isolation 404 | S1, rejoué M2–M5 |
@@ -345,16 +345,16 @@ Chaque critère CDC §17 est **couvert par un sprint**. Le MVP n’est clos qu�
 
 Ne bloquent **pas** M0–M2.
 
-### Avant M3 (Checkout)
+### Avant M3 (paiement)
 
 | Décision | Proposition | Bloque |
 |---|---|---|
 | Devise Stripe | EUR **ou** CAD | M3 |
-| Prix abonnement Production | Ordre de grandeur : dizaines / mois | M3 |
-| Forfait inclus | ex. 200 vérifs / mois | M3 |
-| Overage | Prix unitaire **ou** `quota_exceeded` sans overage au MVP | M3 |
+| Prix unitaire IDV live | Ordre de grandeur : ~0,90 € | M3 |
 | Comptage | À la **création** live | M3 |
-| Quota sandbox | ex. 50 / mois | M3 |
+| Packs de recharge | 50 / 100 / 250 / 500 (unité de devise) | M3 |
+| Canal MVP | **Carte** seule (Checkout) | M3 |
+| Plafond de dépense / recharge auto | Hors MVP | — |
 
 ### Avant M4 (corridor affiché = corridor réel)
 
@@ -413,10 +413,12 @@ Ordre conseillé, **pas** dans le MVP :
 
 - Changement de périmètre → version du **CDC**, pas un commentaire de PR.
 - Glissement d’un critère (ex. Liveness) → CDC §17 **puis** cette roadmap.
-- Prochain sprint à ouvrir : **M3 — souscription**.
+- Prochain sprint à ouvrir : **M3 — crédit d’organisation, recharge carte**.
 
 **Journal des changements de périmètre**
 
 | Date | Changement | Trace |
 |---|---|---|
+| 9 sept. 2026 | Crédit d’organisation, recharge **carte** MVP (plus de meter / facture d’usage). Facturation org seulement. | CDC v1.3 §10 |
+| 9 sept. 2026 | Facturation **à l’usage** (plus de plan mensuel / forfait). Console par service (sidebar compte + onglets produit). | CDC v1.2 §9.6, §10 |
 | 2 sept. 2026 | Vitrine bilingue FR/EN : l’anglais passe de « hors M1 sauf si gratuit » à **dans le périmètre** | CDC v1.1 §8, §8.0 |

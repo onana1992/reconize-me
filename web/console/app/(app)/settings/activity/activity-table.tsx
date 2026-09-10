@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useT } from "../../../../i18n/client";
 import type { AuditEvent } from "../../../../lib/api";
 import { AUDIT_FILTERS, tAuditAction, tResourceType, tRole } from "../../../../lib/labels";
@@ -18,6 +18,7 @@ type Props = {
 export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
   const t = useT();
   const locale = useLocale();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [events, setEvents] = useState(initialEvents);
   const [cursor, setCursor] = useState(initialCursor);
   const [pending, setPending] = useState(false);
@@ -28,7 +29,8 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
   const [actionFilter, setActionFilter] = useState("");
   const [actorFilter, setActorFilter] = useState("");
   const [resourceFilter, setResourceFilter] = useState("");
-  const [detailFilter, setDetailFilter] = useState("");
+  const [ipFilter, setIpFilter] = useState("");
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const rows = useMemo(
     () =>
@@ -37,12 +39,14 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
           ? (emails[event.actor_id] ?? event.actor_id.slice(0, 8))
           : t("console.activity.system");
         const resourceLabel = `${tResourceType(t, event.resource_type)} · ${event.resource_id.slice(0, 8)}`;
+        const ipLabel = event.ip_address?.trim() || "—";
         return {
           event,
           whenLabel: formatUtc(event.created_at, locale),
           actionLabel: tAuditAction(t, event.action),
           actorLabel,
           resourceLabel,
+          ipLabel,
           detailLabel: payloadSummary(event.payload, t),
         };
       }),
@@ -53,7 +57,7 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
     const when = whenFilter.trim().toLowerCase();
     const actor = actorFilter.trim().toLowerCase();
     const resource = resourceFilter.trim().toLowerCase();
-    const detail = detailFilter.trim().toLowerCase();
+    const ip = ipFilter.trim().toLowerCase();
     return rows.filter((row) => {
       if (when && !row.whenLabel.toLowerCase().includes(when) && !row.event.created_at.toLowerCase().includes(when)) {
         return false;
@@ -67,25 +71,49 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
       if (resource && !row.resourceLabel.toLowerCase().includes(resource)) {
         return false;
       }
-      if (detail && !row.detailLabel.toLowerCase().includes(detail)) {
+      if (ip && !row.ipLabel.toLowerCase().includes(ip) && !(row.event.ip_address ?? "").toLowerCase().includes(ip)) {
         return false;
       }
       return true;
     });
-  }, [actionFilter, actorFilter, detailFilter, resourceFilter, rows, whenFilter]);
+  }, [actionFilter, actorFilter, ipFilter, resourceFilter, rows, whenFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const from = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const to = Math.min(currentPage * pageSize, filtered.length);
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const filtersActive = Boolean(
-    whenFilter || actionFilter || actorFilter || resourceFilter || detailFilter,
-  );
+  const filtersActive = Boolean(whenFilter || actionFilter || actorFilter || resourceFilter || ipFilter);
+  const selected = selectedId == null ? null : (rows.find((row) => row.event.id === selectedId) ?? null);
+  const selectedPayload = selected ? payloadPretty(selected.event.payload) : null;
 
   function resetPage() {
     setPage(1);
   }
+
+  function openRow(id: number) {
+    setSelectedId(id);
+  }
+
+  function closeDrawer() {
+    dialogRef.current?.close();
+  }
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+    if (selectedId == null) {
+      if (dialog.open) {
+        dialog.close();
+      }
+      return;
+    }
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+  }, [selectedId]);
 
   async function reload(nextAction: string) {
     setPending(true);
@@ -122,7 +150,7 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
     setActionFilter("");
     setActorFilter("");
     setResourceFilter("");
-    setDetailFilter("");
+    setIpFilter("");
     setPage(1);
     void reload("");
   }
@@ -138,13 +166,25 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
         <table className="rm-table">
           <thead>
             <tr>
+              <th>{t("console.activity.actor")}</th>
               <th>{t("console.activity.when")}</th>
               <th>{t("console.activity.action")}</th>
-              <th>{t("console.activity.actor")}</th>
               <th>{t("console.activity.resource")}</th>
-              <th>{t("console.activity.detail")}</th>
+              <th>{t("console.activity.ip")}</th>
             </tr>
             <tr className="rm-rich-table-filters">
+              <th>
+                <input
+                  type="search"
+                  value={actorFilter}
+                  onChange={(event) => {
+                    setActorFilter(event.target.value);
+                    resetPage();
+                  }}
+                  aria-label={t("console.activity.filterActor")}
+                  placeholder={t("console.activity.filterActor")}
+                />
+              </th>
               <th>
                 <input
                   type="search"
@@ -178,18 +218,6 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
               <th>
                 <input
                   type="search"
-                  value={actorFilter}
-                  onChange={(event) => {
-                    setActorFilter(event.target.value);
-                    resetPage();
-                  }}
-                  aria-label={t("console.activity.filterActor")}
-                  placeholder={t("console.activity.filterActor")}
-                />
-              </th>
-              <th>
-                <input
-                  type="search"
                   value={resourceFilter}
                   onChange={(event) => {
                     setResourceFilter(event.target.value);
@@ -202,13 +230,13 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
               <th>
                 <input
                   type="search"
-                  value={detailFilter}
+                  value={ipFilter}
                   onChange={(event) => {
-                    setDetailFilter(event.target.value);
+                    setIpFilter(event.target.value);
                     resetPage();
                   }}
-                  aria-label={t("console.activity.filterDetail")}
-                  placeholder={t("console.activity.filterDetail")}
+                  aria-label={t("console.activity.filterIp")}
+                  placeholder={t("console.activity.filterIp")}
                 />
               </th>
             </tr>
@@ -222,14 +250,30 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
               </tr>
             ) : (
               pageRows.map((row) => (
-                <tr key={row.event.id}>
+                <tr
+                  key={row.event.id}
+                  className="rm-table-row"
+                  tabIndex={0}
+                  aria-selected={selectedId === row.event.id}
+                  aria-haspopup="dialog"
+                  aria-label={`${row.actorLabel}, ${row.actionLabel}, ${row.whenLabel}`}
+                  onClick={() => openRow(row.event.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openRow(row.event.id);
+                    }
+                  }}
+                >
+                  <td>{row.actorLabel}</td>
                   <td>{row.whenLabel}</td>
                   <td>{row.actionLabel}</td>
-                  <td>{row.actorLabel}</td>
                   <td>
                     <code>{row.resourceLabel}</code>
                   </td>
-                  <td>{row.detailLabel}</td>
+                  <td>
+                    <code>{row.ipLabel}</code>
+                  </td>
                 </tr>
               ))
             )}
@@ -287,6 +331,83 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
           </button>
         ) : null}
       </div>
+      <dialog
+        ref={dialogRef}
+        className="rm-drawer"
+        aria-labelledby="activity-drawer-title"
+        onClose={() => setSelectedId(null)}
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const inside =
+            event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom;
+          if (!inside) {
+            closeDrawer();
+          }
+        }}
+      >
+        {selected ? (
+          <>
+            <div className="rm-drawer-head">
+              <div>
+                <p className="rm-drawer-kicker">{t("console.activity.eventDetail")}</p>
+                <h2 id="activity-drawer-title">{selected.actionLabel}</h2>
+              </div>
+              <button type="button" className="rm-dialog-close" aria-label={t("common.close")} onClick={closeDrawer}>
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                  <path
+                    d="M3 3l8 8M11 3l-8 8"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <dl className="rm-drawer-fields">
+              <div>
+                <dt>{t("console.activity.actor")}</dt>
+                <dd>{selected.actorLabel}</dd>
+              </div>
+              <div>
+                <dt>{t("console.activity.when")}</dt>
+                <dd>{selected.whenLabel}</dd>
+              </div>
+              <div>
+                <dt>{t("console.activity.action")}</dt>
+                <dd>{selected.actionLabel}</dd>
+              </div>
+              <div>
+                <dt>{t("console.activity.resource")}</dt>
+                <dd>
+                  <code>{selected.resourceLabel}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>{t("console.activity.ip")}</dt>
+                <dd>
+                  <code>{selected.ipLabel}</code>
+                </dd>
+              </div>
+              <div>
+                <dt>{t("console.activity.detail")}</dt>
+                <dd>{selected.detailLabel}</dd>
+              </div>
+              {selectedPayload ? (
+                <div>
+                  <dt>{t("console.activity.payload")}</dt>
+                  <dd>
+                    <pre className="rm-drawer-payload">{selectedPayload}</pre>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </>
+        ) : null}
+      </dialog>
     </div>
   );
 }
@@ -312,4 +433,12 @@ function payloadSummary(
     return `${tRole(t, from)} → ${tRole(t, to)}`;
   }
   return "—";
+}
+
+function payloadPretty(payload: Record<string, unknown>): string | null {
+  const keys = Object.keys(payload);
+  if (keys.length === 0) {
+    return null;
+  }
+  return JSON.stringify(payload, null, 2);
 }

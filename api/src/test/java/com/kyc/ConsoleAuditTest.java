@@ -65,7 +65,9 @@ class ConsoleAuditTest {
                 .andExpect(status().isOk())
                 .andReturn();
         String keyId = JSON.readTree(keys.getResponse().getContentAsString()).get(0).get("id").asText();
-        mockMvc.perform(post("/v1/console/api-keys/" + keyId + "/revoke").cookie(owner))
+        mockMvc.perform(post("/v1/console/api-keys/" + keyId + "/revoke")
+                        .header("X-Forwarded-For", "203.0.113.10")
+                        .cookie(owner))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(post("/v1/account/login")
@@ -79,6 +81,7 @@ class ConsoleAuditTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.events.length()").value(1))
                 .andExpect(jsonPath("$.events[0].action").value("api_key.revoked"))
+                .andExpect(jsonPath("$.events[0].ip_address").value("203.0.113.10"))
                 .andExpect(jsonPath("$.events[0].payload").exists());
 
         mockMvc.perform(get("/v1/console/audit").param("action", "user.login_failed").cookie(owner))

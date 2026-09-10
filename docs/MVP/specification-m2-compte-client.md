@@ -3,8 +3,8 @@
 **Plateforme :** Recogniz-Me  
 **Sprint :** M2 — inscription, e-mail, login, organisation Sandbox, console derrière session  
 **Complément :** cycle T — gestion d’équipe type Onfido / Veriff Station (T0–T4)  
-**Version du document :** 1.1  
-**Date :** 8 septembre 2026  
+**Version du document :** 1.2  
+**Date :** 9 septembre 2026  
 **Statut :** spécification as-built (M2 + T0–T4 livrés)  
 **CDC :** §9. **Objectif O3.** Critère d’acceptation §17.4. Cycle T = exception volontaire au CDC §4.2 (rôles avancés).
 
@@ -43,7 +43,7 @@ Après T : un owner invite un developer ou un readonly, peut renvoyer / annuler 
 | Domaine | Contenu | Sprint |
 |---|---|---|
 | Identité humaine | Utilisateur, e-mail unique, mot de passe BCrypt, prénom / nom, vérification d’e-mail | M2 |
-| Tenant | Organisation créée au signup, slug unique, plan Sandbox (libellé) | M2 |
+| Tenant | Organisation créée au signup, slug unique ; sandbox gratuit (pas un plan) | M2 |
 | Appartenance | Un user ∈ **une** org ; cinq rôles ; invitation e-mail avec rôle | M2 / T2 |
 | Cycle de vie équipe | Resend / cancel invite, retirer un membre, dernier owner, unicité pending | T1 |
 | Statut | `active` \| `disabled` ; logout immédiat ; login inactif refusé | T3 |
@@ -51,14 +51,14 @@ Après T : un owner invite un developer ou un readonly, peut renvoyer / annuler 
 | Session console | Cookie `rm_session` httpOnly, SameSite=Lax, TTL 7 jours ; rôle **relu** sur `memberships` | M2 / T1 |
 | Clés machine | Première `ky_test_` à la vérif e-mail du owner ; émission / liste / révocation si `API_KEY_*` | M2 / T2 |
 | Journal | `GET /v1/console/audit` paginé ; page `/settings/activity` ; payload sans PII | T4 |
-| Console | Login, signup, verify, forgot/reset, accueil, clés, équipe, activité, compte | M2 / T |
+| Console | Login, signup, verify, forgot/reset, accueil (sélecteur de services), clés sous Identity, équipe, activité, compte, facturation org | M2 / T |
 | Isolation | Org A ne voit pas org B (404), y compris avec un cookie volé | M2 / T1 |
 
 ### 2.2 Hors périmètre (M3+ / après T4)
 
 | Domaine | Reporté |
 |---|---|
-| Facturation | Checkout, portail Stripe, `GET /v1/usage`, quotas chiffrés — routes = `BILLING_WRITE` |
+| Facturation | Crédit d’organisation, Checkout carte, `GET /v1/usage` — routes = `BILLING_WRITE` |
 | Clés live | `ky_live_`, `RG-SUB-02` |
 | Auth avancée | SSO, 2FA (bandeau d’avertissement seulement), SCIM, reset MFA par admin |
 | Multi-org | Un user dans plusieurs organisations |
@@ -106,7 +106,7 @@ Rôles console (T2) :
 | **Permission** | Droit nommé (`TEAM_WRITE`, `API_KEY_READ`, …). Le rôle n’est plus testé en dur hors `OWNERSHIP`. |
 | **Clé API** | Identité **machine**, distincte du login. Préfixe visible ; secret montré **une fois**. |
 | **Session console** | Jeton opaque côté serveur, cookie `rm_session`. Le store porte `userId` + `organizationId` (le `role` du blob est **ignoré**). À chaque requête : membership absente, org ≠ session, ou statut `disabled` → **401**. Rôle = colonne `memberships`. |
-| **Sandbox** | Plan par défaut de toute org (RG-SUB-01). Pas de colonne SQL ; le `GET /me` renvoie `plan: "sandbox"`. |
+| **Sandbox** | Environnement de clé `ky_test_`, toujours gratuit. Pas un plan d’organisation. Pas de colonne SQL. `GET /me` ne renvoie **plus** `plan`. |
 
 ---
 
@@ -328,7 +328,7 @@ L’organisation **ne se lit pas** dans un header client.
 
 ### 6.5 Ce qui n’existe pas encore
 
-Pas de table `Subscription`, `UsagePeriod`, ni colonne `organizations.plan`. Le plan Sandbox est une constante d’API / d’UI jusqu’à M3.
+Pas de table `Plan`, ni colonne `organizations.plan`. Le sandbox est des clés `ky_test_` + un solde à 0, jusqu’à M3 (`CreditAccount`, Checkout carte, `ky_live_`).
 
 ---
 
@@ -371,7 +371,7 @@ Les UC CDC §13 (`UC-ACC-01`, `UC-ACC-02`, `UC-ISO-01`) sont détaillés ici. Al
 
 1. POST `/v1/account/login` avec e-mail + mot de passe.
 2. **204** + cookie `rm_session`.
-3. Accueil console : nom d’org, plan Sandbox, usage **0**, rôle, CTA selon permissions.
+3. Accueil console : nom d’org, services, usage **0**, rôle, CTA selon permissions.
 4. POST logout : store invalidé, cookie expiré.
 
 **Alternatives**
@@ -504,7 +504,7 @@ On n’invite **pas** en `owner`. Un second owner ne se crée que par PATCH owne
 | **RG-ACC-01** | Un utilisateur appartient à **au plus une** organisation. |
 | **RG-ACC-02** | Un signup **sans** invitation crée l’organisation et une membership `owner` active. |
 | **RG-ACC-03** | Un signup **avec** invitation valide (même e-mail) ne crée **pas** d’org ; l’adhésion au **rôle de l’invite** est posée à la vérification d’e-mail. |
-| **RG-ACC-04** | Toute org naît en Sandbox (**RG-SUB-01**). Pas de `ky_live_` ici. |
+| **RG-ACC-04** | Toute org naît avec le sandbox gratuit (**RG-SUB-01**). Pas de `ky_live_` ici. |
 | **RG-ACC-05** | E-mail unique (contrainte SQL + 409 `email_taken` au signup). |
 | **RG-ACC-06** | E-mail stocké en minuscules, trim. |
 | **RG-ACC-07** | Mot de passe : politique forte, BCrypt, jamais loggé, jamais renvoyé. |
@@ -608,7 +608,7 @@ Toutes les routes : cookie session, puis permission.
 
 | Méthode | Chemin | Permission | Succès |
 |---|---|---|---|
-| GET | `/me` | session | `{ email, first_name, last_name, organization: { id, name, slug, plan: "sandbox" }, role, permissions }` |
+| GET | `/me` | session | `{ email, first_name, last_name, organization: { id, name, slug }, role, permissions }` |
 | POST | `/account/password` | session | **204** `{ current_password, new_password }` |
 | GET | `/verifications` | `VERIFICATION_READ` | **200** `[]` (M4 : liste réelle) |
 | GET | `/verifications/{id}` | `VERIFICATION_READ` | **404** tant que M4 |
@@ -746,12 +746,12 @@ HTTPS hors local. Pas de secrets dans le dépôt.
 | §9.3 2FA hors MVP | RG-ACC-24 |
 | §9.4 parcours inscription | UC-ACC-01, séquence §5.6 |
 | §9.5 écrans (hors facturation) | §11 — facturation = M3 (`BILLING_*`) |
-| RG-SUB-01 Sandbox | RG-ACC-04 |
+| RG-SUB-01 sandbox gratuit | RG-ACC-04 |
 | UC-ACC-01 / 02 / UC-ISO-01 | §7 |
-| §14.1 User, Membership, tokens | §6 — `Subscription` reporté M3 |
+| §14.1 User, Membership, tokens | §6 — ledger / Checkout carte reportés M3 |
 | §17.4 (acceptation compte) | Tests §15 + démo |
 
-Écran CDC « Facturation » et accueil « quota du mois » : **M3**. Ici : usage **0** et libellé Sandbox.
+Écran CDC « Facturation » et accueil usage du mois : **M3**. Ici : usage **0**, pas de badge « plan ».
 
 ---
 
@@ -785,4 +785,4 @@ UI : middleware vérifié (`/` → `/login?next=/`).
 
 ## 16. Suite
 
-M2 + T verts → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Souscription**. Freeze pricing **avant** le premier Checkout. M3 ajoute `Subscription`, `ky_live_`, usage réel et l’écran facturation du CDC §9.5, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.
+M2 + T verts → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Crédit d’organisation**. Freeze pricing **avant** le premier Checkout. M3 ajoute le ledger, Stripe Checkout **carte**, `ky_live_`, usage réel et l’écran `/settings/billing` du CDC §9.5 / §10, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.

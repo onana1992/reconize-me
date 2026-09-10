@@ -2,8 +2,8 @@
 
 **Produit :** Recogniz-Me  
 **Livrable :** MVP métier — mise sur pied du service SaaS  
-**Version :** 1.1 — vitrine bilingue FR/EN (§8), l’anglais passe d’optionnel à livré  
-**Date :** 2 septembre 2026  
+**Version :** 1.3 — crédit d’organisation, recharge carte ; pas de facturation produit  
+**Date :** 9 septembre 2026  
 **Statut :** contrat d’implémentation du MVP  
 **Public :** produit, design, ingénierie, go-to-market
 
@@ -23,17 +23,17 @@ Ce document **prime** sur la vision et sur la roadmap IDV pour tout ce qui conce
 
 ## 1. Objet
 
-Construire le **premier service vendable** Recogniz-Me : une entreprise peut découvrir la plateforme, créer un compte, souscrire, et vérifier l’identité d’un utilisateur à distance via **Identity & Document Verification**.
+Construire le **premier service vendable** Recogniz-Me : une entreprise peut découvrir la plateforme, créer un compte, recharger du crédit par carte, et vérifier l’identité d’un utilisateur à distance via **Identity & Document Verification**.
 
 Le MVP n’est pas un laboratoire IA. Il n’est pas non plus un agrégateur KYC. C’est une **offre SaaS opérable** :
 
 1. une marque et une identité visuelle cohérentes ;
 2. un site vitrine qui explique et convertit ;
 3. un compte client (organisation + utilisateurs) ;
-4. une souscription au service ;
+4. un crédit d’organisation, rechargé par carte, prélevé à l’usage live (sandbox gratuit) ;
 5. le produit **Identity & Document Verification** de bout en bout, sans moteur IA propriétaire — **Amazon Textract / Rekognition** en production, **stubs déterministes** en sandbox et en local.
 
-Les autres solutions de la gamme (**Biometric Authentication**, **AML Screening**) sont **présentées** sur le site. Elles ne sont ni souscriptibles, ni exposées en API, ni implémentées.
+Les autres solutions de la gamme (**Biometric Authentication**, **AML Screening**) sont **présentées** sur le site. Elles n’ont ni tarif, ni API, ni implémentation.
 
 ---
 
@@ -58,7 +58,7 @@ Raisons métier :
 | **O1** | Identité visuelle unique sur toutes les surfaces | Charte + tokens appliqués au site, à la console, au flow, aux e-mails |
 | **O2** | Un visiteur comprend l’offre et peut s’inscrire | Parcours vitrine → inscription sans friction |
 | **O3** | Un client possède un compte et une organisation | Signup, e-mail vérifié, login, une org, rôle propriétaire |
-| **O4** | Le client souscrit et obtient l’accès production | Plan sandbox gratuit + plan production payant, quota, facture |
+| **O4** | Le client recharge du crédit et lance du live | Clé `ky_live_` si solde ≥ une unité ; sandbox toujours gratuit |
 | **O5** | Le client fait vérifier une identité | Création → lien → consentement → pièce + selfie → décision relisible |
 | **O6** | La gamme est lisible sans sur-promettre | IDV = produit live ; biométrie auth et AML = « bientôt » |
 
@@ -75,7 +75,7 @@ Hors objectifs MVP : FAR/FRR propriétaires, MLOps, dataset annoté, liveness pa
 | **Identité visuelle** | Nom, baseline, logo, palette, typo, tokens, ton, application aux 4 surfaces |
 | **Site vitrine** | Accueil, produit IDV, teasers biométrie / AML, tarifs, confiance, légal, CTA compte |
 | **Compte client** | Inscription, vérification e-mail, connexion, session, organisation, profil |
-| **Souscription** | Plans, Checkout, portail facturation, quota, clés sandbox / live, usage |
+| **Facturation** | Crédit d’organisation, recharge **carte** (Stripe Checkout), débit à l’unité live, clés test / live |
 | **IDV** | Session, lien, consentement, capture, analyse AWS ou stub, décision, console, webhooks de résultat |
 | **Catalogue** | Pages marketing Biometric Authentication et AML Screening, sans backend |
 
@@ -97,7 +97,7 @@ Hors objectifs MVP : FAR/FRR propriétaires, MLOps, dataset annoté, liveness pa
 
 Fondation S1 : organisations et clés API (seed), `POST/GET /v1/verifications`, isolation tenant, lien hébergé, consentement versionné, audit, console minimale sans authentification utilisateur, flow jusqu’au consentement.
 
-Le MVP **branche** comptes et souscription sur cette fondation, et **termine** le pipeline IDV.
+Le MVP **branche** comptes et crédit d’organisation sur cette fondation, et **termine** le pipeline IDV.
 
 ---
 
@@ -224,7 +224,7 @@ L’anglais était optionnel en version 1.0 de ce document. Il est **dans le pé
 | `/products/identity-verification` | IDV : problème, parcours, décision, corridor documents, sandbox |
 | `/products/biometric-authentication` | Teaser : ré-auth sans redemander la pièce ; **indisponible** |
 | `/products/aml-screening` | Teaser : PEP / sanctions / adverse media ; **indisponible** |
-| `/pricing` | Sandbox gratuit + plan production ; overage ; pas de tarif biométrie/AML |
+| `/pricing` | Sandbox gratuit ; live IDV à l’unité ; pas de tarif biométrie / AML |
 | `/security` | Isolation tenant, chiffrement, rétention, pas de PII dans les journaux (discours, pas d’audit SOC 2 inventé) |
 | `/docs` | Démarrage : compte → clé sandbox → première vérif ; lien OpenAPI |
 | `/legal/terms` | CGU (brouillon juridique à faire relire) |
@@ -289,7 +289,8 @@ Invitation par e-mail (lien à usage unique). Pas de SSO.
 ### 9.3 Authentification console
 
 - E-mail + mot de passe (hash adapté, jamais en clair)
-- Vérification d’e-mail **avant** la première clé live (sandbox autorisé dès e-mail vérifié)
+- Vérification d’e-mail **avant** l’accès console et l’émission de `ky_test_`
+- `ky_live_` : e-mail vérifié **et** solde ≥ une unité live (M3)
 - Session cookie httpOnly, Secure hors local
 - Déconnexion, mot de passe oublié
 - 2FA : **hors MVP** (prévu vision) ; le propriétaire est prévenu dans la console que ce sera exigé plus tard
@@ -303,7 +304,7 @@ E-mail + mot de passe + nom d’organisation
         ↓
 Compte créé, e-mail de vérification
         ↓
-E-mail vérifié → organisation active, plan Sandbox
+E-mail vérifié → organisation active, sandbox gratuit
         ↓
 Clé ky_test_ émise (affichée une fois)
         ↓
@@ -323,72 +324,86 @@ Règles :
 |---|---|
 | Login / signup / forgot | Charte |
 | Vérification e-mail | Attente + renvoyer |
-| Accueil | Usage du mois, quota, CTA nouvelle vérif |
-| Vérifications | Liste, création, fiche (déjà ébauché) |
-| Clés API | Créer, révoquer, préfixe visible, secret **une fois** |
-| Équipe | Propriétaire + invitations |
-| Facturation | Plan, quota, portail Stripe, factures |
-| Compte | E-mail, mot de passe |
+| Accueil | Sélecteur de services, usage consolidé du mois |
+| Service (IDV, biométrie, AML) | Onglets : vue, configuration, intégrations ; sélecteur Sandbox / Live |
+| Intégrations IDV | Clés API de ce service, badge **Sandbox** (`ky_test_`) / **Live** (`ky_live_`) |
+| Facturation org | Solde, recharge carte, ledger, consommation par service |
+| Équipe / activité / compte | Sidebar organisation |
 
 La console actuelle (création de vérif, copie du lien) est **derrière login**. Plus d’accès anonyme.
 
+### 9.6 Organisation de la console
+
+La sidebar **ne change pas** selon le service (chrome de compte). Une fois dans un service, une barre d’onglets en haut porte le métier, plus un sélecteur **Sandbox / Live**. L’environnement n’est pas un mode d’organisation : il filtre la vue du service (sessions, clés, usage) et reste dans l’URL (`?env=`).
+
+| Surface | Routes | Nature |
+|---|---|---|
+| Compte | `/`, `/settings/billing`, `/settings/team`, `/settings/activity`, `/settings/account` | Organisation |
+| Service | `/identity`, `/biometrics`, `/aml` + `/configuration`, `/integrations` | Produit |
+
+Sandbox / live n’est **pas** un plan d’organisation. C’est le préfixe de clé (`ky_test_` / `ky_live_`) et le compteur du service. Les clés actuelles authentifient **Identity** ; un second produit aura les siennes.
+
 ---
 
-## 10. Souscription
+## 10. Facturation
 
-Le client n’achète pas « l’IA ». Il achète un **droit d’usage** d’Identity & Document Verification.
+Le client n’achète pas « l’IA ». Il **charge un crédit d’organisation**, puis chaque ressource **live** le débite au prix unitaire. Pas de plan mensuel, pas de forfait inclus, pas de facture d’usage, pas d’encaissement au niveau d’un produit.
 
-### 10.1 Plans
+### 10.1 Modèle
 
-| Plan | Prix (indicatif, à figer avant Stripe) | Quotas | Environnement |
-|---|---|---|---|
-| **Sandbox** | 0 | Quota bas (ex. 50 vérifs / mois), reset mensuel | `ky_test_` uniquement ; analyse **stub** |
-| **Production** | Abonnement mensuel + forfait de vérifs inclus + overage unitaire | Forfait (ex. 200 / mois) puis prix / vérif | `ky_live_` ; analyse **AWS** |
+| | Sandbox | Live |
+|---|---|---|
+| Clé | `ky_test_` | `ky_live_` |
+| Crédit | Jamais débité | Prix unitaire du service (IDV : indicatif 0,90 € / vérif, à figer avant Stripe) |
+| Analyse | Stub déterministe | AWS (Textract / Rekognition) |
+| Condition | Compte e-mail vérifié | Solde ≥ une unité live |
 
 Chiffres de catalogue (exemple de travail, **non contractuels** tant que le pricing n’est pas figé) :
 
-- Abonnement Production : à définir (ordre de grandeur : dizaines d’€ / mois, pas un enterprise 4 zéros)
-- Vérif incluse puis overage : au-dessus du COGS (~0,10–0,20 $ chargé à petit volume) et sous le marché (0,80–4 $)
-- Devise d’affichage et de Stripe : **à figer** (EUR ou CAD) avant d’ouvrir Checkout
-- Biométrie et AML : **pas de ligne tarifaire**
+- IDV live : au-dessus du COGS (~0,10–0,20 $ chargé à petit volume) et sous le marché (0,80–4 $)
+- Devise Stripe : **à figer** (EUR ou CAD) avant la première recharge
+- Packs de recharge indicatifs : 50 / 100 / 250 / 500 (unité de devise)
+- Biométrie et AML : **pas de débit** tant qu’ils ne sont pas vendus
 
-Un seul produit facturé : **IDV**. Annulation → clés live révoquées ou bloquées ; sandbox conserve l’accès lecture + test selon politique (défaut : sandbox reste).
+Le ledger interne est la **source de vérité du solde**. Stripe n’encaise que les **recharges carte**. IDV est le seul service qui débite au MVP. Solde insuffisant → clés / ressources live refusées ; le sandbox reste.
 
-### 10.2 Cycle de vie abonnement
+**Canal MVP :** carte bancaire (Stripe Checkout). Hors MVP : virement, avoir ops, rechargement auto, bon de commande.
+
+### 10.2 Cycle de vie
 
 ```
-Sandbox (défaut)
-    ↓  Checkout Stripe (carte)
-Production active
-    ↓  quota inclus consommé
-Overage facturé (Stripe metered ou facture mensuelle)
-    ↓  échec de paiement
-Période de grâce courte → live bloqué (429 / 402 métier) ; sandbox OK
-    ↓  résiliation
-Fin de période : plus de ky_live_ ; données selon rétention
+Compte (sandbox gratuit, ky_test_, solde 0)
+    ↓  Recharge carte (Stripe Checkout)
+Crédit au ledger
+    ↓  ky_live_ si solde ≥ une unité
+Usage live → débit du solde
+    ↓  solde < une unité
+Live bloqué ; sandbox OK
+    ↓  nouvelle recharge carte
+Live de nouveau possible
 ```
 
 ### 10.3 Règles
 
 | ID | Règle |
 |---|---|
-| **RG-SUB-01** | Toute org naît en Sandbox. |
-| **RG-SUB-02** | `ky_live_` seulement si l’abonnement Production est `active` (ou `trialing` si essai activé). |
-| **RG-SUB-03** | Une vérif **live** consomme le quota. Sandbox ne consomme pas le forfait payant. |
-| **RG-SUB-04** | Quota dépassé en Production → overage, pas un silence. Si overage non configuré : refus explicite `quota_exceeded`. |
-| **RG-SUB-05** | Le client gère moyen de paiement, factures et résiliation via le **portail Stripe** (pas de CB stockée chez nous). |
-| **RG-SUB-06** | Webhooks Stripe signés ; source de vérité abonnement = Stripe, miroir en base (statut, `current_period_end`). |
-| **RG-SUB-07** | Pas de souscription séparée par produit : un plan = accès IDV. |
+| **RG-SUB-01** | Toute org naît avec le sandbox gratuit. Aucune carte ni crédit exigé pour `ky_test_`. |
+| **RG-SUB-02** | `ky_live_` seulement si le solde couvre au moins une unité live du service. |
+| **RG-SUB-03** | Une ressource **live** débite le crédit au prix unitaire. Le sandbox ne débite jamais. |
+| **RG-SUB-04** | Pas de quota inclus ni de plafond silencieux. Le ledger débite l’usage. Un seuil d’alerte / recharge auto pourra venir plus tard. |
+| **RG-SUB-05** | Recharge MVP = **carte** via Stripe Checkout. Pas de CB stockée chez nous. |
+| **RG-SUB-06** | Webhooks Stripe signés pour les recharges. Source de vérité du **solde** = ledger interne ; Stripe = vérité des paiements carte. |
+| **RG-SUB-07** | Un seul compte de crédit par organisation. Pas de facturation par produit. La consommation par service est un **relevé**, pas un encaissement. |
 
-Essai gratuit Production : optionnel. Si absent au MVP, le sandbox suffit à tester.
+Essai gratuit live : optionnel. Si absent au MVP, le sandbox suffit à tester.
 
 ### 10.4 Usage
 
-- Compteur mensuel : `sandbox_verifications`, `live_verifications`
-- Console : consommé / inclus / overage
-- API : `GET /v1/usage` (prévu vision, **à livrer** au MVP)
+- Compteurs **par service** : `sandbox_*` (info, non débité) et `live_*` (débit)
+- Console : `/settings/billing` = solde, recharge, ledger, consommation. Les pages produit n’encaissent pas.
+- API : `GET /v1/usage` et solde (à livrer au MVP / M3)
 
-Une vérification **créée** compte dès la création (évite le spam de liens). Alternative acceptable : compter à la **décision**. **À figer** avant implémentation (recommandation : à la création live, plus simple et anti-abus).
+Une vérification **créée** en live débite dès la création (évite le spam de liens). Alternative acceptable : débiter à la **décision**. **À figer** avant implémentation (recommandation : à la création live).
 
 ---
 
@@ -486,10 +501,10 @@ Flow applicant (token) : hydratation, consentement, upload, statut — **inchang
 | Acteur | MVP |
 |---|---|
 | **Visiteur** | Site vitrine |
-| **Utilisateur console** | Compte, souscription, vérifs, clés, revue |
+| **Utilisateur console** | Compte, facturation, vérifs, clés, revue |
 | **Backend client** | API clé |
 | **Applicant** | Lien, jamais de compte Recogniz-Me |
-| **Système** | Quota, Stripe, pipeline, expiration |
+| **Système** | Meter Stripe, pipeline, expiration |
 | **Recogniz-Me (nous)** | Opère plateforme et facturation ; ne fait **pas** la revue KYC du client au MVP |
 
 ---
@@ -500,16 +515,16 @@ Flow applicant (token) : hydratation, consentement, upload, statut — **inchang
 Le visiteur parcourt accueil, IDV, tarifs, teasers. Il distingue disponible / bientôt.
 
 **UC-ACC-01 — Créer un compte**  
-Inscription → e-mail → org Sandbox → clé test. Alternative : e-mail déjà pris ; mot de passe trop faible.
+Inscription → e-mail → org + sandbox gratuit → clé test. Alternative : e-mail déjà pris ; mot de passe trop faible.
 
 **UC-ACC-02 — Se connecter et opérer**  
 Login → console. Session expirée → login. Invitation membre → acceptation → rôle membre.
 
-**UC-SUB-01 — Passer en Production**  
-Checkout Stripe → `ky_live_` créable → vérifs live débitent le quota.
+**UC-SUB-01 — Activer le live**  
+Recharge carte → solde ≥ une unité → `ky_live_` créable → vérifs live débitées.
 
-**UC-SUB-02 — Gérer la facturation**  
-Portail : carte, factures, résiliation. Échec paiement → live bloqué, message console clair.
+**UC-SUB-02 — Gérer le crédit**  
+Recharge carte, lecture du ledger et de la consommation. Solde insuffisant → live bloqué, sandbox OK, message console clair.
 
 **UC-IDV-01 à 10**  
 Ceux de la spec IDV, dans les limites §11 (pas d’AML, pas d’enrôlement, analyse AWS/stub).
@@ -536,10 +551,10 @@ web/site (vitrine)            web/console                      web/flow
               ▼                       ▼                       ▼
         PostgreSQL                  Redis                      S3
         (orgs, users,               (sessions,                 (médias)
-         subs, vérifs)               tokens flow)
+         usage, vérifs)              tokens flow)
               │
               ▼
-        Stripe (abonnement)
+        Stripe (Checkout carte → recharge)
               │
               ▼
         Stub IA  ← sandbox / local
@@ -552,7 +567,7 @@ Stack inchangée : Java / Spring Boot, PostgreSQL, Next.js, Redis, S3. Ajouts MV
 
 ### 14.1 Entités nouvelles (indicatif)
 
-`User`, `Membership`, `EmailVerificationToken`, `PasswordResetToken`, `Subscription` (miroir Stripe), `UsagePeriod`, `WebhookEndpoint` — en plus des entités S1.
+`User`, `Membership`, `EmailVerificationToken`, `PasswordResetToken`, `CreditAccount`, `CreditLedgerEntry`, miroir Stripe (`StripeCustomer` pour les recharges carte), `WebhookEndpoint` — en plus des entités S1.
 
 ---
 
@@ -593,14 +608,14 @@ Le MVP est **démontrable** quand **toutes** les conditions suivantes sont vraie
 
 1. Charte et tokens existent ; site, console, flow et e-mail de vérif utilisent le même logo et les mêmes actions.
 2. Un inconnu comprend en moins de deux minutes : ce qu’est IDV, que biométrie et AML **ne sont pas** à vendre, comment créer un compte.
-3. `/pricing` reflète les plans réels (sandbox + production).
+3. `/pricing` reflète le modèle réel : sandbox gratuit, crédit org, live IDV débité à l’unité, recharge carte.
 
-### Compte et souscription
+### Compte et facturation
 
-4. Inscription → e-mail → login → org Sandbox → clé `ky_test_` affichée une fois.
-5. Checkout test Stripe → statut Production → création d’une clé `ky_live_`.
-6. Résiliation ou échec de paiement → plus de vérif live ; message console explicite.
-7. `GET /v1/usage` et l’écran facturation montrent le même compteur.
+4. Inscription → e-mail → login → sandbox gratuit → clé `ky_test_` affichée une fois.
+5. Recharge carte test Stripe → solde crédité → création d’une clé `ky_live_`.
+6. Solde insuffisant → plus de vérif live ; message console explicite.
+7. `GET /v1/usage` / solde et l’écran `/settings/billing` montrent les mêmes chiffres.
 
 ### IDV
 
@@ -615,7 +630,7 @@ Le MVP est **démontrable** quand **toutes** les conditions suivantes sont vraie
 13. Aucune page ne présente biométrie auth ou AML comme un service activable.
 14. Aucune mention de modèle propriétaire, de certification non obtenue, ou d’un corridor documents plus large que le réel.
 
-**Kill (arrêt go-live) :** fuite tenant ; PII ou secret dans les logs ; paiement live sans CGU/privacy ; clés live sans abonnement actif ; vitrine qui vend AML/biométrie.
+**Kill (arrêt go-live) :** fuite tenant ; PII ou secret dans les logs ; paiement live sans CGU/privacy ; clés live sans crédit suffisant ; vitrine qui vend AML/biométrie.
 
 ---
 
@@ -628,7 +643,7 @@ Lots **séquentiels**. Un lot n’est pas « vert » sans son critère démontra
 | **M0** | Charte : logo, tokens, application console + flow existants | Design |
 | **M1** | Site vitrine (pages §8.1) publié en local / preview | M0 |
 | **M2** | Compte : signup, e-mail, login, org, console derrière session | S1, M0 |
-| **M3** | Stripe : Sandbox → Production, clés live, usage | M2 |
+| **M3** | Stripe Checkout carte → crédit → `ky_live_` → débit à l’unité | M2 |
 | **M4** | Capture (S2) + pipeline IDV stub (qualité, « lecture », décision) | S1, M2 |
 | **M5** | Adaptateurs AWS live + webhooks résultat | M4, M3 |
 | **M6** | Durcissement : rétention affichée, rate limit, staging, 1 design partner sandbox | M1–M5 |
@@ -643,7 +658,7 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 
 | Sujet | Décision |
 |---|---|
-| Nom du livrable | MVP SaaS (marque, vitrine, compte, souscription, IDV) |
+| Nom du livrable | MVP SaaS (marque, vitrine, compte, crédit d’organisation, IDV) |
 | Produit live | Identity & Document Verification uniquement |
 | Biométrie auth / AML | Marketing seulement |
 | IA documentaire MVP | Textract live + stub sandbox ; pas de SageMaker |
@@ -651,13 +666,13 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 | Juge | Règles + scores, pas un LLM |
 | Auth console | E-mail / mot de passe ; 2FA plus tard |
 | Auth API | Clés `ky_test_` / `ky_live_` |
-| Facturation | Stripe ; un plan Production ; sandbox gratuit |
+| Facturation | Crédit d’organisation ; recharge carte (MVP) ; sandbox gratuit |
 | Revue | Analyste du **client**, pas un service opéré par Recogniz-Me |
 | Compte | Une org par utilisateur fondateur ; invitations membres |
 | Régénération auto du lien KYC | Non (spec IDV) |
 | Discours IA propriétaire | Interdit sur le MVP |
 
-**À figer avant M3 (ne bloque pas M0–M2) :** devises, prix exacts, forfait inclus, overage, comptage à la création vs à la décision, liste corridor pays × types.
+**À figer avant M3 (ne bloque pas M0–M2) :** devises, prix unitaire IDV live, comptage à la création vs à la décision, liste corridor pays × types.
 
 ---
 
@@ -667,10 +682,11 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 |---|---|
 | **Vitrine** | Site marketing public |
 | **Console** | Application client connecté |
-| **Sandbox** | Plan gratuit, stubs, clés test |
-| **Production / live** | Plan payant, AWS IA, clés live |
+| **Sandbox** | Clés `ky_test_`, stubs, toujours gratuit — pas un plan d’organisation |
+| **Live** | Clés `ky_live_`, AWS IA, débité du crédit d’organisation |
+| **Crédit** | Solde d’organisation, rechargé par carte (MVP), débité par l’usage live |
 | **Stub** | Adaptateur d’analyse déterministe, sans AWS |
-| **Teaser** | Page produit sans souscription ni API |
+| **Teaser** | Page produit sans tarif ni API |
 | **Design partner** | Premier client réel en staging / sandbox, pas un lancement grand public |
 
 Les termes IDV (session, applicant, lien hébergé, signal, revue) : spec IDV §4.
@@ -681,4 +697,4 @@ Les termes IDV (session, applicant, lien hébergé, signal, revue) : spec IDV §
 
 Toute évolution de périmètre MVP se décide ici (version + date), pas dans un commentaire de sprint. Si un lot glisse (ex. Face Liveness reporté), le critère d’acceptation §17.9 est mis à jour **avant** de déclarer M5 terminé.
 
-Prochaine étape d’implémentation : **sprint M0** (charte et tokens), puis M1 / M2 en parallèle — voir la [roadmap](./roadmap-implementation-mvp.md).
+Prochaine étape d’implémentation : **sprint M3** (crédit d’organisation, recharge carte) — voir la [roadmap](./roadmap-implementation-mvp.md).

@@ -88,8 +88,7 @@ public class ConsoleService {
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                new MeResponse.OrganizationMe(
-                        organization.getId(), organization.getName(), organization.getSlug(), "sandbox"),
+                new MeResponse.OrganizationMe(organization.getId(), organization.getName(), organization.getSlug()),
                 principal.role(),
                 ConsoleAuth.permissionNames(principal.role()));
     }
@@ -318,6 +317,7 @@ public class ConsoleService {
                         event.getResourceType(),
                         event.getResourceId(),
                         payloadNode(event.getPayload()),
+                        event.getIpAddress(),
                         event.getCreatedAt()))
                 .toList();
         return new AuditListResponse(events, next);

@@ -98,8 +98,8 @@ export function TeaserPage({
             </h2>
             <p className="rm-lead">{copy.ctaBody}</p>
 
-            {/* Seul appel à l'action de la page. Rien qui ressemble à une
-                souscription, ni à un essai. */}
+            {/* Seul appel à l'action de la page. Rien qui ressemble à un
+                achat, ni à un essai. */}
             <div className="rm-actions">
               <Link className="rm-button" href={href(locale, "contact")}>
                 {messages.actions.notify}

@@ -9,7 +9,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const firstName = me.ok ? (me.data.first_name ?? "") : "";
   const lastName = me.ok ? (me.data.last_name ?? "") : "";
   const role = me.ok ? me.data.role : "";
-  const plan = me.ok ? me.data.organization.plan : "";
   const permissions = me.ok ? (me.data.permissions ?? []) : [];
 
   return (
@@ -20,7 +19,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       firstName={firstName}
       lastName={lastName}
       role={role}
-      plan={plan}
       permissions={permissions}
     >
       {children}

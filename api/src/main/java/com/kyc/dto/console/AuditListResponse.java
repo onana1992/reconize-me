@@ -16,5 +16,6 @@ public record AuditListResponse(List<AuditEventItem> events, @JsonProperty("next
             @JsonProperty("resource_type") String resourceType,
             @JsonProperty("resource_id") UUID resourceId,
             JsonNode payload,
+            @JsonProperty("ip_address") String ipAddress,
             @JsonProperty("created_at") Instant createdAt) {}
 }

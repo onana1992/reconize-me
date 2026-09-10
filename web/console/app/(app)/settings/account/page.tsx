@@ -12,7 +12,6 @@ export default async function AccountPage() {
   const name = displayName(me.first_name, me.last_name, me.email);
   const avatar = initials(me.first_name, me.last_name, me.email);
   const role = tRole(t, me.role);
-  const plan = me.organization.plan === "sandbox" ? t("console.plan.sandbox") : me.organization.plan;
   const firstName = me.first_name?.trim() || t("console.account.empty");
   const lastName = me.last_name?.trim() || t("console.account.empty");
   const permissions = me.permissions ?? [];
@@ -35,7 +34,6 @@ export default async function AccountPage() {
           <p className="rm-lead">{me.email}</p>
           <p className="rm-account-hero-tags">
             <StatusBadge label={role} tone="info" />
-            <StatusBadge label={plan} tone="neutral" />
           </p>
         </div>
       </article>
@@ -76,8 +74,8 @@ export default async function AccountPage() {
             <strong>{me.organization.slug}</strong>
           </div>
           <div>
-            <span>{t("console.home.planLabel")}</span>
-            <strong>{plan}</strong>
+            <span>{t("console.billing.model")}</span>
+            <strong>{t("console.billing.modelValue")}</strong>
           </div>
         </div>
         <div className="rm-link-grid">
@@ -85,8 +83,12 @@ export default async function AccountPage() {
             <h3>{t("console.nav.team")}</h3>
             <p>{t("console.home.teamLead")}</p>
           </Link>
+          <Link href="/settings/billing" className="rm-card rm-link-card">
+            <h3>{t("console.nav.billing")}</h3>
+            <p>{t("console.home.billingLead")}</p>
+          </Link>
           {canReadKeys ? (
-            <Link href="/settings/keys" className="rm-card rm-link-card">
+            <Link href="/identity/integrations" className="rm-card rm-link-card">
               <h3>{t("console.nav.keys")}</h3>
               <p>{t("console.home.keysLead")}</p>
             </Link>

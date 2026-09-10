@@ -12,5 +12,5 @@ public record MeResponse(
         String role,
         List<String> permissions) {
 
-    public record OrganizationMe(UUID id, String name, String slug, String plan) {}
+    public record OrganizationMe(UUID id, String name, String slug) {}
 }

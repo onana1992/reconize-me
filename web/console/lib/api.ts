@@ -6,7 +6,7 @@ export type Me = {
   last_name?: string | null;
   role: string;
   permissions: string[];
-  organization: { id: string; name: string; slug: string; plan: string };
+  organization: { id: string; name: string; slug: string };
 };
 
 export type ApiKeyItem = {
@@ -35,6 +35,7 @@ export type AuditEvent = {
   resource_type: string;
   resource_id: string;
   payload: Record<string, unknown>;
+  ip_address: string | null;
   created_at: string;
 };
 

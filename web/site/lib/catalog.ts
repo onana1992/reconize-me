@@ -3,7 +3,7 @@
  *
  * Un seul endroit décide de la disponibilité d'un produit. Le CDC §6 l'interdit
  * ailleurs : un produit sur la feuille de route n'a ni bouton d'essai ni bouton
- * de souscription. Le kill de la roadmap est explicite là-dessus — une vitrine
+ * d'achat. Le kill de la roadmap est explicite là-dessus — une vitrine
  * qui vend l'authentification biométrique ou le criblage AML bloque le go-live.
  *
  * Le jour où l'un des deux ouvre, une seule ligne bouge ici, et la barre de

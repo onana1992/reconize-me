@@ -11,6 +11,7 @@ import com.kyc.dto.account.SignupResponse;
 import com.kyc.services.AccountService;
 import com.kyc.services.AuthRateLimiter;
 import com.kyc.services.SessionService;
+import com.kyc.web.ClientIps;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
@@ -64,7 +65,7 @@ public class AccountController {
     @PostMapping("/verify/resend")
     @Operation(summary = "Renvoyer l’e-mail de vérification")
     public ResponseEntity<Void> resend(@Valid @RequestBody EmailRequest body, HttpServletRequest request) {
-        authRateLimiter.check("resend", clientIp(request));
+        authRateLimiter.check("resend", ClientIps.from(request));
         accountService.resend(body.email());
         return ResponseEntity.noContent().build();
     }
@@ -73,7 +74,7 @@ public class AccountController {
     @Operation(summary = "Ouvrir une session console")
     public ResponseEntity<Void> login(
             @Valid @RequestBody LoginRequest body, HttpServletRequest request, HttpServletResponse response) {
-        authRateLimiter.check("login", clientIp(request));
+        authRateLimiter.check("login", ClientIps.from(request));
         String session = accountService.login(body.email(), body.password());
         SessionService.write(response, sessionService.cookie(session));
         return ResponseEntity.noContent().build();
@@ -90,7 +91,7 @@ public class AccountController {
     @PostMapping("/password/forgot")
     @Operation(summary = "Demander une réinitialisation de mot de passe")
     public ResponseEntity<Void> forgot(@Valid @RequestBody EmailRequest body, HttpServletRequest request) {
-        authRateLimiter.check("forgot", clientIp(request));
+        authRateLimiter.check("forgot", ClientIps.from(request));
         accountService.forgot(body.email());
         return ResponseEntity.noContent().build();
     }
@@ -128,12 +129,4 @@ public class AccountController {
         return null;
     }
 
-    private static String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            int comma = forwarded.indexOf(',');
-            return comma < 0 ? forwarded.trim() : forwarded.substring(0, comma).trim();
-        }
-        return request.getRemoteAddr();
-    }
 }

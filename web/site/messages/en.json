@@ -83,10 +83,10 @@
   },
   "home": {
     "metaTitle": "Identity verification for businesses",
-    "metaDescription": "Verify an identity in real time: document, biometrics and a decision, via API or hosted link. Free test environment.",
+    "metaDescription": "Verify an identity in real time: document, biometrics and a decision, via API or hosted link. Free sandbox.",
     "title": "Verify identities. Reduce fraud. Stay compliant.",
     "lead": "A SaaS platform for fast, secure identity checks, document validation and KYC/AML — simple for the user, complete for the business.",
-    "heroNote": "Free test environment, no card required.",
+    "heroNote": "Free sandbox, no card required.",
     "hero": {
       "verdictTitle": "Decision returned",
       "verdictSummary": "Three checks that agree, and the reasons kept with the case.",
@@ -132,7 +132,7 @@
       },
       {
         "value": "€0",
-        "title": "Cost of the test environment",
+        "title": "Cost of the sandbox",
         "body": "The sandbox answers from fixed data sets, with no billed processing call. No card required at signup."
       },
       {
@@ -163,7 +163,7 @@
       {
         "glyph": "api",
         "title": "An integration, not a project",
-        "body": "One POST, one GET, a test key from signup. Moving to production does not change your code, only the key prefix."
+        "body": "One POST, one GET, a sandbox key from signup. Switching to live does not change your code, only the key prefix."
       }
     ],
     "stepsEyebrow": "The flow",
@@ -255,7 +255,7 @@
           {
             "glyph": "shield",
             "title": "One key, a Bearer token",
-            "body": "The key prefix states the environment. Going to production changes nothing else in your code."
+            "body": "The key prefix states the environment. Switching to live changes nothing else in your code."
           },
           {
             "glyph": "ledger",
@@ -335,7 +335,7 @@
         "Decision rules versioned server-side: two identical cases return the same decision.",
         "A timestamped consent, with the version of the text accepted, kept with the case.",
         "No personal data in our logs: technical identifiers, statuses, durations.",
-        "A free and deterministic test environment, replayable in your continuous integration."
+        "A free and deterministic sandbox, replayable in your continuous integration."
       ],
       "limitsTitle": "What we do not claim",
       "limitsBadge": "Limits we own",
@@ -372,15 +372,15 @@
     ],
     "catalogEyebrow": "The range",
     "catalogTitle": "One product to sell, two to announce",
-    "catalogLead": "We would rather say it than let you assume it: identity verification is the only product you can subscribe to today.",
+    "catalogLead": "We would rather say it than let you assume it: identity verification is the only product billed today.",
     "catalogNote": "Biometric authentication and AML screening cannot be enabled, are not priced, and are not exposed through the API. No launch date is announced.",
     "closingEyebrow": "Try it",
     "closingTitle": "Your first verification, without talking to a salesperson",
-    "closingBody": "Create an account, collect the test key and run the whole flow in the sandbox. Nothing billed, no card requested.",
+    "closingBody": "Create an account, collect the sandbox key and run the whole flow. Nothing billed, no card requested.",
     "closingNote": "A sales contact exists. It is not the way in.",
     "closingListTitle": "What you have in hand straight away",
     "closingPoints": [
-      "A test key as soon as your email address is verified",
+      "A sandbox key as soon as your email address is verified",
       "Deterministic results you can replay in your automated tests",
       "No real personal data to handle in order to integrate"
     ]
@@ -501,20 +501,20 @@
     },
     "sandboxEyebrow": "Sandbox",
     "sandboxTitle": "Write your integration before you have a customer",
-    "sandboxBody": "Every account starts with a test key. The sandbox returns deterministic results: you replay your cases — approved, rejected, review — with no invoice and no real data.",
+    "sandboxBody": "Every account starts with a sandbox key. The sandbox returns deterministic results: you replay your cases — approved, rejected, review — without debiting credit and with no real data.",
     "sandbox": [
-      "A test key as soon as the account is created",
+      "A sandbox key as soon as the account is created",
       "Reproducible cases for your automated tests",
       "No real personal data to handle in order to integrate",
-      "Going to production changes nothing but the key"
+      "Going live changes nothing but the key"
     ]
   },
   "biometric": {
     "metaTitle": "Biometric authentication",
-    "metaDescription": "Re-authenticate an already verified customer by their face. A product announced on the Recogniz-Me roadmap: it is not available and cannot be subscribed to.",
+    "metaDescription": "Re-authenticate an already verified customer by their face. A product announced on the Recogniz-Me roadmap: it is not available and is not sold.",
     "eyebrow": "Roadmap",
     "noticeTitle": "This product is not available",
-    "noticeBody": "It cannot be subscribed to, enabled, or called through the API. This page exists so you know where the product is going, not to sell it to you today.",
+    "noticeBody": "It cannot be purchased, enabled, or called through the API. This page exists so you know where the product is going, not to sell it to you today.",
     "ideaEyebrow": "The idea",
     "problemTitle": "Recognising someone you have already verified",
     "problemBody": "Once a person has been verified, asking for their identity document again at every sensitive operation is expensive — for them as much as for you.",
@@ -539,10 +539,10 @@
   },
   "aml": {
     "metaTitle": "AML screening",
-    "metaDescription": "Sanctions, politically exposed persons and adverse media screening. A product announced on the Recogniz-Me roadmap: it is not available and cannot be subscribed to.",
+    "metaDescription": "Sanctions, politically exposed persons and adverse media screening. A product announced on the Recogniz-Me roadmap: it is not available and is not sold.",
     "eyebrow": "Roadmap",
     "noticeTitle": "This product is not available",
-    "noticeBody": "It cannot be subscribed to, enabled, or called through the API. This page exists so you know where the product is going, not to sell it to you today.",
+    "noticeBody": "It cannot be purchased, enabled, or called through the API. This page exists so you know where the product is going, not to sell it to you today.",
     "ideaEyebrow": "The idea",
     "problemTitle": "Knowing whether you are allowed to onboard someone",
     "problemBody": "Checking that an identity is real does not tell you whether regulation allows you to open an account for that person.",
@@ -567,38 +567,38 @@
   },
   "pricing": {
     "metaTitle": "Pricing",
-    "metaDescription": "A free sandbox to integrate and test, and a Production plan billed on usage. Pricing for Recogniz-Me identity verification.",
+    "metaDescription": "A free sandbox to integrate and test. Live identity verification draws organization credit. Top up by card. Recogniz-Me pricing.",
     "eyebrow": "Pricing",
     "title": "Integrate for free, pay when you verify for real",
-    "lead": "Only one product is billed today: identity verification. The test environment does not eat into your allowance.",
+    "lead": "Only one service draws credit today: identity verification. Sandbox never debits. Top up by card. No monthly plan.",
     "provisionalTitle": "Provisional pricing",
-    "provisionalBody": "These amounts are indicative and will be fixed when Production accounts open. They do not constitute a contractual offer.",
-    "plansTitle": "The two plans",
+    "provisionalBody": "These amounts are indicative and will be fixed when live billing opens. They do not constitute a contractual offer.",
+    "plansTitle": "How you pay",
     "plansNote": "Biometric authentication and AML screening have no price line: they are not available, so they are not sold.",
-    "perMonth": "per month",
+    "perMonth": "per live verification",
     "free": "Free",
-    "includedLabel": "verifications included per month",
-    "overageLabel": "per additional verification",
+    "includedLabel": "sandbox",
+    "overageLabel": "per live verification",
     "sandbox": {
       "badge": "No card required",
       "name": "Sandbox",
       "tagline": "To integrate and test",
       "features": [
-        "A test key as soon as the account is created",
+        "A sandbox key as soon as the account is created",
         "Deterministic, reproducible results",
         "The full console and hosted flow",
-        "No real data to provide"
+        "Never debited"
       ]
     },
     "production": {
-      "badge": "One paid plan",
-      "name": "Production",
+      "badge": "Credit",
+      "name": "Live",
       "tagline": "To verify real people",
       "features": [
         "Real verifications with a reasoned decision",
         "A review queue for ambiguous cases",
         "Result notifications to your back office",
-        "Self-service billing and invoices"
+        "Top up by card, then debit the balance"
       ]
     },
     "numerals": {
@@ -611,16 +611,16 @@
     "tableColumns": {
       "item": "Item",
       "sandbox": "Sandbox",
-      "production": "Production"
+      "production": "Live"
     },
     "tableRows": [
       {
-        "item": "Verifications included per month",
-        "sandbox": "50",
-        "production": "200"
+        "item": "Unit price",
+        "sandbox": "Free",
+        "production": "Per use (indicative)"
       },
       {
-        "item": "Draws on the paid allowance",
+        "item": "Debits credit",
         "sandbox": "No",
         "production": "Yes"
       },
@@ -644,20 +644,24 @@
       },
       {
         "term": "What if my customer does not finish?",
-        "detail": "The verification is still counted: the link was issued and the flow was made available. That is also what makes your invoice predictable."
+        "detail": "The verification is still counted: the link was issued and the flow was made available. That is also what makes the debit from the balance predictable."
       },
       {
         "term": "Is the sandbox billed?",
-        "detail": "No. Test keys do not draw on the Production allowance and trigger no billable processing with our subprocessors."
+        "detail": "No. Test keys never debit credit and trigger no billable processing with our subprocessors."
       },
       {
         "term": "What about the other two products?",
-        "detail": "Biometric authentication and AML screening are not available, so they are not priced. No line on your invoice will ever mention them."
+        "detail": "Biometric authentication and AML screening are not available, so they are not priced. No credit debit will ever mention them."
+      },
+      {
+        "term": "How do you top up credit?",
+        "detail": "By card, from the console. The amount is added to the organisation balance. Other channels come later."
       }
     ],
     "closingTitle": "Start with the sandbox",
-    "closingBody": "You do not need a paid plan to integrate, nor to show the complete flow to your team.",
-    "closingNote": "Moving to production happens from the console, the day you need it."
+    "closingBody": "You do not need a card or credit to integrate, nor to show the complete flow to your team.",
+    "closingNote": "Live starts from the console, the day the balance covers a verification. Top-up is by card."
   },
   "security": {
     "metaTitle": "Security and data",
@@ -691,7 +695,7 @@
     "isolationTitle": "Customer isolation",
     "isolationBody": "Every verification belongs to one organisation. Every read is filtered by the organisation of the key that asked. A resource belonging to another customer returns a not-found page rather than an access denial: a denial would confirm that the resource exists.",
     "keysTitle": "API keys",
-    "keysBody": "Keys are stored as a digest: we cannot read them back. A key’s secret is shown once, when it is created. Test keys and production keys are distinct, and a production key is refused if the subscription is not active.",
+    "keysBody": "Keys are stored as a digest: we cannot read them back. A key’s secret is shown once, when it is created. Test keys and live keys are distinct, and a live key is refused if the balance is insufficient.",
     "mediaTitle": "Documents and photos",
     "mediaBody": "Media are stored in private storage. No permanent URL is published: every view, including from our own console, goes through a short-lived signed link. Binary content never travels in our business responses or in our notifications.",
     "transitTitle": "Encryption",
@@ -751,7 +755,7 @@
     "eyebrow": "Documentation",
     "title": "Your first verification in three calls",
     "lead": "This page is enough to integrate the hosted flow. The complete field reference lives in the OpenAPI specification.",
-    "heroNote": "The examples work as they are with a test key.",
+    "heroNote": "The examples work as they are with a sandbox key.",
     "requestLabel": "Create a verification",
     "responseLabel": "Response — the link to send your customer",
     "authEyebrow": "Authentication",
@@ -759,7 +763,7 @@
     "authBody": "Every request carries your key as a Bearer token. A key starting with ky_test_ works in the sandbox, a ky_live_ key on real data. That is the only difference between your two environments.",
     "authPoints": [
       "A key’s secret is shown once, when it is created.",
-      "A production key is refused if the subscription is not active.",
+      "A live key is refused if the balance does not cover a verification.",
       "The console session cookie never authenticates the public API."
     ],
     "numerals": {
@@ -771,7 +775,7 @@
     "quickstartTitle": "Three calls, in order",
     "quickstartLead": "An account, a creation, a read. Nothing else is needed for a first complete flow.",
     "step1Title": "Get a sandbox key",
-    "step1Body": "Create an account: a test key is issued once your email address is verified. The secret is shown only once — put it in your secret manager, not in your code.",
+    "step1Body": "Create an account: a sandbox key is issued once your email address is verified. The secret is shown only once — put it in your secret manager, not in your code.",
     "step2Title": "Create a verification",
     "step2Body": "The response holds the verification identifier and the link to send your customer. The idempotency header protects your network retries: replaying the same call does not create a duplicate.",
     "step3Title": "Read the decision",
@@ -849,14 +853,14 @@
     "openapiSchema": "OpenAPI schema",
     "openapiExplorer": "Interactive explorer",
     "closingTitle": "Ready to write the first call",
-    "closingBody": "Create your account to get the test key, then come back and copy the command."
+    "closingBody": "Create your account to get the sandbox key, then come back and copy the command."
   },
   "contact": {
     "metaTitle": "Contact",
     "metaDescription": "Write to the Recogniz-Me team: product, security and compliance questions, or interest in the roadmap products.",
     "eyebrow": "Contact",
     "title": "Talk to a person",
-    "lead": "You do not need to talk to us to try the product: the account and the test key are self-service. Write to us for everything else.",
+    "lead": "You do not need to talk to us to try the product: the account and the sandbox key are self-service. Write to us for everything else.",
     "emailEyebrow": "Write",
     "emailTitle": "By email, preferably",
     "emailBody": "It is the most direct route, and you keep a record of the exchange.",
@@ -895,7 +899,7 @@
   },
   "legal": {
     "draftTitle": "Document under legal review",
-    "draftBody": "This page is a working draft published for transparency. It has not yet been approved by legal counsel and is not authoritative. The applicable version will be presented to you at subscription.",
+    "draftBody": "This page is a working draft published for transparency. It has not yet been approved by legal counsel and is not authoritative. The applicable version will be presented to you when you create an account.",
     "lastUpdatedLabel": "Last updated",
     "lastUpdated": "2 September 2026",
     "terms": {
@@ -917,7 +921,7 @@
         },
         {
           "heading": "Environments",
-          "body": "The test environment returns simulated results and must not receive real personal data. The production environment requires an active subscription; a production key is refused in its absence."
+          "body": "The sandbox returns simulated results and must not receive real personal data. The live environment requires a sufficient credit balance; a live key is refused otherwise."
         },
         {
           "heading": "Nature of the decision",
@@ -929,7 +933,7 @@
         },
         {
           "heading": "Billing",
-          "body": "Verifications are counted when they are created. The subscription is monthly and can be cancelled; cancellation takes effect at the end of the current period and closes access to the production environment."
+          "body": "Live verifications are counted when they are created and debited from organisation credit. Sandbox never debits. MVP top-up is by card. Without a sufficient balance, live keys are refused."
         },
         {
           "heading": "Personal data",

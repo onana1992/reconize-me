@@ -6,6 +6,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { Logo, Wordmark } from "@kyc/brand";
 import { useT } from "../i18n/client";
 import { displayName, initials, tRole } from "../lib/labels";
+import { PRODUCTS, PRODUCT_IDS } from "../lib/products";
 import { LanguageMenu } from "./language-menu";
 import { LogoutButton } from "./logout-button";
 import { NavIcon, type IconName } from "./nav-icons";
@@ -20,43 +21,33 @@ export type AppShellProps = {
   firstName: string;
   lastName: string;
   role: string;
-  plan: string;
   permissions: string[];
   children: ReactNode;
 };
 
 type NavLink = {
   href: string;
-  labelKey: "console.nav.home" | "console.nav.keys" | "console.nav.team" | "console.nav.activity" | "console.nav.account";
+  labelKey: "console.nav.home" | "console.nav.billing" | "console.nav.team" | "console.nav.activity";
   icon: IconName;
   match: (path: string) => boolean;
   permission?: string;
 };
 
-type SoonItem = {
-  labelKey: "console.nav.idv" | "console.nav.biometric" | "console.nav.aml";
-  icon: IconName;
+const HOME: NavLink = {
+  href: "/",
+  labelKey: "console.nav.home",
+  icon: "home",
+  match: (path) => path === "/",
 };
 
-const OVERVIEW: NavLink[] = [
-  { href: "/", labelKey: "console.nav.home", icon: "home", match: (path) => path === "/" },
-];
-
-const SOON: SoonItem[] = [
-  { labelKey: "console.nav.idv", icon: "idcard" },
-  { labelKey: "console.nav.biometric", icon: "scan" },
-  { labelKey: "console.nav.aml", icon: "search" },
-];
-
-const ORG: NavLink[] = [
-  {
-    href: "/settings/keys",
-    labelKey: "console.nav.keys",
-    icon: "key",
-    match: (path) => path.startsWith("/settings/keys"),
-    permission: "API_KEY_READ",
-  },
+const SETTINGS: NavLink[] = [
   { href: "/settings/team", labelKey: "console.nav.team", icon: "team", match: (path) => path.startsWith("/settings/team") },
+  {
+    href: "/settings/billing",
+    labelKey: "console.nav.billing",
+    icon: "billing",
+    match: (path) => path.startsWith("/settings/billing"),
+  },
   {
     href: "/settings/activity",
     labelKey: "console.nav.activity",
@@ -64,15 +55,32 @@ const ORG: NavLink[] = [
     match: (path) => path.startsWith("/settings/activity"),
     permission: "AUDIT_READ",
   },
-  {
-    href: "/settings/account",
-    labelKey: "console.nav.account",
-    icon: "user",
-    match: (path) => path.startsWith("/settings/account"),
-  },
 ];
 
-function sectionTitle(path: string): "console.top.home" | "console.top.keys" | "console.top.team" | "console.top.activity" | "console.top.account" {
+function sectionTitle(
+  path: string,
+):
+  | "console.top.home"
+  | "console.top.identity"
+  | "console.top.biometrics"
+  | "console.top.aml"
+  | "console.top.billing"
+  | "console.top.keys"
+  | "console.top.team"
+  | "console.top.activity"
+  | "console.top.account" {
+  if (path.startsWith("/identity")) {
+    return "console.top.identity";
+  }
+  if (path.startsWith("/biometrics")) {
+    return "console.top.biometrics";
+  }
+  if (path.startsWith("/aml")) {
+    return "console.top.aml";
+  }
+  if (path.startsWith("/settings/billing")) {
+    return "console.top.billing";
+  }
   if (path.startsWith("/settings/keys")) {
     return "console.top.keys";
   }
@@ -99,7 +107,6 @@ export function AppShell({
   firstName,
   lastName,
   role,
-  plan,
   permissions,
   children,
 }: AppShellProps) {
@@ -169,7 +176,6 @@ export function AppShell({
     : mobileOpen
       ? t("console.nav.close")
       : t("console.nav.open");
-  const planLabel = plan === "sandbox" ? t("console.plan.sandbox") : plan;
   const initial = (orgName.trim().charAt(0) || "R").toUpperCase();
   const railCollapsed = desktop && collapsed;
   const profileName = displayName(firstName, lastName, email);
@@ -190,21 +196,32 @@ export function AppShell({
           {railCollapsed ? <Logo size={24} title="Recogniz-Me" /> : <Wordmark size={24} />}
         </Link>
         <nav className="rm-shell-nav" aria-label={t("console.nav.label")}>
-          <NavGroup label={t("console.nav.overview")} collapsed={railCollapsed}>
-            {OVERVIEW.map((item) => (
-              <NavItem key={item.href} item={item} pathname={pathname} collapsed={railCollapsed} />
-            ))}
+          <NavGroup collapsed={railCollapsed}>
+            <NavItem item={HOME} pathname={pathname} collapsed={railCollapsed} />
           </NavGroup>
-          <NavGroup label={t("console.nav.solutions")} collapsed={railCollapsed}>
-            {(permissions.includes("VERIFICATION_READ")
-              ? SOON
-              : SOON.filter((item) => item.labelKey !== "console.nav.idv")
-            ).map((item) => (
-              <SoonNavItem key={item.labelKey} item={item} />
-            ))}
+          <NavGroup label={t("console.nav.services")} collapsed={railCollapsed}>
+            {PRODUCT_IDS.map((id) => {
+              const product = PRODUCTS[id];
+              const current = pathname === product.href || pathname.startsWith(`${product.href}/`);
+              const label = t(product.navKey);
+              return (
+                <Link
+                  key={product.id}
+                  href={product.href}
+                  className="rm-shell-item"
+                  aria-current={current ? "page" : undefined}
+                  title={railCollapsed ? label : undefined}
+                >
+                  <span className="rm-shell-ico">
+                    <NavIcon name={product.icon} />
+                  </span>
+                  <span className="rm-shell-label">{label}</span>
+                </Link>
+              );
+            })}
           </NavGroup>
-          <NavGroup label={t("console.nav.organization")} collapsed={railCollapsed}>
-            {ORG.filter((item) => !item.permission || permissions.includes(item.permission)).map((item) => (
+          <NavGroup label={t("console.nav.settings")} collapsed={railCollapsed}>
+            {SETTINGS.filter((item) => !item.permission || permissions.includes(item.permission)).map((item) => (
               <NavItem key={item.href} item={item} pathname={pathname} collapsed={railCollapsed} />
             ))}
           </NavGroup>
@@ -217,10 +234,7 @@ export function AppShell({
             {railCollapsed ? null : (
               <div className="rm-shell-org-meta">
                 <span className="rm-shell-org-name">{orgName}</span>
-                <span className="rm-shell-org-slug">
-                  {orgSlug}
-                  {planLabel ? ` · ${planLabel}` : ""}
-                </span>
+                <span className="rm-shell-org-slug">{orgSlug}</span>
               </div>
             )}
           </div>
@@ -245,7 +259,12 @@ export function AppShell({
           </button>
           <p className="rm-shell-crumb">{t(sectionTitle(pathname))}</p>
           {email ? (
-            <Link href="/settings/account" className="rm-shell-profile" title={profileName}>
+            <Link
+              href="/settings/account"
+              className="rm-shell-profile"
+              title={profileName}
+              aria-current={pathname.startsWith("/settings/account") ? "page" : undefined}
+            >
               <span className="rm-shell-initial" aria-hidden="true">
                 {profileInitials}
               </span>
@@ -256,16 +275,18 @@ export function AppShell({
             </Link>
           ) : null}
         </header>
-        <div className="rm-page">{children}</div>
+        <div className="rm-shell-body">{children}</div>
       </div>
     </div>
   );
 }
 
-function NavGroup({ label, collapsed, children }: { label: string; collapsed: boolean; children: ReactNode }) {
+function NavGroup({ label, collapsed, children }: { label?: string; collapsed: boolean; children: ReactNode }) {
   return (
     <div className="rm-shell-group">
-      <p className="rm-shell-group-label">{collapsed ? <span className="rm-sr-only">{label}</span> : label}</p>
+      {label ? (
+        <p className="rm-shell-group-label">{collapsed ? <span className="rm-sr-only">{label}</span> : label}</p>
+      ) : null}
       {children}
     </div>
   );
@@ -288,21 +309,5 @@ function NavItem({ item, pathname, collapsed }: { item: NavLink; pathname: strin
       </span>
       <span className="rm-shell-label">{label}</span>
     </Link>
-  );
-}
-
-function SoonNavItem({ item }: { item: SoonItem }) {
-  const t = useT();
-  const label = t(item.labelKey);
-  const hint = `${label} — ${t("console.nav.soon")}. ${t("console.home.waitlist")}`;
-
-  return (
-    <span className="rm-shell-item" data-soon="true" title={hint} aria-disabled="true">
-      <span className="rm-shell-ico">
-        <NavIcon name={item.icon} />
-      </span>
-      <span className="rm-shell-label">{label}</span>
-      <span className="rm-sr-only">{t("console.nav.soon")}</span>
-    </span>
   );
 }

@@ -12,7 +12,7 @@ import { href } from "../lib/routes";
  * retrait et sans relief. Un visiteur pressé doit pouvoir trancher sans lire.
  *
  * La carte n'a qu'un seul geste, « voir la page » — jamais « essayer » ni
- * « souscrire », que le produit soit disponible ou non. L'appel à l'action
+ * « acheter », que le produit soit disponible ou non. L'appel à l'action
  * d'achat appartient à la bande de conclusion, pas au catalogue.
  */
 export function OfferCard({ locale, product }: { locale: Locale; product: ProductKey }) {

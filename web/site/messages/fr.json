@@ -83,10 +83,10 @@
   },
   "home": {
     "metaTitle": "Vérification d’identité pour les entreprises",
-    "metaDescription": "Vérifiez une identité en temps réel : document, biométrie et décision, via API ou lien hébergé. Environnement de test gratuit.",
+    "metaDescription": "Vérifiez une identité en temps réel : document, biométrie et décision, via API ou lien hébergé. Sandbox gratuit.",
     "title": "Vérifiez les identités. Réduisez la fraude. Restez conforme.",
     "lead": "Une plateforme SaaS pour des contrôles d’identité rapides et sûrs, la validation de documents et le KYC/AML — simple pour l’utilisateur, complète pour l’entreprise.",
-    "heroNote": "Environnement de test gratuit, sans carte bancaire.",
+    "heroNote": "Sandbox gratuit, sans carte bancaire.",
     "hero": {
       "verdictTitle": "Décision rendue",
       "verdictSummary": "Trois contrôles concordants, et les raisons conservées avec le dossier.",
@@ -132,7 +132,7 @@
       },
       {
         "value": "0 €",
-        "title": "Coût de l’environnement de test",
+        "title": "Coût du sandbox",
         "body": "Le sandbox répond sur des jeux de données fixes, sans appel de traitement facturé. Aucune carte bancaire à l’inscription."
       },
       {
@@ -163,7 +163,7 @@
       {
         "glyph": "api",
         "title": "Une intégration, pas un projet",
-        "body": "Un POST, un GET, une clé de test dès l’inscription. Le passage en production ne change pas votre code, seulement le préfixe de la clé."
+        "body": "Un POST, un GET, une clé sandbox dès l’inscription. Passer en live ne change pas votre code, seulement le préfixe de la clé."
       }
     ],
     "stepsEyebrow": "Le parcours",
@@ -255,7 +255,7 @@
           {
             "glyph": "shield",
             "title": "Une clé, un jeton Bearer",
-            "body": "Le préfixe de la clé dit l’environnement. Passer en production ne change rien d’autre dans votre code."
+            "body": "Le préfixe de la clé dit l’environnement. Passer en live ne change rien d’autre dans votre code."
           },
           {
             "glyph": "ledger",
@@ -326,7 +326,7 @@
     ],
     "compareEyebrow": "Le contrat",
     "compareTitle": "Ce que nous tenons, ce que nous ne prétendons pas",
-    "compareLead": "Un fournisseur de vérification qui n’énonce que ses forces vous oblige à découvrir ses limites en production. Les voici avant la signature.",
+    "compareLead": "Un fournisseur de vérification qui n’énonce que ses forces vous oblige à découvrir ses limites en live. Les voici avant la signature.",
     "compare": {
       "heldTitle": "Ce que nous tenons",
       "heldBadge": "Vérifiable",
@@ -335,7 +335,7 @@
         "Des règles de décision versionnées côté serveur : deux dossiers identiques rendent la même décision.",
         "Un consentement horodaté, avec la version du texte accepté, conservé avec le dossier.",
         "Aucune donnée personnelle dans nos journaux : des identifiants techniques, des statuts, des durées.",
-        "Un environnement de test gratuit et déterministe, rejouable dans votre intégration continue."
+        "Un sandbox gratuit et déterministe, rejouable dans votre intégration continue."
       ],
       "limitsTitle": "Ce que nous ne prétendons pas",
       "limitsBadge": "Limites assumées",
@@ -372,15 +372,15 @@
     ],
     "catalogEyebrow": "La gamme",
     "catalogTitle": "Un produit à vendre, deux à annoncer",
-    "catalogLead": "Nous préférons le dire que le laisser croire : seule la vérification d’identité est souscriptible aujourd’hui.",
+    "catalogLead": "Nous préférons le dire que le laisser croire : seule la vérification d’identité est vendue aujourd’hui.",
     "catalogNote": "L’authentification biométrique et le criblage AML ne sont ni activables, ni tarifés, ni exposés en API. Aucune date d’ouverture n’est annoncée.",
     "closingEyebrow": "Essayer",
     "closingTitle": "Votre première vérification, sans parler à un commercial",
-    "closingBody": "Créez un compte, récupérez la clé de test et lancez le parcours complet en sandbox. Aucun appel facturé, aucune carte demandée.",
+    "closingBody": "Créez un compte, récupérez la clé sandbox et lancez le parcours complet. Aucun appel facturé, aucune carte demandée.",
     "closingNote": "Un contact commercial existe. Ce n’est pas le chemin d’entrée.",
     "closingListTitle": "Ce que vous avez en main tout de suite",
     "closingPoints": [
-      "Clé de test dès l’adresse e-mail vérifiée",
+      "Clé sandbox dès l’adresse e-mail vérifiée",
       "Résultats déterministes, rejouables dans vos tests automatisés",
       "Aucune donnée personnelle réelle à manipuler pour intégrer"
     ]
@@ -501,20 +501,20 @@
     },
     "sandboxEyebrow": "Sandbox",
     "sandboxTitle": "Écrivez votre intégration avant d’avoir un client",
-    "sandboxBody": "Tout compte démarre avec une clé de test. L’environnement sandbox rend des résultats déterministes : vous rejouez vos cas — approuvé, refusé, à revoir — sans facture et sans données réelles.",
+    "sandboxBody": "Tout compte démarre avec une clé sandbox. L’environnement sandbox rend des résultats déterministes : vous rejouez vos cas — approuvé, refusé, à revoir — sans débiter le crédit et sans données réelles.",
     "sandbox": [
-      "Une clé de test dès la création du compte",
+      "Une clé sandbox dès la création du compte",
       "Des cas reproductibles pour vos tests automatisés",
       "Aucune donnée personnelle réelle à manipuler pour intégrer",
-      "Le passage en production ne change que la clé"
+      "Le passage en live ne change que la clé"
     ]
   },
   "biometric": {
     "metaTitle": "Authentification biométrique",
-    "metaDescription": "Ré-authentifier un client déjà vérifié par son visage. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et ne peut pas être souscrit.",
+    "metaDescription": "Ré-authentifier un client déjà vérifié par son visage. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et n’est pas vendu.",
     "eyebrow": "Feuille de route",
     "noticeTitle": "Ce produit n’est pas disponible",
-    "noticeBody": "Il ne peut être ni souscrit, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
+    "noticeBody": "Il ne peut être ni acheté, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
     "ideaEyebrow": "L’idée",
     "problemTitle": "Reconnaître quelqu’un qu’on a déjà vérifié",
     "problemBody": "Une fois une personne vérifiée, lui redemander sa pièce d’identité à chaque opération sensible coûte cher — à elle comme à vous.",
@@ -539,10 +539,10 @@
   },
   "aml": {
     "metaTitle": "Criblage AML",
-    "metaDescription": "Criblage sanctions, personnes politiquement exposées et presse défavorable. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et ne peut pas être souscrit.",
+    "metaDescription": "Criblage sanctions, personnes politiquement exposées et presse défavorable. Produit annoncé sur la feuille de route Recogniz-Me : il n’est pas disponible et n’est pas vendu.",
     "eyebrow": "Feuille de route",
     "noticeTitle": "Ce produit n’est pas disponible",
-    "noticeBody": "Il ne peut être ni souscrit, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
+    "noticeBody": "Il ne peut être ni acheté, ni activé, ni appelé par l’API. Cette page existe pour que vous sachiez où va le produit, pas pour vous le vendre aujourd’hui.",
     "ideaEyebrow": "L’idée",
     "problemTitle": "Savoir si vous avez le droit d’entrer en relation",
     "problemBody": "Vérifier qu’une identité est réelle ne dit pas si la réglementation vous autorise à ouvrir un compte à cette personne.",
@@ -567,38 +567,38 @@
   },
   "pricing": {
     "metaTitle": "Tarifs",
-    "metaDescription": "Sandbox gratuit pour intégrer et tester, plan Production à l’usage. Tarifs de la vérification d’identité Recogniz-Me.",
+    "metaDescription": "Sandbox gratuit pour intégrer et tester. La vérification d’identité live débite le crédit d’organisation. Recharge par carte. Tarifs Recogniz-Me.",
     "eyebrow": "Tarifs",
     "title": "Intégrez gratuitement, payez quand vous vérifiez pour de vrai",
-    "lead": "Un seul produit est facturé aujourd’hui : la vérification d’identité. L’environnement de test ne consomme pas votre forfait.",
+    "lead": "Un seul service débite le crédit aujourd’hui : la vérification d’identité. Le sandbox ne débite jamais. Recharge par carte. Pas de plan mensuel.",
     "provisionalTitle": "Tarifs provisoires",
-    "provisionalBody": "Ces montants sont indicatifs et seront figés à l’ouverture des comptes Production. Ils ne constituent pas une offre contractuelle.",
-    "plansTitle": "Les deux plans",
+    "provisionalBody": "Ces montants sont indicatifs et seront figés à l’ouverture du live. Ils ne constituent pas une offre contractuelle.",
+    "plansTitle": "Comment vous payez",
     "plansNote": "L’authentification biométrique et le criblage AML n’ont pas de ligne tarifaire : ils ne sont pas disponibles, donc ils ne sont pas vendus.",
-    "perMonth": "par mois",
+    "perMonth": "par vérification live",
     "free": "Gratuit",
-    "includedLabel": "vérifications incluses par mois",
-    "overageLabel": "par vérification supplémentaire",
+    "includedLabel": "sandbox",
+    "overageLabel": "par vérification live",
     "sandbox": {
       "badge": "Sans carte bancaire",
       "name": "Sandbox",
       "tagline": "Pour intégrer et tester",
       "features": [
-        "Clé de test dès la création du compte",
+        "Clé sandbox dès la création du compte",
         "Résultats déterministes et reproductibles",
         "Console et parcours hébergé complets",
-        "Aucune donnée réelle à fournir"
+        "Jamais débité"
       ]
     },
     "production": {
-      "badge": "Un seul plan payant",
-      "name": "Production",
+      "badge": "Crédit",
+      "name": "Live",
       "tagline": "Pour vérifier de vraies personnes",
       "features": [
         "Vérifications réelles avec décision motivée",
         "File de revue pour les cas ambigus",
         "Notifications de résultat vers votre back-office",
-        "Facturation et factures en libre-service"
+        "Recharge par carte, débit du solde"
       ]
     },
     "numerals": {
@@ -611,16 +611,16 @@
     "tableColumns": {
       "item": "Élément",
       "sandbox": "Sandbox",
-      "production": "Production"
+      "production": "Live"
     },
     "tableRows": [
       {
-        "item": "Vérifications incluses par mois",
-        "sandbox": "50",
-        "production": "200"
+        "item": "Prix unitaire",
+        "sandbox": "Gratuit",
+        "production": "À l’unité (indicatif)"
       },
       {
-        "item": "Consomme le forfait payant",
+        "item": "Débite le crédit",
         "sandbox": "Non",
         "production": "Oui"
       },
@@ -644,20 +644,24 @@
       },
       {
         "term": "Et si mon client ne va pas au bout ?",
-        "detail": "La vérification reste comptée : le lien a été émis et le parcours mis à disposition. C’est aussi ce qui rend votre facture prévisible."
+        "detail": "La vérification reste comptée : le lien a été émis et le parcours mis à disposition. C’est aussi ce qui rend le débit du solde prévisible."
       },
       {
         "term": "Le sandbox est-il facturé ?",
-        "detail": "Non. Les clés de test n’entament pas le forfait Production et ne déclenchent aucun traitement payant chez nos sous-traitants."
+        "detail": "Non. Les clés sandbox ne débitent jamais le crédit et ne déclenchent aucun traitement payant chez nos sous-traitants."
       },
       {
         "term": "Et les deux autres produits ?",
-        "detail": "L’authentification biométrique et le criblage AML ne sont pas disponibles, donc pas tarifés. Aucune ligne de votre facture ne les concernera."
+        "detail": "L’authentification biométrique et le criblage AML ne sont pas disponibles, donc pas tarifés. Aucun débit de crédit ne les concernera."
+      },
+      {
+        "term": "Comment recharge-t-on le crédit ?",
+        "detail": "Par carte bancaire, depuis la console. Le montant rejoint le solde de l’organisation. D’autres canaux viendront plus tard."
       }
     ],
     "closingTitle": "Commencez par le sandbox",
-    "closingBody": "Vous n’avez pas besoin d’un plan payant pour intégrer, ni pour montrer le parcours complet à votre équipe.",
-    "closingNote": "Le passage en production se fait depuis la console, le jour où vous en avez besoin."
+    "closingBody": "Vous n’avez pas besoin de carte ni de crédit pour intégrer, ni pour montrer le parcours complet à votre équipe.",
+    "closingNote": "Le live se lance depuis la console, le jour où le solde couvre une vérification. La recharge se fait par carte."
   },
   "security": {
     "metaTitle": "Sécurité et données",
@@ -691,7 +695,7 @@
     "isolationTitle": "Cloisonnement des clients",
     "isolationBody": "Chaque vérification appartient à une organisation. Toute lecture est filtrée par l’organisation de la clé qui la demande. Une ressource d’un autre client renvoie une page introuvable et non un refus d’accès : un refus confirmerait que la ressource existe.",
     "keysTitle": "Clés d’API",
-    "keysBody": "Les clés sont stockées sous forme de condensat : nous ne pouvons pas les relire. Le secret d’une clé n’est affiché qu’une fois, à sa création. Les clés de test et les clés de production sont distinctes, et une clé de production est refusée si l’abonnement n’est pas actif.",
+    "keysBody": "Les clés sont stockées sous forme de condensat : nous ne pouvons pas les relire. Le secret d’une clé n’est affiché qu’une fois, à sa création. Les clés sandbox et les clés live sont distinctes, et une clé live est refusée si le solde est insuffisant.",
     "mediaTitle": "Documents et photos",
     "mediaBody": "Les médias sont déposés dans un stockage privé. Aucune URL permanente n’est publiée : chaque consultation, y compris depuis notre console, passe par un lien signé de courte durée. Le contenu binaire ne circule jamais dans nos réponses métier ni dans nos notifications.",
     "transitTitle": "Chiffrement",
@@ -751,7 +755,7 @@
     "eyebrow": "Documentation",
     "title": "Première vérification en trois appels",
     "lead": "Cette page suffit à intégrer le parcours hébergé. La référence complète des champs vit dans la spécification OpenAPI.",
-    "heroNote": "Les exemples fonctionnent tels quels avec une clé de test.",
+    "heroNote": "Les exemples fonctionnent tels quels avec une clé sandbox.",
     "requestLabel": "Créer une vérification",
     "responseLabel": "Réponse — le lien à envoyer à votre client",
     "authEyebrow": "Authentification",
@@ -759,7 +763,7 @@
     "authBody": "Toutes les requêtes portent votre clé en jeton Bearer. Une clé commençant par ky_test_ travaille en sandbox, une clé ky_live_ sur des données réelles. C’est la seule différence entre vos deux environnements.",
     "authPoints": [
       "Le secret d’une clé n’est affiché qu’une fois, à sa création.",
-      "Une clé de production est refusée si l’abonnement n’est pas actif.",
+      "Une clé live est refusée si le solde ne couvre pas une vérification.",
       "Le cookie de session de la console n’authentifie jamais l’API publique."
     ],
     "numerals": {
@@ -771,7 +775,7 @@
     "quickstartTitle": "Trois appels, dans l’ordre",
     "quickstartLead": "Un compte, une création, une lecture. Rien d’autre n’est nécessaire pour un premier parcours complet.",
     "step1Title": "Obtenir une clé sandbox",
-    "step1Body": "Créez un compte : une clé de test est émise à la vérification de votre adresse e-mail. Le secret n’est affiché qu’une fois — mettez-le dans votre gestionnaire de secrets, pas dans votre code.",
+    "step1Body": "Créez un compte : une clé sandbox est émise à la vérification de votre adresse e-mail. Le secret n’est affiché qu’une fois — mettez-le dans votre gestionnaire de secrets, pas dans votre code.",
     "step2Title": "Créer une vérification",
     "step2Body": "La réponse contient l’identifiant de la vérification et le lien à envoyer à votre client. L’en-tête d’idempotence protège vos reprises réseau : rejouer le même appel ne crée pas de doublon.",
     "step3Title": "Lire la décision",
@@ -849,14 +853,14 @@
     "openapiSchema": "Schéma OpenAPI",
     "openapiExplorer": "Explorateur interactif",
     "closingTitle": "Prêt à écrire le premier appel",
-    "closingBody": "Créez votre compte pour obtenir la clé de test, puis revenez copier la commande."
+    "closingBody": "Créez votre compte pour obtenir la clé sandbox, puis revenez copier la commande."
   },
   "contact": {
     "metaTitle": "Contact",
     "metaDescription": "Écrire à l’équipe Recogniz-Me : questions produit, sécurité, conformité, ou intérêt pour les produits de la feuille de route.",
     "eyebrow": "Contact",
     "title": "Parler à une personne",
-    "lead": "Vous n’avez pas besoin de nous parler pour essayer le produit : le compte et la clé de test sont en libre-service. Écrivez-nous pour tout le reste.",
+    "lead": "Vous n’avez pas besoin de nous parler pour essayer le produit : le compte et la clé sandbox sont en libre-service. Écrivez-nous pour tout le reste.",
     "emailEyebrow": "Écrire",
     "emailTitle": "Par e-mail, de préférence",
     "emailBody": "C’est le plus direct, et vous gardez une trace de l’échange.",
@@ -895,7 +899,7 @@
   },
   "legal": {
     "draftTitle": "Document en cours de relecture juridique",
-    "draftBody": "Cette page est un brouillon de travail publié pour transparence. Elle n’a pas encore été validée par un conseil juridique et ne fait pas foi. La version applicable vous sera présentée à la souscription.",
+    "draftBody": "Cette page est un brouillon de travail publié pour transparence. Elle n’a pas encore été validée par un conseil juridique et ne fait pas foi. La version applicable vous sera présentée à la création du compte.",
     "lastUpdatedLabel": "Dernière mise à jour",
     "lastUpdated": "2 septembre 2026",
     "terms": {
@@ -917,7 +921,7 @@
         },
         {
           "heading": "Environnements",
-          "body": "L’environnement de test rend des résultats simulés et ne doit pas recevoir de données personnelles réelles. L’environnement de production requiert un abonnement actif ; une clé de production est refusée en son absence."
+          "body": "Le sandbox rend des résultats simulés et ne doit pas recevoir de données personnelles réelles. L’environnement live exige un solde de crédit suffisant ; une clé live est refusée sinon."
         },
         {
           "heading": "Nature de la décision",
@@ -929,7 +933,7 @@
         },
         {
           "heading": "Facturation",
-          "body": "Les vérifications sont comptées à leur création. L’abonnement est mensuel et résiliable ; la résiliation prend effet à la fin de la période en cours et ferme l’accès à l’environnement de production."
+          "body": "Les vérifications live sont comptées à leur création et débitées du crédit d’organisation. Le sandbox ne débite jamais. La recharge MVP se fait par carte. Sans solde suffisant, les clés live sont refusées."
         },
         {
           "heading": "Données personnelles",

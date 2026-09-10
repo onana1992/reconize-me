@@ -2,8 +2,8 @@
 
 **Plateforme :** Recogniz-Me  
 **Sprint :** M2 — inscription, e-mail, login, organisation Sandbox, console derrière session  
-**Version :** 1.0  
-**Date :** 4 septembre 2026  
+**Version :** 1.1  
+**Date :** 9 septembre 2026  
 **Statut :** livré — voir la [spécification as-built](./specification-m2-compte-client.md)  
 **CDC :** §9. **Objectif O3.** Critère d’acceptation §17.4.
 
@@ -57,12 +57,12 @@ S1 reste : isolation 404, envelope `{ error }`, hash BCrypt des clés, flow par 
 |---|---|
 | `User`, `Membership`, tokens e-mail / reset | SSO, 2FA, SCIM, multi-org |
 | Signup, verify, login, logout, forgot / reset | Facturation, Checkout, `GET /v1/usage` |
-| Création org + slug unique + plan Sandbox (libellé seulement) | `ky_live_`, `Subscription` Stripe |
+| Création org + slug unique ; sandbox gratuit (libellé d’environnement de clé, pas un plan) | `ky_live_`, crédit org, Checkout carte |
 | Cookie session httpOnly | Auth `/v1/verifications` par cookie |
 | Rôles propriétaire / membre + invitation e-mail | RBAC fin, révocation de session distante |
-| Écrans : login, signup, verify, forgot, clés, équipe, compte | Portail Stripe, quotas chiffrés |
+| Écrans : login, signup, verify, forgot, clés sous Identity, équipe, compte | Checkout Stripe, ledger |
 
-Une org naît en Sandbox (RG-SUB-01, sans Stripe). L’écran d’accueil affiche le plan, usage à **0** jusqu’à M3.
+Une org naît avec le sandbox gratuit (RG-SUB-01, sans Stripe). L’écran d’accueil affiche les services, usage à **0** jusqu’à M3.
 
 ---
 
@@ -103,7 +103,7 @@ Flyway `V4__accounts.sql` :
 
 Ajouter sur `api_keys` : `created_by_user_id` nullable (clés seed S1 restent sans auteur).
 
-`organizations` : pas de colonne plan en M2 (tout le monde est Sandbox). M3 ajoutera `Subscription`.
+`organizations` : pas de colonne plan en M2. M3 ajoutera `CreditAccount` et le Checkout **carte**, **pas** un plan d’abonnement ni un meter.
 
 Entités JPA + repositories. Pas encore de routes.
 
@@ -143,7 +143,7 @@ Principal session : `userId` + `organizationId` + `role`.
 
 | Méthode | Chemin | Rôle min. | Effet |
 |---|---|---|---|
-| `GET` | `/v1/console/me` | member | `{ email, organization: { id, name, slug, plan: "sandbox" }, role }` |
+| `GET` | `/v1/console/me` | member | `{ email, organization: { id, name, slug }, role }` |
 | `POST` | `/v1/console/verifications` | member | Délègue à `VerificationService` avec l’org de session |
 | `GET` | `/v1/console/verifications` | member | Liste du tenant |
 | `GET` | `/v1/console/verifications/{id}` | member | Fiche. Autre org → **404** |
@@ -165,7 +165,7 @@ Tokens M0 (`console.css`). Pages :
 |---|---|
 | `/signup`, `/login`, `/forgot`, `/reset`, `/verify` | Public. Layout **sans** nav métier |
 | `/verify/pending` | Après signup, e-mail non vérifié |
-| `/` | Session. Accueil : org, plan Sandbox, CTA nouvelle vérif |
+| `/` | Session. Accueil : org, services, CTA |
 | `/verifications`, `/verifications/new`, `/verifications/[id]` | Session. Remplacer `KYC_API_KEY` par les appels `/v1/console/**` |
 | `/settings/keys` | Session. Secret affiché uniquement juste après create / verify |
 | `/settings/team` | Session |
@@ -298,4 +298,4 @@ Ne pas « profiter » de M2 pour du SSO ou de la 2FA.
 
 ## 14. Suite
 
-M2 vert → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Souscription**. Freeze pricing **avant** le premier Checkout.
+M2 vert → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Facturation à l’usage**. Freeze pricing **avant** le premier Checkout.
