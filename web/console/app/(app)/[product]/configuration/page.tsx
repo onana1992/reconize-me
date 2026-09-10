@@ -17,7 +17,7 @@ export default async function ProductConfigurationPage({
   const t = await getT();
 
   return (
-    <main>
+    <main className="rm-idv">
       <PageHeader
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.configuration")}

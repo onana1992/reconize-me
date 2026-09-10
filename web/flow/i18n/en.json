@@ -1,0 +1,23 @@
+{
+  "title": "Identity verification",
+  "invalid": "This link is not valid.",
+  "expired": "This link has expired. Contact the company that sent it.",
+  "consentTitle": "Consent",
+  "consentBody": "We will photograph your identity document and your face to verify your identity. The images are sent to the company that opened this session.",
+  "accept": "I agree",
+  "decline": "I decline",
+  "declined": "You declined. You can close this page.",
+  "documentTitle": "Photograph your document",
+  "documentLead": "Place the document in the frame, well lit, without glare.",
+  "selfieTitle": "Photograph your face",
+  "selfieLead": "Look at the camera, face unobstructed, even lighting.",
+  "capture": "Take photo",
+  "uploading": "Uploading…",
+  "recapture": "The photo is not sharp enough. Try again.",
+  "wait": "Processing…",
+  "done": "You’re done. You can close this page.",
+  "cameraError": "Camera access failed.",
+  "retry": "Try again",
+  "langFr": "FR",
+  "langEn": "EN"
+}

@@ -153,6 +153,38 @@ export async function consoleApi<T>(path: string, cookieHeader: string, init?: R
   }
 }
 
+export type Verification = {
+  id: string;
+  status: string;
+  hosted_url?: string | null;
+  expires_at: string;
+  applicant?: { first_name?: string | null; last_name?: string | null; email?: string | null } | null;
+  metadata?: Record<string, unknown> | null;
+  decision?: string | null;
+  decision_reasons?: string[] | null;
+  signals?: { code: string; outcome: string; score?: number | null }[] | null;
+  extracted_identity?: {
+    first_name?: string;
+    last_name?: string;
+    birth_date?: string;
+    document_type?: string;
+    document_country?: string;
+    document_number?: string;
+  } | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VerificationList = {
+  items: Verification[];
+  next_cursor?: string | null;
+};
+
+export type MediaUrl = {
+  url: string;
+  expires_at: string;
+};
+
 export type InvitePreview = {
   email: string;
   role: string;

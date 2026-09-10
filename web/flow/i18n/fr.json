@@ -1,0 +1,23 @@
+{
+  "title": "Vérification d’identité",
+  "invalid": "Ce lien n’est pas valide.",
+  "expired": "Ce lien a expiré. Contactez l’entreprise qui vous l’a envoyé.",
+  "consentTitle": "Consentement",
+  "consentBody": "Nous allons photographier votre pièce d’identité et votre visage pour vérifier votre identité. Les images sont transmises à l’entreprise qui a ouvert cette session.",
+  "accept": "J’accepte",
+  "decline": "Je refuse",
+  "declined": "Vous avez refusé. Vous pouvez fermer cette page.",
+  "documentTitle": "Photographiez votre pièce",
+  "documentLead": "Placez le document dans le cadre, bien éclairé, sans reflet.",
+  "selfieTitle": "Photographiez votre visage",
+  "selfieLead": "Regardez l’appareil, visage dégagé, lumière uniforme.",
+  "capture": "Prendre la photo",
+  "uploading": "Envoi…",
+  "recapture": "La photo n’est pas assez nette. Recommencez.",
+  "wait": "Traitement en cours…",
+  "done": "C’est terminé. Vous pouvez fermer cette page.",
+  "cameraError": "Impossible d’accéder à la caméra.",
+  "retry": "Réessayer",
+  "langFr": "FR",
+  "langEn": "EN"
+}

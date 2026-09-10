@@ -7,6 +7,7 @@ import { formatCount } from "../../../lib/pricing";
 import { parseProduct } from "../../../lib/parse-product";
 import { PRODUCTS, productTabHref } from "../../../lib/products";
 import { requireMe } from "../../../lib/session";
+import { IdentityOverview } from "./identity-overview";
 
 export default async function ProductOverviewPage({
   params,
@@ -22,8 +23,14 @@ export default async function ProductOverviewPage({
   const t = await getT();
   const locale = await getLocale();
   const canReadSessions = me.permissions.includes("VERIFICATION_READ");
-  const count = 0;
+  const canWriteSessions = me.permissions.includes("VERIFICATION_WRITE");
   const live = env === "live";
+
+  if (productId === "identity") {
+    return (
+      <IdentityOverview env={env} live={live} canRead={canReadSessions} canWrite={canWriteSessions} />
+    );
+  }
 
   return (
     <main>
@@ -41,37 +48,10 @@ export default async function ProductOverviewPage({
       <section className="rm-kpi-grid" aria-label={t("console.env.label")}>
         <article className="rm-card rm-kpi">
           <p className="rm-eyebrow">{live ? t("console.env.live") : t("console.env.sandbox")}</p>
-          <p className="rm-kpi-value">
-            {product.metered
-              ? live
-                ? formatCount(locale, count)
-                : `${formatCount(locale, count)} · ${t("console.billing.free")}`
-              : "—"}
-          </p>
-          <p className="rm-lead">
-            {product.metered
-              ? live
-                ? t("console.env.liveLead")
-                : t("console.env.sandboxLead")
-              : t("console.product.billingNotSold")}
-          </p>
-          {product.metered && live ? <p className="rm-lead">{t("console.env.liveNeedsCredit")}</p> : null}
+          <p className="rm-kpi-value">{live ? formatCount(locale, 0) : "—"}</p>
+          <p className="rm-lead">{t("console.product.billingNotSold")}</p>
         </article>
       </section>
-      {product.metered ? (
-        <section className="rm-section">
-          <h2>{t("console.product.sessionsTitle")}</h2>
-          <div className="rm-empty">
-            <p>
-              {canReadSessions
-                ? live
-                  ? t("console.product.sessionsEmptyLive")
-                  : t("console.product.sessionsEmptySandbox")
-                : t("console.product.sessionsLocked")}
-            </p>
-          </div>
-        </section>
-      ) : null}
       <section className="rm-section">
         <h2>{t("console.product.tabsLabel")}</h2>
         <div className="rm-link-grid">
@@ -82,10 +62,6 @@ export default async function ProductOverviewPage({
           <Link href={productTabHref(productId, "integrations", env)} className="rm-card rm-link-card">
             <h3>{t("console.product.tab.integrations")}</h3>
             <p>{t("console.product.integrationsLead")}</p>
-          </Link>
-          <Link href="/settings/billing" className="rm-card rm-link-card">
-            <h3>{t("console.nav.billing")}</h3>
-            <p>{t("console.home.billingLead")}</p>
           </Link>
         </div>
       </section>

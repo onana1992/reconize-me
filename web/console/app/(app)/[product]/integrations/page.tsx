@@ -27,7 +27,7 @@ export default async function ProductIntegrationsPage({
 
   if (!product.metered) {
     return (
-      <main>
+      <main className="rm-idv">
         <PageHeader
           eyebrow={t(product.navKey)}
           title={t("console.product.tab.integrations")}
@@ -43,7 +43,7 @@ export default async function ProductIntegrationsPage({
   const keys = canRead ? await consoleApi<ApiKeyItem[]>("/v1/console/api-keys", await sessionCookieHeader()) : null;
 
   return (
-    <main>
+    <main className="rm-idv">
       <PageHeader
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.integrations")}

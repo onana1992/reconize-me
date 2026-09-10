@@ -77,8 +77,8 @@ class ApiKeyAuthTest {
         mockMvc.perform(get("/v1/verifications")
                         .header("Authorization", "Bearer " + RAW_KEY)
                         .header("X-Request-Id", "req_ok_read"))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isOk())
                 .andExpect(header().string("X-Request-Id", "req_ok_read"))
-                .andExpect(jsonPath("$.error.code").value("not_found"));
+                .andExpect(jsonPath("$.items").isArray());
     }
 }

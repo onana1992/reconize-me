@@ -78,7 +78,7 @@ class ApiKeyStillBearerTest {
                 now));
 
         mockMvc.perform(get("/v1/verifications").header("Authorization", "Bearer " + SEED))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("not_found"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray());
     }
 }

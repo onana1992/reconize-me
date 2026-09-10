@@ -31,8 +31,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));
         config.setAllowCredentials(true);
@@ -78,6 +78,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/v1/account/invites/accept")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/account/invites")
+                        .permitAll()
+                        .requestMatchers("/v1/flow/**", "/v1/objects")
                         .permitAll()
                         .requestMatchers("/v1/account/**", "/v1/console/**")
                         .authenticated()

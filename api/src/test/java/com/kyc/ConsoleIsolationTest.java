@@ -36,6 +36,11 @@ class ConsoleIsolationTest {
         String orgA = orgId(a);
         String orgB = orgId(b);
         assertNotEquals(orgA, orgB);
+
+        var created = IdvSupport.createConsole(mockMvc, a, "{}");
+        String id = created.path("id").asText();
+        mockMvc.perform(get("/v1/console/verifications/" + id).cookie(a)).andExpect(status().isOk());
+        mockMvc.perform(get("/v1/console/verifications/" + id).cookie(b)).andExpect(status().isNotFound());
     }
 
     private String orgId(jakarta.servlet.http.Cookie cookie) throws Exception {

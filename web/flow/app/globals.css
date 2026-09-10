@@ -1,0 +1,27 @@
+/*
+ * Hosted flow — styles propres à cette surface uniquement.
+ */
+
+.rm-flow video {
+  width: 100%;
+  border-radius: var(--rm-radius);
+  background: var(--rm-ink);
+}
+
+.rm-flow img {
+  max-width: 100%;
+  height: auto;
+}
+
+.rm-flow-lang {
+  display: flex;
+  gap: var(--rm-space-2);
+  margin-left: auto;
+}
+
+.rm-flow-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+}
