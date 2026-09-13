@@ -96,4 +96,15 @@ class HostedFlowTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("invalid_status"));
     }
+
+    @Test
+    void consentAcceptsDecisionQueryWhenBodyMissing() throws Exception {
+        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
+        String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
+        mockMvc.perform(get("/v1/flow/" + token)).andExpect(status().isOk());
+        mockMvc.perform(post("/v1/flow/" + token + "/consent").param("decision", "accepted"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("pending_applicant"))
+                .andExpect(jsonPath("$.next").value("capture_document"));
+    }
 }

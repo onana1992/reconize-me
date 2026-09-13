@@ -4,4 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 
 public record InvitePreviewResponse(
-        String email, String role, @JsonProperty("expires_at") Instant expiresAt) {}
+        String email,
+        String role,
+        @JsonProperty("expires_at") Instant expiresAt,
+        @JsonProperty("organization_name") String organizationName,
+        @JsonProperty("invited_by_name") String invitedByName) {}

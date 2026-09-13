@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(
@@ -49,6 +50,10 @@ public class MembershipInvite {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Setter
+    @Column(name = "invited_by_user_id")
+    private UUID invitedByUserId;
+
     public MembershipInvite(
             UUID id,
             UUID organizationId,
@@ -56,7 +61,8 @@ public class MembershipInvite {
             String role,
             String tokenHash,
             Instant expiresAt,
-            Instant createdAt) {
+            Instant createdAt,
+            UUID invitedByUserId) {
         this.id = id;
         this.organizationId = organizationId;
         this.email = email;
@@ -65,6 +71,7 @@ public class MembershipInvite {
         this.expiresAt = expiresAt;
         this.pendingKey = email;
         this.createdAt = createdAt;
+        this.invitedByUserId = invitedByUserId;
     }
 
     public boolean pending(Instant now) {

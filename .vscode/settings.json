@@ -1,5 +1,9 @@
 {
-  "i18n-ally.localesPaths": ["web/console/i18n", "web/site/messages"],
+  // i18n-ally merges every localesPath into one dictionary. Console, site and
+  // flow each have their own keys, so listing more than one produces a false
+  // "N missing (en, fr)" on every t() call. Point this at the app you are
+  // translating; TypeScript already enforces FR/EN parity inside each app.
+  "i18n-ally.localesPaths": ["web/console/i18n"],
   "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.keystyle": "nested",
   "i18n-ally.sourceLanguage": "fr",

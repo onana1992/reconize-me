@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,9 +44,14 @@ public class FlowController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Enregistrer le consentement")
     public ConsentResponse consent(
-            @PathVariable String token, @RequestBody(required = false) ConsentRequest body, HttpServletRequest request, HttpServletResponse response) {
+            @PathVariable String token,
+            @RequestBody(required = false) ConsentRequest body,
+            @RequestParam(value = "decision", required = false) String decision,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         noStore(response);
-        return flow.consent(token, body, ClientIps.from(request), request.getHeader("User-Agent"));
+        String resolved = body != null && body.decision() != null && !body.decision().isBlank() ? body.decision() : decision;
+        return flow.consent(token, new ConsentRequest(resolved), ClientIps.from(request), request.getHeader("User-Agent"));
     }
 
     @PostMapping("/document/uploads")

@@ -15,14 +15,15 @@ const sans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Recogniz-Me Console",
   description: "Dashboard SaaS — vérifications d’identité Recogniz-Me",
+  icons: { icon: "/icon.svg" },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={sans.variable}>
-      <body>
+    <html lang={locale} className={sans.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <I18nProvider key={locale} locale={locale}>
           {children}
         </I18nProvider>

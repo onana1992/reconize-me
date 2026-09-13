@@ -520,7 +520,7 @@ On n’invite **pas** en `owner`. Un second owner ne se crée que par PATCH owne
 | **RG-ACC-17** | Les verbes console passent par `require(Permission)` (§9). Plus de `requireOwner()` métier. |
 | **RG-ACC-18** | L’organisation d’une requête console vient de la **session** (membership), jamais d’un header client. |
 | **RG-ACC-19** | Cookie console **n’authentifie pas** `/v1/verifications/**` ni `/v1/flow/**`. |
-| **RG-ACC-20** | Login, resend, forgot : rate limit par IP → 429 `rate_limited`. |
+| **RG-ACC-20** | Login, resend, forgot : rate limit par IP → 429 `rate_limited`. Login : seuls les **échecs** comptent. |
 | **RG-ACC-21** | Invitation : rôle invitable `admin` \| `member` \| `readonly` \| `developer` ; jamais `owner` ; une pending par `(org, e-mail)`. |
 | **RG-ACC-22** | Cookie `rm_session` : httpOnly, SameSite=Lax, Secure hors local, path `/`, max-age 7 jours. |
 | **RG-ACC-23** | Audit **sans PII** dans `payload` (pas d’e-mail, pas de nom). |

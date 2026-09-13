@@ -98,7 +98,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   }));
 
   return (
-    <html lang={locale} className={`${sans.variable} ${mono.variable}`}>
+    <html lang={locale} className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         {/* Sans JavaScript, l'apparition au défilement ne se déclenchera jamais :
             on neutralise son état de départ plutôt que de laisser une page
@@ -107,7 +107,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           <style>{".rm-reveal{opacity:1!important;transform:none!important}"}</style>
         </noscript>
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <div className="rm-site">
           <a className="rm-skip" href="#rm-content">
             {messages.a11y.skipToContent}

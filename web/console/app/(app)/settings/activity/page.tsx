@@ -12,9 +12,12 @@ export default async function ActivityPage() {
   const permissions = me.permissions ?? [];
   const canRead = permissions.includes("AUDIT_READ");
   const cookie = await sessionCookieHeader();
-
-  const audit = canRead ? await consoleApi<AuditList>("/v1/console/audit?limit=100", cookie) : null;
-  const team = canRead ? await consoleApi<Team>("/v1/console/team", cookie) : null;
+  const [audit, team] = canRead
+    ? await Promise.all([
+        consoleApi<AuditList>("/v1/console/audit?limit=100", cookie),
+        consoleApi<Team>("/v1/console/team", cookie),
+      ])
+    : [null, null];
   const emails: Record<string, string> = {};
   if (team?.ok) {
     for (const member of team.data.members) {

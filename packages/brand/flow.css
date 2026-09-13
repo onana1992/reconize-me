@@ -38,9 +38,91 @@ body {
   margin-top: var(--rm-space-6);
 }
 
-.rm-flow button {
+.rm-flow-stage {
+  --rm-frame-arm: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  margin: var(--rm-space-5) 0 0;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-stage[data-kind="document"] {
+  aspect-ratio: 85 / 54;
+}
+
+.rm-flow-stage video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-guide {
+  position: absolute;
+  inset: 14%;
+  border: 2px dashed var(--rm-border-strong);
+  border-radius: var(--rm-radius-md);
+}
+
+.rm-flow-stage[data-kind="selfie"] .rm-flow-guide {
+  inset: 16% 22%;
+  border-radius: 50%;
+}
+
+.rm-flow-frame {
+  position: absolute;
+  inset: var(--rm-space-3);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.rm-flow-frame::before {
+  --rm-frame-arm-image: linear-gradient(var(--rm-accent), var(--rm-accent)) no-repeat;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    var(--rm-frame-arm-image) 0 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 0 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 100% / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 100% / 2px var(--rm-frame-arm);
+}
+
+.rm-flow video {
+  display: block;
+  width: 100%;
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-file {
+  position: relative;
+  overflow: hidden;
+}
+
+.rm-flow-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.rm-flow button,
+.rm-flow .rm-button {
   padding: var(--rm-space-4) var(--rm-space-5);
   font-size: var(--rm-text-base);
+  min-height: 2.75rem;
+  touch-action: manipulation;
 }
 
 @media (max-width: 30rem) {

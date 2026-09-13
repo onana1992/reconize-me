@@ -189,6 +189,8 @@ export type InvitePreview = {
   email: string;
   role: string;
   expires_at: string;
+  organization_name: string;
+  invited_by_name: string;
 };
 
 export function peekInvite(token: string): Promise<ApiResult<InvitePreview>> {

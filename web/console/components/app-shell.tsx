@@ -16,7 +16,6 @@ const DESKTOP_MQ = "(min-width: 64rem)";
 
 export type AppShellProps = {
   orgName: string;
-  orgSlug: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -102,7 +101,6 @@ function isDesktop() {
 
 export function AppShell({
   orgName,
-  orgSlug,
   email,
   firstName,
   lastName,
@@ -227,14 +225,13 @@ export function AppShell({
           </NavGroup>
         </nav>
         <div className="rm-shell-foot">
-          <div className="rm-shell-org" title={railCollapsed ? `${orgName} · ${orgSlug}` : email || undefined}>
+          <div className="rm-shell-org" title={railCollapsed ? orgName : email || undefined}>
             <span className="rm-shell-initial" aria-hidden="true">
               {initial}
             </span>
             {railCollapsed ? null : (
               <div className="rm-shell-org-meta">
                 <span className="rm-shell-org-name">{orgName}</span>
-                <span className="rm-shell-org-slug">{orgSlug}</span>
               </div>
             )}
           </div>

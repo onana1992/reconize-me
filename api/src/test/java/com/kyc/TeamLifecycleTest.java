@@ -140,7 +140,10 @@ class TeamLifecycleTest {
 
         mockMvc.perform(get("/v1/account/invites").param("token", inviteToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("invitee-cancel-verify@example.com"));
+                .andExpect(jsonPath("$.email").value("invitee-cancel-verify@example.com"))
+                .andExpect(jsonPath("$.organization_name").value("Cancel Verify Co"))
+                .andExpect(jsonPath("$.invited_by_name").value("owner-cancel-verify@example.com"))
+                .andExpect(jsonPath("$.role").value("member"));
 
         MvcResult signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)

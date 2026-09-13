@@ -11,6 +11,7 @@
   "scripts": {
     "dev:console": "npm run dev -w web/console",
     "dev:site": "npm run dev -w web/site",
-    "dev:flow": "npm run dev -w web/flow"
+    "dev:flow": "npm run dev -w web/flow",
+    "dev:flow:tunnel": "npm run dev:tunnel -w web/flow"
   }
 }

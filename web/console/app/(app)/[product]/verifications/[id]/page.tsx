@@ -48,18 +48,22 @@ export default async function VerificationDetailPage({
     notFound();
   }
   const env = resolveEnvironment((await searchParams).env);
-  const me = await requireMe();
-  const t = await getT();
-  const locale = await getLocale();
-  const cookie = await sessionCookieHeader();
-  const result = await consoleApi<Verification>(`/v1/console/verifications/${encodeURIComponent(id)}`, cookie);
+  const [me, t, locale, result] = await Promise.all([
+    requireMe(),
+    getT(),
+    getLocale(),
+    consoleApi<Verification>(`/v1/console/verifications/${encodeURIComponent(id)}`, await sessionCookieHeader()),
+  ]);
   if (!result.ok) {
     notFound();
   }
   const verification = result.data;
   const canWrite = me.permissions.includes("VERIFICATION_WRITE");
-  const document = await mediaIfPresent(cookie, id, "document");
-  const selfie = await mediaIfPresent(cookie, id, "selfie");
+  const cookie = await sessionCookieHeader();
+  const [document, selfie] = await Promise.all([
+    mediaIfPresent(cookie, id, "document"),
+    mediaIfPresent(cookie, id, "selfie"),
+  ]);
   const title =
     displayName(
       verification.applicant?.first_name,

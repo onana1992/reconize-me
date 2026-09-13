@@ -4,7 +4,6 @@ import { getMe } from "../../lib/session";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await getMe();
   const orgName = me.ok ? me.data.organization.name : "Console";
-  const orgSlug = me.ok ? me.data.organization.slug : "";
   const email = me.ok ? me.data.email : "";
   const firstName = me.ok ? (me.data.first_name ?? "") : "";
   const lastName = me.ok ? (me.data.last_name ?? "") : "";
@@ -14,7 +13,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppShell
       orgName={orgName}
-      orgSlug={orgSlug}
       email={email}
       firstName={firstName}
       lastName={lastName}

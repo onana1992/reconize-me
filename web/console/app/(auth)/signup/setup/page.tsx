@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getT } from "../../../../i18n";
 import { peekInvite } from "../../../../lib/api";
+import { tRole } from "../../../../lib/labels";
 import { redirectHomeIfSignedIn } from "../../../../lib/session";
 import { InvalidInvite } from "../invalid-invite";
 import { SetupForm } from "./setup-form";
@@ -15,6 +16,7 @@ export default async function SignupSetupPage({
   const invite = params.invite ?? "";
   const t = await getT();
   let email = (params.email ?? "").trim();
+  let lead = "";
 
   if (invite) {
     const preview = await peekInvite(invite);
@@ -22,14 +24,19 @@ export default async function SignupSetupPage({
       return <InvalidInvite title={t("signup.invalidTitle")} lead={t("signup.invalidLead")} login={t("signup.login")} />;
     }
     email = preview.data.email;
+    const inviter = preview.data.invited_by_name?.trim() || t("setup.inviterFallback");
+    lead = t("setup.leadInvite")
+      .replace("{email}", email)
+      .replace("{org}", preview.data.organization_name)
+      .replace("{inviter}", inviter)
+      .replace("{role}", tRole(t, preview.data.role));
   } else {
     if (!email) {
       redirect("/signup");
     }
     await redirectHomeIfSignedIn();
+    lead = t("setup.leadWithEmail").replace("{email}", email);
   }
-
-  const lead = (invite ? t("setup.leadInvite") : t("setup.leadWithEmail")).replace("{email}", email);
 
   return (
     <main className="su-card">

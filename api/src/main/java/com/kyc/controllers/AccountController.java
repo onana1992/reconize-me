@@ -11,6 +11,7 @@ import com.kyc.dto.account.SignupResponse;
 import com.kyc.services.AccountService;
 import com.kyc.services.AuthRateLimiter;
 import com.kyc.services.SessionService;
+import com.kyc.web.ApiException;
 import com.kyc.web.ClientIps;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -74,10 +75,16 @@ public class AccountController {
     @Operation(summary = "Ouvrir une session console")
     public ResponseEntity<Void> login(
             @Valid @RequestBody LoginRequest body, HttpServletRequest request, HttpServletResponse response) {
-        authRateLimiter.check("login", ClientIps.from(request));
-        String session = accountService.login(body.email(), body.password());
-        SessionService.write(response, sessionService.cookie(session));
-        return ResponseEntity.noContent().build();
+        String ip = ClientIps.from(request);
+        authRateLimiter.checkAllowed("login", ip);
+        try {
+            String session = accountService.login(body.email(), body.password());
+            SessionService.write(response, sessionService.cookie(session));
+            return ResponseEntity.noContent().build();
+        } catch (ApiException e) {
+            authRateLimiter.recordFailure("login", ip);
+            throw e;
+        }
     }
 
     @PostMapping("/logout")

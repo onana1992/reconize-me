@@ -3,11 +3,12 @@ export type Assessment = {
   reasons: string[];
 };
 
-const MIN_SHORT_SIDE = 720;
-const DARK = 40;
-const BRIGHT = 230;
-const MIN_CONTRAST = 18;
-const MIN_SHARPNESS = 12;
+/** Floor for a usable still. Browser camera preview is often VGA; 720 rejected almost every live frame. */
+const MIN_SHORT_SIDE = 480;
+const DARK = 22;
+const BRIGHT = 250;
+const MIN_CONTRAST = 8;
+const MIN_SHARPNESS = 4;
 
 export function assessDocumentFrame(image: ImageData): Assessment {
   return assess(image, "document");

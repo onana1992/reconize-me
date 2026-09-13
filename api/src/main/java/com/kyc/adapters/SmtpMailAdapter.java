@@ -40,11 +40,16 @@ public class SmtpMailAdapter implements MailPort {
 
     @Override
     public void send(String to, String correlationId, String template, String url) {
+        send(to, correlationId, template, url, Map.of());
+    }
+
+    @Override
+    public void send(String to, String correlationId, String template, String url, Map<String, String> extras) {
         lastUrls.put(correlationId, url);
         lastByTemplate.put(template, url);
         MailMessage message = MailMessage.of(template);
         String intendedTo = to == null ? "" : to.trim();
-        String html = renderer.render(template, url, redirectNotice(intendedTo));
+        String html = renderer.render(template, url, redirectNotice(intendedTo), extras);
         sendHtml(intendedTo, message.subject(), html);
         log.info("mail sent to={} intended={} template={}", resolveTo(intendedTo), intendedTo, template);
     }

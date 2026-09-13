@@ -18,6 +18,7 @@ const RETIRED_PATHS = [
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@kyc/brand"],
+  allowedDevOrigins: ["10.0.0.133"],
   async redirects() {
     return RETIRED_PATHS.map((path) => ({
       source: `/:locale(fr|en)${path}`,

@@ -5,6 +5,7 @@ import com.kyc.security.RestAccessDeniedHandler;
 import com.kyc.security.RestAuthenticationEntryPoint;
 import com.kyc.security.SessionAuthenticationFilter;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,9 +30,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${kyc.cors-allowed-origin-patterns:http://localhost:[*],http://127.0.0.1:[*],http://10.0.0.133:[*],https://localhost:[*],https://127.0.0.1:[*],https://10.0.0.133:[*],https://*.trycloudflare.com,https://*.ngrok-free.app,https://*.ngrok.io}")
+                    String corsAllowedOriginPatterns) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        config.setAllowedOriginPatterns(List.of(corsAllowedOriginPatterns.split("\\s*,\\s*")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("X-Request-Id", "Set-Cookie"));

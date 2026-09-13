@@ -25,6 +25,7 @@ import com.kyc.web.ApiException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -130,7 +131,16 @@ public class AccountService {
     public InvitePreviewResponse peekInvite(String inviteToken) {
         Instant now = Instant.now();
         MembershipInvite invite = resolveInvite(inviteToken, now).orElseThrow(ApiException::invalidOrExpiredToken);
-        return new InvitePreviewResponse(invite.getEmail(), invite.getRole(), invite.getExpiresAt());
+        String organizationName = organizationRepository
+                .findById(invite.getOrganizationId())
+                .map(Organization::getName)
+                .orElse("");
+        String invitedByName = Optional.ofNullable(invite.getInvitedByUserId())
+                .flatMap(userRepository::findById)
+                .map(AccountService::personName)
+                .orElse("");
+        return new InvitePreviewResponse(
+                invite.getEmail(), invite.getRole(), invite.getExpiresAt(), organizationName, invitedByName);
     }
 
     @Transactional
@@ -280,6 +290,7 @@ public class AccountService {
         if (open.isPresent() && open.get().open()) {
             invite = open.get();
             invite.rotate(hashToken(raw), now.plus(INVITE_TTL), assignedRole);
+            invite.setInvitedByUserId(actorUserId);
         } else {
             invite = membershipInviteRepository.save(new MembershipInvite(
                     UUID.randomUUID(),
@@ -288,7 +299,8 @@ public class AccountService {
                     assignedRole,
                     hashToken(raw),
                     now.plus(INVITE_TTL),
-                    now));
+                    now,
+                    actorUserId));
         }
         sendInviteMail(invite, raw, actorUserId, "membership.invited", now);
         return invite;
@@ -300,6 +312,7 @@ public class AccountService {
         MembershipInvite invite = requireOpenInvite(organizationId, inviteId);
         String raw = CryptoTokens.randomHostedToken();
         invite.rotate(hashToken(raw), now.plus(INVITE_TTL));
+        invite.setInvitedByUserId(actorUserId);
         sendInviteMail(invite, raw, actorUserId, "membership.invite_resent", now);
     }
 
@@ -330,7 +343,21 @@ public class AccountService {
             MembershipInvite invite, String raw, UUID actorUserId, String action, Instant now) {
         Optional<User> existing = userRepository.findByEmail(invite.getEmail());
         String correlation = existing.map(user -> user.getId().toString()).orElse("invite:" + invite.getId());
-        mailPort.send(invite.getEmail(), correlation, "team_invite", properties.consoleUrl("/signup?invite=" + raw));
+        String organizationName = organizationRepository
+                .findById(invite.getOrganizationId())
+                .map(Organization::getName)
+                .orElse("");
+        String invitedByName = userRepository.findById(actorUserId).map(AccountService::personName).orElse("");
+        String roleLabel = ConsoleRole.parse(invite.getRole()).frenchLabel();
+        mailPort.send(
+                invite.getEmail(),
+                correlation,
+                "team_invite",
+                properties.consoleUrl("/signup?invite=" + raw),
+                Map.of(
+                        "organization_name", organizationName,
+                        "invited_by_name", invitedByName,
+                        "role_label", roleLabel));
         auditEventRepository.save(new AuditEvent(
                 invite.getOrganizationId(),
                 "user",
@@ -407,6 +434,13 @@ public class AccountService {
 
     static String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static String personName(User user) {
+        String first = user.getFirstName();
+        String last = user.getLastName();
+        String name = ((first == null ? "" : first.trim()) + " " + (last == null ? "" : last.trim())).trim();
+        return name.isEmpty() ? user.getEmail() : name;
     }
 
     private static String blankToNull(String value) {

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@kyc/brand"],
+  allowedDevOrigins: ["10.0.0.133"],
   // Sans ça, Next remonte jusqu'au home de l'utilisateur (lockfile parasite) et trace tout le disque.
   outputFileTracingRoot: path.join(__dirname, "../.."),
 };

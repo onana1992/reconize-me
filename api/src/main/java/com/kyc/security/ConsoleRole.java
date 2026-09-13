@@ -22,6 +22,16 @@ public enum ConsoleRole {
         return value;
     }
 
+    public String frenchLabel() {
+        return switch (this) {
+            case OWNER -> "propriétaire";
+            case ADMIN -> "administrateur";
+            case MEMBER -> "membre";
+            case READONLY -> "lecture seule";
+            case DEVELOPER -> "développeur";
+        };
+    }
+
     public boolean matches(String raw) {
         return value.equals(raw);
     }

@@ -21,7 +21,7 @@
   "signup": {
     "title": "Create an account",
     "lead": "Enter your email to create an account and get started.",
-    "leadInvite": "You’ve been invited. Enter your email to join the team.",
+    "leadInvite": "{inviter} invited you to join {org}. Enter your email to continue.",
     "email": "Email",
     "emailPlaceholder": "your.name@email.com",
     "submit": "Get started for free",
@@ -38,7 +38,8 @@
     "title": "Set up your account",
     "lead": "Enter your details to create a secure account and get started.",
     "leadWithEmail": "Enter your details to create a secure account for {email}.",
-    "leadInvite": "You’ve been invited. Complete your details for {email} to join the team.",
+    "leadInvite": "{inviter} invited you to join {org} as {role}. Complete your details for {email}.",
+    "inviterFallback": "An administrator",
     "email": "Email",
     "company": "Company name",
     "firstName": "First name",

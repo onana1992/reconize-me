@@ -21,7 +21,7 @@
   "signup": {
     "title": "Créer un compte",
     "lead": "Saisissez votre e-mail pour créer un compte et commencer.",
-    "leadInvite": "Vous avez été invité. Saisissez votre e-mail pour rejoindre l’équipe.",
+    "leadInvite": "Vous avez été invité par {inviter} à rejoindre {org}. Saisissez votre e-mail pour continuer.",
     "email": "E-mail",
     "emailPlaceholder": "votre.nom@email.com",
     "submit": "Commencer gratuitement",
@@ -38,7 +38,8 @@
     "title": "Configurez votre compte",
     "lead": "Saisissez vos informations pour créer un compte sécurisé et commencer.",
     "leadWithEmail": "Saisissez vos informations pour créer un compte sécurisé associé à {email}.",
-    "leadInvite": "Vous avez été invité. Complétez vos informations pour {email} afin de rejoindre l’équipe.",
+    "leadInvite": "Vous avez été invité par {inviter} à rejoindre {org} en tant que {role}. Complétez vos informations pour {email}.",
+    "inviterFallback": "Un administrateur",
     "email": "E-mail",
     "company": "Nom de l’entreprise",
     "firstName": "Prénom",

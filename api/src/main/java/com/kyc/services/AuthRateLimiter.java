@@ -20,19 +20,49 @@ public class AuthRateLimiter {
         this.properties = properties;
     }
 
+    /** Rejects if the window is full, then records this call (resend, forgot). */
     public void check(String action, String ip) {
-        String key = action + ":" + (ip == null || ip.isBlank() ? "unknown" : ip);
+        visit(action, ip, true);
+    }
+
+    /** Rejects if the window is full. Does not record this call (login). */
+    public void checkAllowed(String action, String ip) {
+        visit(action, ip, false);
+    }
+
+    /** Records a failed login. Does not throw. */
+    public void recordFailure(String action, String ip) {
+        Deque<Long> times = bucket(action, ip);
         long now = Instant.now().toEpochMilli();
-        long cutoff = now - Duration.ofMinutes(properties.authRateWindowMinutes()).toMillis();
-        Deque<Long> times = hits.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         synchronized (times) {
-            while (!times.isEmpty() && times.peekFirst() < cutoff) {
-                times.removeFirst();
-            }
+            prune(times, now);
+            times.addLast(now);
+        }
+    }
+
+    private void visit(String action, String ip, boolean record) {
+        Deque<Long> times = bucket(action, ip);
+        long now = Instant.now().toEpochMilli();
+        synchronized (times) {
+            prune(times, now);
             if (times.size() >= properties.authRateLimit()) {
                 throw ApiException.tooManyRequests();
             }
-            times.addLast(now);
+            if (record) {
+                times.addLast(now);
+            }
         }
+    }
+
+    private void prune(Deque<Long> times, long now) {
+        long cutoff = now - Duration.ofMinutes(properties.authRateWindowMinutes()).toMillis();
+        while (!times.isEmpty() && times.peekFirst() < cutoff) {
+            times.removeFirst();
+        }
+    }
+
+    private Deque<Long> bucket(String action, String ip) {
+        String key = action + ":" + (ip == null || ip.isBlank() ? "unknown" : ip);
+        return hits.computeIfAbsent(key, ignored -> new ArrayDeque<>());
     }
 }

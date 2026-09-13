@@ -27,4 +27,22 @@ class MailTemplateRendererTest {
         assertThat(html).contains("Nouveau mot de passe");
         assertThat(html).doesNotContain("Environnement de test");
     }
+
+    @Test
+    void rendersTeamInviteWithOrgInviterAndRole() {
+        String html = renderer.render(
+                "team_invite",
+                "http://localhost:3000/signup?invite=abc",
+                null,
+                java.util.Map.of(
+                        "organization_name", "Nano-Tech",
+                        "invited_by_name", "Ada Lovelace",
+                        "role_label", "membre"));
+
+        assertThat(html).contains("Nano-Tech");
+        assertThat(html).contains("Ada Lovelace");
+        assertThat(html).contains("membre");
+        assertThat(html).contains("http://localhost:3000/signup?invite=abc");
+        assertThat(html).doesNotContain("{{organization_name}}");
+    }
 }

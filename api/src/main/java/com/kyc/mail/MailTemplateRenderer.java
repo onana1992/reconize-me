@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Year;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,10 @@ import org.springframework.web.util.HtmlUtils;
 public class MailTemplateRenderer {
 
     public String render(String template, String url, String redirectNotice) {
+        return render(template, url, redirectNotice, Map.of());
+    }
+
+    public String render(String template, String url, String redirectNotice, Map<String, String> extras) {
         String body = load("mail/" + template + ".html");
         String layout = load("mail/layout.html");
         String escapedUrl = HtmlUtils.htmlEscape(url);
@@ -20,13 +25,16 @@ public class MailTemplateRenderer {
                 ? ""
                 : load("mail/redirect-notice.html")
                         .replace("{{redirect_notice}}", HtmlUtils.htmlEscape(redirectNotice));
-        Map<String, String> values = Map.of(
-                "{{url}}",
-                escapedUrl,
-                "{{redirect_notice}}",
-                notice,
-                "{{year}}",
-                String.valueOf(Year.now().getValue()));
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("{{url}}", escapedUrl);
+        values.put("{{redirect_notice}}", notice);
+        values.put("{{year}}", String.valueOf(Year.now().getValue()));
+        if (extras != null) {
+            extras.forEach((key, value) -> {
+                String placeholder = key.startsWith("{{") ? key : "{{" + key + "}}";
+                values.put(placeholder, HtmlUtils.htmlEscape(value == null ? "" : value));
+            });
+        }
         String filledBody = apply(body, values);
         return apply(layout.replace("{{body}}", filledBody), values);
     }
