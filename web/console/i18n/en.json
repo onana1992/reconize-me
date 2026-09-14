@@ -217,7 +217,7 @@
       "settingsIdentityFlowBody": "Consent text and expiry. Organization branding of the applicant flow is not in the MVP.",
       "settingsBiometrics": "Match threshold and enrollment lifetime will be configured here.",
       "settingsAml": "Sanctions, PEP and adverse-media lists will be configured here.",
-      "integrationsLead": "API keys, webhooks and the hosted page for this service.",
+      "integrationsLead": "Each integration has a test or live mode, its own API keys, and later its webhooks.",
       "integrationsKeys": "API keys",
       "integrationsKeysBodySandbox": "ky_test_ keys for this service. Free, no credit debit. The secret is shown only at issuance.",
       "integrationsKeysBodyLive": "ky_live_ keys for this service. Each resource debits organization credit. A sufficient balance is required. The secret is shown only at issuance.",
@@ -227,6 +227,36 @@
       "billingNotSold": "This service does not debit credit yet.",
       "newVerification": "New verification",
       "openSession": "Open"
+    },
+    "integrations": {
+      "lead": "Create an integration, copy its key, then run verifications from its page.",
+      "empty": "No integrations yet.",
+      "name": "Name",
+      "nameHint": "Required and unique in this organization.",
+      "nameRequired": "Name is required.",
+      "nameTaken": "An integration already has this name.",
+      "mode": "Mode",
+      "modeTest": "Test",
+      "modeLive": "Live",
+      "created": "Created",
+      "open": "Open",
+      "create": "New integration",
+      "createTitle": "Create an integration",
+      "creating": "Creating…",
+      "createError": "Could not create the integration.",
+      "liveLocked": "Live integrations require a credit balance. Card top-up is not wired yet.",
+      "forbidden": "Your role cannot create an integration.",
+      "loadError": "Could not load integrations.",
+      "back": "Back to integrations",
+      "tabsLabel": "Integration tabs",
+      "tab": {
+        "sessions": "Verifications",
+        "keys": "API keys",
+        "settings": "Settings"
+      },
+      "details": "Integration identity",
+      "keysLeadTest": "One ky_test_ key per integration, issued on create. The secret is shown only once.",
+      "keysLeadLive": "ky_live_ keys for this integration. Each resource debits organization credit. A sufficient balance is required."
     },
     "verifications": {
       "lead": "Identity verifications for this organization.",
@@ -367,10 +397,10 @@
       "active": "Active",
       "revoked": "Revoked",
       "revoke": "Revoke",
-      "empty": "No API keys for this organization.",
-      "emptySandbox": "No sandbox keys (ky_test_) for this organization.",
-      "emptyLive": "No live keys (ky_live_) for this organization.",
-      "issueSandbox": "Issue a sandbox key",
+      "empty": "No API keys on this integration.",
+      "emptySandbox": "No test keys (ky_test_) on this integration.",
+      "emptyLive": "No live keys (ky_live_) on this integration.",
+      "issueSandbox": "Issue a test key",
       "issueLive": "Issue a live key",
       "issuing": "Issuing…",
       "issuedTitle": "New {env} key",
@@ -469,6 +499,7 @@
       "resourceUser": "User",
       "resourceInvite": "Invitation",
       "resourceKey": "API key",
+      "resourceIntegration": "Integration",
       "actionInvited": "Invitation sent",
       "actionInviteResent": "Invitation resent",
       "actionInviteCancelled": "Invitation cancelled",
@@ -480,7 +511,8 @@
       "actionKeyRevoked": "Key revoked",
       "actionLoginFailed": "Failed sign-in",
       "actionRegistered": "Account created",
-      "actionEmailVerified": "Email verified"
+      "actionEmailVerified": "Email verified",
+      "actionIntegrationCreated": "Integration created"
     }
   }
 }

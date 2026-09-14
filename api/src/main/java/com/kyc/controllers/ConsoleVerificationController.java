@@ -9,6 +9,7 @@ import com.kyc.security.ConsoleAuth;
 import com.kyc.security.ConsolePrincipal;
 import com.kyc.security.CurrentConsole;
 import com.kyc.security.Permission;
+import com.kyc.services.IntegrationService;
 import com.kyc.services.VerificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,20 +30,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConsoleVerificationController {
 
     private final VerificationService verifications;
+    private final IntegrationService integrations;
 
-    public ConsoleVerificationController(VerificationService verifications) {
+    public ConsoleVerificationController(VerificationService verifications, IntegrationService integrations) {
         this.verifications = verifications;
+        this.integrations = integrations;
     }
 
     @GetMapping
     @Operation(summary = "Liste des vérifications")
     public VerificationListResponse list(
             @RequestParam(required = false) String status,
+            @RequestParam(value = "integration_id", required = false) UUID integrationId,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) {
         ConsolePrincipal principal = CurrentConsole.require();
         ConsoleAuth.require(principal, Permission.VERIFICATION_READ);
-        return verifications.list(principal.organizationId(), status, cursor, limit);
+        return verifications.list(principal.organizationId(), status, integrationId, cursor, limit);
     }
 
     @GetMapping("/{id}")
@@ -60,7 +64,10 @@ public class ConsoleVerificationController {
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         ConsolePrincipal principal = CurrentConsole.require();
         ConsoleAuth.require(principal, Permission.VERIFICATION_WRITE);
-        return verifications.create(principal.organizationId(), "user", principal.userId(), body, idempotencyKey);
+        var integration = integrations.resolveForCreate(
+                principal.organizationId(), body == null ? null : body.integrationId());
+        return verifications.create(
+                principal.organizationId(), integration, "user", principal.userId(), body, idempotencyKey);
     }
 
     @PostMapping("/{id}/cancel")

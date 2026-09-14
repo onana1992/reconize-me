@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +33,14 @@ class DocumentCaptureTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Test
     void uploadWithoutConsentIsConflict() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         mockMvc.perform(post("/v1/flow/" + token + "/document/uploads"))
                 .andExpect(status().isConflict())
@@ -45,7 +49,7 @@ class DocumentCaptureTest {
 
     @Test
     void acceptedDocumentThenQualityFailThenCap() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
@@ -57,7 +61,7 @@ class DocumentCaptureTest {
 
     @Test
     void qualityRejectedThenThreeFailuresDecline() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
@@ -79,7 +83,7 @@ class DocumentCaptureTest {
 
     @Test
     void completeWithoutObjectKeepsPending() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);

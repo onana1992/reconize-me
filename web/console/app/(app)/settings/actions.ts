@@ -1,10 +1,23 @@
 "use server";
 
-import { consoleApi, type ApiResult, type AuditList, type IssuedApiKey } from "../../../lib/api";
+import {
+  consoleApi,
+  type ApiResult,
+  type AuditList,
+  type IntegrationResponse,
+} from "../../../lib/api";
 import { sessionCookieHeader } from "../../../lib/session";
 
-export async function createApiKeyAction(): Promise<ApiResult<IssuedApiKey>> {
-  return consoleApi("/v1/console/api-keys", await sessionCookieHeader(), { method: "POST" });
+export async function createIntegrationAction(formData: FormData): Promise<ApiResult<IntegrationResponse>> {
+  const name = String(formData.get("name") ?? "").trim();
+  const mode = String(formData.get("mode") ?? "test").trim() || "test";
+  return consoleApi("/v1/console/integrations", await sessionCookieHeader(), {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      mode,
+    }),
+  });
 }
 
 export async function revokeApiKeyAction(id: string): Promise<ApiResult<void>> {

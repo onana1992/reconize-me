@@ -58,6 +58,7 @@ class ConsoleAuditTest {
     @Test
     void auditFilterAndCursorAndRevokedKeyAndLoginFailed() throws Exception {
         Cookie owner = AccountSupport.signupVerified(mockMvc, mailPort, "owner-audit-f@example.com", "Audit Filter");
+        AccountSupport.createIntegration(mockMvc, owner, "Audit keys");
         AccountSupport.invite(mockMvc, owner, "member-audit-f@example.com", "member");
         AccountSupport.acceptInvite(mockMvc, mailPort, "member-audit-f@example.com");
 

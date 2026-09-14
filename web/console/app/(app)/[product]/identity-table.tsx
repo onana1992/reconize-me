@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { StatusBadge } from "@kyc/brand";
 import { useLocale, useT } from "../../../i18n/client";
 import type { Verification } from "../../../lib/api";
-import { withEnvironment, type ApiEnvironment } from "../../../lib/environment";
+import { integrationModeTone, tIntegrationMode } from "../../../lib/environment";
 import { displayName } from "../../../lib/labels";
 import { formatUtc, tVerificationStatus, verificationTone, VERIFICATION_STATUSES } from "../../../lib/status";
 import { listVerificationsAction } from "./verifications/actions";
@@ -15,11 +15,11 @@ const PAGE_SIZES = [10, 25, 50] as const;
 export function IdentityTable({
   initialItems,
   initialCursor,
-  env,
+  integrationId,
 }: {
   initialItems: Verification[];
   initialCursor: string | null;
-  env: ApiEnvironment;
+  integrationId?: string;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -88,13 +88,13 @@ export function IdentityTable({
   }
 
   function openRow(id: string) {
-    router.push(withEnvironment(`/identity/verifications/${id}`, env));
+    router.push(`/identity/verifications/${id}`);
   }
 
   async function reload(nextStatus: string) {
     setPending(true);
     setError(null);
-    const result = await listVerificationsAction(nextStatus || undefined, undefined, 100);
+    const result = await listVerificationsAction(nextStatus || undefined, undefined, 100, integrationId);
     setPending(false);
     if (!result.ok) {
       setError(result.message);
@@ -111,7 +111,7 @@ export function IdentityTable({
     }
     setPending(true);
     setError(null);
-    const result = await listVerificationsAction(statusFilter || undefined, cursor, 100);
+    const result = await listVerificationsAction(statusFilter || undefined, cursor, 100, integrationId);
     setPending(false);
     if (!result.ok) {
       setError(result.message);
@@ -144,6 +144,7 @@ export function IdentityTable({
             <tr>
               <th>{t("console.verifications.applicant")}</th>
               <th>{t("console.verifications.email")}</th>
+              <th>{t("console.integrations.mode")}</th>
               <th>{t("console.verifications.createdAt")}</th>
               <th>{t("console.verifications.statusLabel")}</th>
               <th>{t("console.verifications.id")}</th>
@@ -173,6 +174,7 @@ export function IdentityTable({
                   placeholder={t("console.verifications.filterEmail")}
                 />
               </th>
+              <th></th>
               <th>
                 <input
                   type="search"
@@ -220,7 +222,7 @@ export function IdentityTable({
           <tbody>
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="rm-rich-table-empty">
+                <td colSpan={6} className="rm-rich-table-empty">
                   {items.length === 0 ? t("console.verifications.empty") : t("console.verifications.emptyFiltered")}
                 </td>
               </tr>
@@ -241,6 +243,12 @@ export function IdentityTable({
                 >
                   <td>{row.applicant}</td>
                   <td>{row.email}</td>
+                  <td>
+                    <StatusBadge
+                      label={tIntegrationMode(t, row.item.integration_mode)}
+                      tone={integrationModeTone(row.item.integration_mode)}
+                    />
+                  </td>
                   <td>{row.whenLabel}</td>
                   <td>
                     <StatusBadge label={row.statusLabel} tone={verificationTone(row.item.status)} />

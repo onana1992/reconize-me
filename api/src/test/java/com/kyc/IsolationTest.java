@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.kyc.ports.MailPort;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +37,15 @@ class IsolationTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Test
     void otherOrganizationSeesNotFoundAndFlowHasNoPii() throws Exception {
-        String keyA = IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, "ky_test_aaa00001", "Iso A", "iso-a-idv");
-        String keyB = IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, "ky_test_bbb00001", "Iso B", "iso-b-idv");
+        String keyA = IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, "ky_test_aaa00001", "Iso A", "iso-a-idv");
+        String keyB = IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, "ky_test_bbb00001", "Iso B", "iso-b-idv");
         JsonNode created = IdvSupport.create(
                 mockMvc,
                 keyA,

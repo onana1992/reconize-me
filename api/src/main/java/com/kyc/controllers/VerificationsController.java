@@ -7,6 +7,7 @@ import com.kyc.dto.idv.VerificationListResponse;
 import com.kyc.dto.idv.VerificationResponse;
 import com.kyc.security.ApiPrincipal;
 import com.kyc.security.CurrentApiKey;
+import com.kyc.services.IntegrationService;
 import com.kyc.services.VerificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class VerificationsController {
 
     private final VerificationService verifications;
+    private final IntegrationService integrations;
 
-    public VerificationsController(VerificationService verifications) {
+    public VerificationsController(VerificationService verifications, IntegrationService integrations) {
         this.verifications = verifications;
+        this.integrations = integrations;
     }
 
     @PostMapping
@@ -38,7 +41,9 @@ public class VerificationsController {
             @RequestBody(required = false) CreateVerificationRequest body,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         ApiPrincipal principal = CurrentApiKey.require();
-        return verifications.create(principal.organizationId(), "api_key", principal.apiKeyId(), body, idempotencyKey);
+        var integration = integrations.requireInOrg(principal.organizationId(), principal.integrationId());
+        return verifications.create(
+                principal.organizationId(), integration, "api_key", principal.apiKeyId(), body, idempotencyKey);
     }
 
     @GetMapping
@@ -48,7 +53,7 @@ public class VerificationsController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) {
         ApiPrincipal principal = CurrentApiKey.require();
-        return verifications.list(principal.organizationId(), status, cursor, limit);
+        return verifications.list(principal.organizationId(), status, principal.integrationId(), cursor, limit);
     }
 
     @GetMapping("/{id}")

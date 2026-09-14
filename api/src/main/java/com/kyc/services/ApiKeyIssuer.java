@@ -3,6 +3,7 @@ package com.kyc.services;
 import com.kyc.dto.account.IssuedApiKeyResponse;
 import com.kyc.entities.ApiKey;
 import com.kyc.entities.AuditEvent;
+import com.kyc.entities.Integration;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.AuditEventRepository;
 import java.time.Instant;
@@ -26,14 +27,28 @@ public class ApiKeyIssuer {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public IssuedApiKeyResponse issue(UUID organizationId, UUID createdByUserId) {
+    public IssuedApiKeyResponse issue(Integration integration, UUID createdByUserId) {
         Instant now = Instant.now();
-        String raw = CryptoTokens.randomApiKey();
+        String raw = CryptoTokens.randomApiKey(integration.isLive());
         String prefix = raw.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH);
         UUID id = UUID.randomUUID();
-        apiKeyRepository.save(new ApiKey(id, organizationId, prefix, passwordEncoder.encode(raw), now, createdByUserId));
+        apiKeyRepository.save(new ApiKey(
+                id,
+                integration.getOrganizationId(),
+                integration.getId(),
+                prefix,
+                passwordEncoder.encode(raw),
+                now,
+                createdByUserId));
         auditEventRepository.save(new AuditEvent(
-                organizationId, "user", createdByUserId, "api_key.issued", "api_key", id, "{}", now));
-        return new IssuedApiKeyResponse(id, raw, prefix);
+                integration.getOrganizationId(),
+                "user",
+                createdByUserId,
+                "api_key.issued",
+                "api_key",
+                id,
+                "{}",
+                now));
+        return new IssuedApiKeyResponse(id, raw, prefix, integration.getId());
     }
 }

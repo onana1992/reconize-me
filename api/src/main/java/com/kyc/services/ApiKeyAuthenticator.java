@@ -34,7 +34,7 @@ public class ApiKeyAuthenticator {
         List<ApiKey> candidates = apiKeyRepository.findByKeyPrefixAndRevokedFalse(prefix);
         for (ApiKey key : candidates) {
             if (passwordEncoder.matches(rawKey, key.getKeyHash())) {
-                return Optional.of(new ApiPrincipal(key.getOrganizationId(), key.getId()));
+                return Optional.of(new ApiPrincipal(key.getOrganizationId(), key.getId(), key.getIntegrationId()));
             }
         }
         return Optional.empty();

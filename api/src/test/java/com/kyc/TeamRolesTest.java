@@ -50,7 +50,10 @@ class TeamRolesTest {
                 .andExpect(jsonPath("$.error.code").value("forbidden"));
         mockMvc.perform(get("/v1/console/verifications/00000000-0000-0000-0000-000000000001").cookie(developer))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/v1/console/api-keys").cookie(developer))
+        mockMvc.perform(post("/v1/console/integrations")
+                        .cookie(developer)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mode\":\"test\",\"name\":\"Dev keys\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.key").isString());
     }

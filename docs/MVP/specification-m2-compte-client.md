@@ -3,9 +3,9 @@
 **Plateforme :** Recogniz-Me  
 **Sprint :** M2 — inscription, e-mail, login, organisation Sandbox, console derrière session  
 **Complément :** cycle T — gestion d’équipe type Onfido / Veriff Station (T0–T4)  
-**Version du document :** 1.2  
-**Date :** 9 septembre 2026  
-**Statut :** spécification as-built (M2 + T0–T4 livrés)  
+**Version du document :** 1.3  
+**Date :** 14 septembre 2026  
+**Statut :** spécification as-built (M2 + T0–T4 livrés) ; évolution contrat CDC 1.4 (§17)  
 **CDC :** §9. **Objectif O3.** Critère d’acceptation §17.4. Cycle T = exception volontaire au CDC §4.2 (rôles avancés).
 
 **Documents liés :**
@@ -104,9 +104,10 @@ Rôles console (T2) :
 | **Organisation** | Tenant isolé, déjà présent en S1. Elle naît au signup (sauf invitation). Facturée plus tard (M3). |
 | **Appartenance (membership)** | Lien user ↔ org + rôle + statut `active` \| `disabled`. Un user a **au plus une** membership. |
 | **Permission** | Droit nommé (`TEAM_WRITE`, `API_KEY_READ`, …). Le rôle n’est plus testé en dur hors `OWNERSHIP`. |
-| **Clé API** | Identité **machine**, distincte du login. Préfixe visible ; secret montré **une fois**. |
+| **Clé API** | Identité **machine**, distincte du login. Préfixe visible ; secret montré **une fois**. As-built M2 : rattachée à l’org. Contrat CDC 1.4 : rattachée à une **intégration**. |
 | **Session console** | Jeton opaque côté serveur, cookie `rm_session`. Le store porte `userId` + `organizationId` (le `role` du blob est **ignoré**). À chaque requête : membership absente, org ≠ session, ou statut `disabled` → **401**. Rôle = colonne `memberships`. |
-| **Sandbox** | Environnement de clé `ky_test_`, toujours gratuit. Pas un plan d’organisation. Pas de colonne SQL. `GET /me` ne renvoie **plus** `plan`. |
+| **Sandbox** | Toujours gratuit. Pas un plan d’organisation. Pas de colonne SQL `plan`. `GET /me` ne renvoie **plus** `plan`. CDC 1.4 : c’est le `mode=test` d’une **intégration**, pas un écran `?env=`. |
+| **Intégration** | Contrat CDC 1.4 — **pas livré en M2**. Environnement `test` \| `live` d’un service : clés, webhooks, sessions. Voir §17. |
 
 ---
 
@@ -328,7 +329,7 @@ L’organisation **ne se lit pas** dans un header client.
 
 ### 6.5 Ce qui n’existe pas encore
 
-Pas de table `Plan`, ni colonne `organizations.plan`. Le sandbox est des clés `ky_test_` + un solde à 0, jusqu’à M3 (`CreditAccount`, Checkout carte, `ky_live_`).
+Pas de table `Plan`, ni colonne `organizations.plan`. As-built : le sandbox est des clés `ky_test_` au niveau org + un solde à 0, jusqu’à M3. Contrat CDC 1.4 : ces clés migrent vers une intégration `test` par défaut (§17).
 
 ---
 
@@ -692,8 +693,9 @@ Tokens M0 (`console.css`). Layout public **sans** nav métier ; layout app avec 
 | `/forgot`, `/reset` | public | Reset |
 | `/verify` | public | Clé une fois + copie ; ou « compte activé » (invité) |
 | `/verify/pending` | public | Consigne + renvoyer l’e-mail |
-| `/` | session | Org, Sandbox, usage 0, rôle, bandeau 2FA si owner |
-| `/settings/keys` | `API_KEY_READ` | Liste préfixes ; émission / révocation si `API_KEY_WRITE` |
+| `/` | session | Org, usage 0, rôle, bandeau 2FA si owner |
+| `/settings/keys` | `API_KEY_READ` | Liste préfixes ; émission / révocation si `API_KEY_WRITE` — **as-built**. Cible CDC 1.4 : `/identity/integrations/{id}` |
+| `/identity/integrations` | `API_KEY_READ` | Cible CDC 1.4 : liste d’intégrations (badge test / live). As-built : page clés filtrée par `?env=` — **à retirer**. |
 | `/settings/team` | session | Membres (rôle, badge Actif/Inactif), invites, invite+rôle si `TEAM_WRITE` ; transfert si `OWNERSHIP` |
 | `/settings/activity` | `AUDIT_READ` | Journal filtrable, pagination curseur |
 | `/settings/account` | session | E-mail, rôle, changement de mot de passe |
@@ -745,7 +747,7 @@ HTTPS hors local. Pas de secrets dans le dépôt.
 | §9.3 cookie vs Bearer | RG-ACC-19, architecture §5.2 |
 | §9.3 2FA hors MVP | RG-ACC-24 |
 | §9.4 parcours inscription | UC-ACC-01, séquence §5.6 |
-| §9.5 écrans (hors facturation) | §11 — facturation = M3 (`BILLING_*`) |
+| §9.5 écrans (hors facturation) | §11 — facturation = M3 (`BILLING_*`) ; chrome intégrations = CDC 1.4 / §17 |
 | RG-SUB-01 sandbox gratuit | RG-ACC-04 |
 | UC-ACC-01 / 02 / UC-ISO-01 | §7 |
 | §14.1 User, Membership, tokens | §6 — ledger / Checkout carte reportés M3 |
@@ -785,4 +787,33 @@ UI : middleware vérifié (`/` → `/login?next=/`).
 
 ## 16. Suite
 
-M2 + T verts → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Crédit d’organisation**. Freeze pricing **avant** le premier Checkout. M3 ajoute le ledger, Stripe Checkout **carte**, `ky_live_`, usage réel et l’écran `/settings/billing` du CDC §9.5 / §10, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.
+M2 + T verts → **entité Integration + chrome** (CDC 1.4, §17) **avant M5**, puis [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Crédit d’organisation**. Freeze pricing **avant** le premier Checkout. M3 ajoute le ledger, Stripe Checkout **carte**, intégration `live` / `ky_live_`, usage réel et l’écran `/settings/billing` du CDC §9.5 / §10, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.
+
+---
+
+## 17. Évolution contrat CDC 1.4 — Intégration
+
+Le CDC 1.4 **prime**. M2 as-built reste : clés `ky_test_` au niveau org, pas de table `integrations`. Le chrome console a ensuite ajouté un sélecteur `?env=sandbox|live` (CDC 1.3) : **à retirer**.
+
+### 17.1 Entité
+
+`Integration` : `id`, `organization_id`, `product` (`identity` au MVP), `mode` (`test` \| `live`), `name`, timestamps.
+
+- Une clé `api_keys.integration_id` **obligatoire** après migration.
+- Une session IDV (M4+) porte `verifications.integration_id`.
+- Webhook / callback / HMAC (M5) : **par intégration**.
+
+Migration as-built : pour chaque org ayant des `ky_test_`, créer une intégration `test` par défaut et y rattacher les clés existantes.
+
+### 17.2 Règles (en plus de RG-ACC)
+
+| ID | Règle |
+|---|---|
+| **RG-ACC-15** (cible) | Vérif e-mail du owner → **une** intégration `test` + première `ky_test_`. Un invité ne reçoit ni intégration ni clé. |
+| **RG-INT-01** | Pas de sélecteur Sandbox / Live, pas de `?env=`, pas de cookie `rm_console_env`. |
+| **RG-INT-02** | Créer une intégration `live` = RG-SUB-02 (solde ≥ une unité). |
+| **RG-INT-03** | `ky_test_` / `ky_live_` ne quittent pas le serveur. Le JS SDK ne reçoit que `hosted_url`. |
+
+### 17.3 Écrans cibles
+
+`/identity/integrations` = liste. `/identity/integrations/{id}` = clés (émission une fois), webhook (M5), sessions de **cette** intégration. Vue `/identity` : sessions org + badge d’intégration.

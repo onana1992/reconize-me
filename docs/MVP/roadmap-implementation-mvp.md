@@ -2,8 +2,8 @@
 
 **Plateforme :** Recogniz-Me  
 **Livrable :** premier service vendable (marque, vitrine, compte, crédit d’organisation, IDV)  
-**Version du document :** 1.4 — crédit d’organisation, recharge carte ; pas de facturation produit  
-**Date :** 9 septembre 2026  
+**Version du document :** 1.5 — intégrations test / live (CDC 1.4)  
+**Date :** 14 septembre 2026  
 **Statut :** ordre de build du MVP  
 **Documents liés :**
 - [`cahier-des-charges-mvp.md`](./cahier-des-charges-mvp.md) — *quoi* (contrat métier)
@@ -26,7 +26,7 @@ La [roadmap IDV S3–S9](../specs/roadmap-implementation-idv.md) (SageMaker, dat
 
 ## 1. Cible
 
-**Happy path commercial :** un visiteur comprend l’offre sur la vitrine → crée un compte → obtient une clé sandbox → l’applicant va au bout du lien (pièce + visage) → une **décision justifiée** apparaît en console → le client recharge par carte et crée une clé live.
+**Happy path commercial :** un visiteur comprend l’offre sur la vitrine → crée un compte → obtient une **intégration test** et sa clé `ky_test_` → l’applicant va au bout du lien (pièce + visage) → une **décision justifiée** apparaît en console → le client recharge par carte et crée une **intégration live**.
 
 Sans ce chemin, le MVP n’est pas livré — même si un morceau d’IDV ou de design est « presque fini ».
 
@@ -77,9 +77,10 @@ S1 fondation (fait)
 | **M1** | Vitrine | Site public, pages CDC §8.1, CTA compte | **Livré** (`web/site`, FR + EN) |
 | **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | **Livré** ([spec](./specification-m2-compte-client.md)) |
 | **T** | Équipe | Cycle de vie puis rôles type Onfido / Veriff | **T0–T4 livrés** ([roadmap](./roadmap-implementation-team.md)) |
-| **M3** | Facturation | Checkout carte test → crédit → `ky_live_` → débit à l’unité | à faire |
+| **I** | Intégration | Entité `Integration` (`test` \| `live`), clés rattachées, retrait `?env=` | à faire — **avant M5** (CDC 1.4) |
+| **M3** | Facturation | Checkout carte test → crédit → intégration live (`ky_live_`) → débit à l’unité | à faire |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
-| **M5** | IDV live | Textract + Rekognition + webhook résultat | à faire |
+| **M5** | IDV live | Textract + Rekognition + webhook **par intégration** | à faire |
 | **M6** | Go-live | Rate limit, rétention affichée, staging, 1 design partner sandbox | à faire |
 
 ### Parallélisme autorisé
@@ -90,8 +91,9 @@ S1 fondation (fait)
 | **M3** après M2 seulement | — |
 | **T1 ∥ M4** | M2 vert ; [roadmap équipe](./roadmap-implementation-team.md) |
 | **T2** avant ou avec **M3** | Helper de droits (`BILLING_*`) avant les routes Stripe |
+| **I** après M2, **avant M5** | Peut ∥ M3 et M4 ; sans crédit on ne crée que des intégrations `test` |
 | **M4** après M2 (console authentifiée) ; capture peut démarrer dès M0 si la session S1 suffit, mais la **démo M4** se fait en compte connecté | Cookies console en place |
-| **M5** après **M4 et M3** | Stub métier vert **et** clés live existantes |
+| **M5** après **M4 et M3** | Stub métier vert **et** au moins une intégration live |
 | Contenu légal / tarifs | Rédaction dès M1 ; **prix figés avant M3** |
 
 Interdit : M5 sans M4 ; M3 sans M2 ; M1 sans M0.
@@ -210,13 +212,34 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 
 ---
 
+### I — Intégrations (test / live)
+
+**Durée :** quelques jours.  
+**CDC :** §9.6–9.7, §11.7.  
+**Prérequis :** M2. **Avant M5.** Peut ∥ M3 et M4.
+
+**Spécification :** [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) §17.
+
+**Livrable :** plus de sélecteur Sandbox / Live (`?env=`). Une org a des **intégrations**. Signup (ou migration) pose une intégration `test` et y rattache les `ky_test_`. La console liste `/identity/integrations` ; la fiche porte clés et (plus tard) webhook. Sessions IDV portent `integration_id` dès que M4 est là.
+
+| In | Out |
+|---|---|
+| Table `integrations` ; `api_keys.integration_id` ; migration des clés org | Publishable key dans le navigateur |
+| Chrome : liste + fiche ; badge `test` / `live` | Radio `?env=` / cookie `rm_console_env` |
+| Création intégration `live` seulement si RG-SUB-02 (donc après M3 pour le happy path live) | SDK InContext (après M4) |
+
+**Démo :** compte existant → une intégration test, clés dessus, plus de switcher d’écran.  
+**Kill :** `ky_*` exposée au front ; sessions d’une org B via l’intégration de A.
+
+---
+
 ### M3 — Crédit d’organisation (recharge carte)
 
 **Durée :** 1–2 semaines.  
 **CDC :** §10. **Objectif O4.**  
 **Prérequis :** M2. **Freeze pricing** avant le premier Checkout (voir §6).
 
-**Livrable :** Stripe Checkout **test** (carte) → crédit au ledger → `ky_live_` créable si solde ≥ une unité → solde / `GET /v1/usage` = écran `/settings/billing`. Solde insuffisant → plus de vérif live, sandbox OK.
+**Livrable :** Stripe Checkout **test** (carte) → crédit au ledger → intégration **live** créable si solde ≥ une unité → solde / `GET /v1/usage` = écran `/settings/billing`. Solde insuffisant → plus de vérif live, intégrations test OK.
 
 | In | Out |
 |---|---|
@@ -224,20 +247,20 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 | Webhooks Stripe signés, miroir customer / session Checkout | Stockage de CB |
 | Ledger interne (source de vérité du **solde**) | Portail factures, virement, avoir ops, recharge auto |
 | `GET /v1/usage` par service (relevé, pas un encaissement) | Compteurs biométrie / AML |
-| Blocage `ky_live_` si solde < une unité | SageMaker |
+| Blocage intégration `live` / `ky_live_` si solde < une unité | SageMaker |
 
 **Travaux**
 
 - Entités `CreditAccount` / `CreditLedgerEntry` (pas de table « Plan »).
 - RG-SUB-01…07.
 - Comptage : **à la création** d’une vérif live (recommandation CDC) — figé ici.
-- Sandbox : **jamais** débité.
+- Intégration test : **jamais** débitée.
 - Console : `/settings/billing` seulement (solde, recharge carte, ledger, consommation). Pas d’onglet facturation produit.
 - `/pricing` vitrine : montants **réels** après freeze. Canal MVP = carte.
 
 **Tests :** webhook rejoué (idempotence) ; `ky_live_` refusée sans solde ; débit live ; org B ne voit pas le ledger de A.
 
-**Démo :** Stripe CLI Checkout test → solde crédité → clé live → une `POST /v1/verifications` live débite le crédit.  
+**Démo :** Stripe CLI Checkout test → solde crédité → intégration live → une `POST /v1/verifications` live débite le crédit.  
 **Kill :** clé live sans crédit suffisant ; webhook Stripe non signé.
 
 ---
@@ -266,7 +289,7 @@ Reprend le [guide S2](../specs/guide-implementation-s2.md) pour la **capture pi�
 | Stockage réel local (filesystem / MinIO) | Appels AWS IA |
 | Statuts document, selfie, processing, décisions, recapture | Enrôlement, AML attaché |
 | Stubs déterministes (fixtures sandbox) | Modèle authenticité |
-| Corridor : mapping stub ; hors liste → `unsupported_document` | SDK natif |
+| Corridor : mapping stub ; hors liste → `unsupported_document` | SDK natif (InContext = après M4, même `hosted_url`) |
 
 **Démo :** compte sandbox → lien → consentement → pièce → selfie → statut terminal en console, raisons visibles, 0 appel AWS.  
 **Kill :** binaire dans le JSON métier ; média cross-tenant ; décision sans raisons ; token / PII dans les logs.
@@ -281,12 +304,12 @@ Si M4 n’est pas démontrable, **ne pas** ouvrir M5.
 **CDC :** §11 live, §11.6, critère §17.9. **Objectif O5 (production).**  
 **Prérequis :** M4 **et** M3.
 
-**Livrable :** une vérif **`ky_live_`** en staging parcourt Textract AnalyzeID + CompareFaces (+ Face Liveness **ou** liveness stub **documenté** si Liveness n’est pas prêt — alors mettre à jour le CDC §17.9 **avant** de déclarer M5 vert). Webhook `verification.completed` signé, **sans** médias dans le payload.
+**Livrable :** une vérif d’une intégration **`live`** (`ky_live_`) en staging parcourt Textract AnalyzeID + CompareFaces (+ Face Liveness **ou** liveness stub **documenté** si Liveness n’est pas prêt — alors mettre à jour le CDC §17.9 **avant** de déclarer M5 vert). Webhook `verification.completed` signé **par intégration**, **sans** médias dans le payload.
 
 | In | Out |
 |---|---|
 | Adaptateurs `AwsDocumentAi` / `AwsBiometric` derrière les ports existants | SageMaker, Bedrock, Ground Truth |
-| Choix stub vs AWS selon préfixe de clé (`ky_test_` vs `ky_live_`) | Heuristiques de coins en prod |
+| Choix stub vs AWS selon le mode de l’intégration (`ky_test_` vs `ky_live_`) | Heuristiques de coins en prod |
 | Parseur MRZ déterministe si zone présente | Authenticité ML |
 | `POST /v1/webhooks` + livraison signée + retry borné | Catalogue d’événements vision (liveness.started, etc.) |
 | Hors corridor AnalyzeID → `unsupported_document` | |
@@ -333,8 +356,8 @@ Chaque critère CDC §17 est **couvert par un sprint**. Le MVP n’est clos qu�
 | 1 — Charte unique | M0, vérifié M1 |
 | 2 — Offre comprise, IDV vs bientôt | M1 |
 | 3 — `/pricing` = sandbox gratuit + crédit + live à l’unité | M1 (provisoire) → M3 (figé) |
-| 4 — Compte + `ky_test_` | M2 |
-| 5 — Recharge carte → crédit → `ky_live_` | M3 |
+| 4 — Compte + intégration test + `ky_test_` | M2 + I |
+| 5 — Recharge carte → crédit → intégration live | M3 |
 | 6 — Solde insuffisant | M3 |
 | 7 — Solde / usage API = console | M3 |
 | 8 — IDV sandbox sans AWS | M4 |
@@ -418,12 +441,13 @@ Ordre conseillé, **pas** dans le MVP :
 
 - Changement de périmètre → version du **CDC**, pas un commentaire de PR.
 - Glissement d’un critère (ex. Liveness) → CDC §17 **puis** cette roadmap.
-- Prochain sprint à ouvrir : **M3 — crédit d’organisation, recharge carte**.
+- Prochain sprint à ouvrir : **I — intégrations** (retrait `?env=`), puis **M3 — crédit d’organisation**.
 
 **Journal des changements de périmètre**
 
 | Date | Changement | Trace |
 |---|---|---|
+| 14 sept. 2026 | Plus de sélecteur Sandbox / Live. Test / live = type d’**intégration**. Web flow = `hosted_url` (redirect ou InContext). | CDC v1.4 §9.6–9.7, §11.7 |
 | 9 sept. 2026 | Crédit d’organisation, recharge **carte** MVP (plus de meter / facture d’usage). Facturation org seulement. | CDC v1.3 §10 |
 | 9 sept. 2026 | Facturation **à l’usage** (plus de plan mensuel / forfait). Console par service (sidebar compte + onglets produit). | CDC v1.2 §9.6, §10 |
 | 2 sept. 2026 | Vitrine bilingue FR/EN : l’anglais passe de « hors M1 sauf si gratuit » à **dans le périmètre** | CDC v1.1 §8, §8.0 |

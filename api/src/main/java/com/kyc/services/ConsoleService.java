@@ -50,7 +50,7 @@ public class ConsoleService {
     private final MembershipInviteRepository membershipInviteRepository;
     private final ApiKeyRepository apiKeyRepository;
     private final AuditEventRepository auditEventRepository;
-    private final ApiKeyIssuer apiKeyIssuer;
+    private final IntegrationService integrationService;
     private final AccountService accountService;
     private final SessionService sessionService;
     private final ObjectMapper objectMapper;
@@ -62,7 +62,7 @@ public class ConsoleService {
             MembershipInviteRepository membershipInviteRepository,
             ApiKeyRepository apiKeyRepository,
             AuditEventRepository auditEventRepository,
-            ApiKeyIssuer apiKeyIssuer,
+            IntegrationService integrationService,
             AccountService accountService,
             SessionService sessionService,
             ObjectMapper objectMapper) {
@@ -72,7 +72,7 @@ public class ConsoleService {
         this.membershipInviteRepository = membershipInviteRepository;
         this.apiKeyRepository = apiKeyRepository;
         this.auditEventRepository = auditEventRepository;
-        this.apiKeyIssuer = apiKeyIssuer;
+        this.integrationService = integrationService;
         this.accountService = accountService;
         this.sessionService = sessionService;
         this.objectMapper = objectMapper;
@@ -97,14 +97,15 @@ public class ConsoleService {
     public List<ApiKeyListItem> listKeys(ConsolePrincipal principal) {
         ConsoleAuth.require(principal, Permission.API_KEY_READ);
         return apiKeyRepository.findByOrganizationIdOrderByCreatedAtDesc(principal.organizationId()).stream()
-                .map(key -> new ApiKeyListItem(key.getId(), key.getKeyPrefix(), key.getCreatedAt(), key.isRevoked()))
+                .map(key -> new ApiKeyListItem(
+                        key.getId(), key.getIntegrationId(), key.getKeyPrefix(), key.getCreatedAt(), key.isRevoked()))
                 .toList();
     }
 
     @Transactional
     public IssuedApiKeyResponse createKey(ConsolePrincipal principal) {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
-        return apiKeyIssuer.issue(principal.organizationId(), principal.userId());
+        return integrationService.issueTestKey(principal.organizationId(), principal.userId());
     }
 
     @Transactional

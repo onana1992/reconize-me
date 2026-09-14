@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.kyc.entities.AuditEvent;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.AuditEventRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class CreateVerificationTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Autowired
@@ -47,7 +51,7 @@ class CreateVerificationTest {
 
     @Test
     void createReturnsHostedLinkAndReplaysIdempotency() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Create Co", "create-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Create Co", "create-co");
         String body = """
                 {"external_id":"ext-1","applicant":{"email":"marie@example.com"},"metadata":{"sandbox_scenario":"approved"}}
                 """;
@@ -94,7 +98,7 @@ class CreateVerificationTest {
 
     @Test
     void responseDoesNotLeakTokenHash() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Create Co", "create-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Create Co", "create-co");
         mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + KEY)
                         .contentType(MediaType.APPLICATION_JSON)

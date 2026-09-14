@@ -78,6 +78,8 @@ export function tAuditAction(t: Translate, action: string): string {
       return t("console.activity.actionKeyIssued");
     case "api_key.revoked":
       return t("console.activity.actionKeyRevoked");
+    case "integration.created":
+      return t("console.activity.actionIntegrationCreated");
     case "user.login_failed":
       return t("console.activity.actionLoginFailed");
     case "user.registered":
@@ -97,6 +99,8 @@ export function tResourceType(t: Translate, type: string): string {
       return t("console.activity.resourceInvite");
     case "api_key":
       return t("console.activity.resourceKey");
+    case "integration":
+      return t("console.activity.resourceIntegration");
     default:
       return type;
   }
@@ -112,6 +116,7 @@ export const AUDIT_FILTERS = [
   "membership.enabled",
   "api_key.issued",
   "api_key.revoked",
+  "integration.created",
   "user.login_failed",
   "user.registered",
   "user.email_verified",

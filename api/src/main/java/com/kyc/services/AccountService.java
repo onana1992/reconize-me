@@ -53,7 +53,6 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final MailPort mailPort;
     private final KycProperties properties;
-    private final ApiKeyIssuer apiKeyIssuer;
     private final SessionService sessionService;
 
     public AccountService(
@@ -67,7 +66,6 @@ public class AccountService {
             PasswordEncoder passwordEncoder,
             MailPort mailPort,
             KycProperties properties,
-            ApiKeyIssuer apiKeyIssuer,
             SessionService sessionService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
@@ -79,7 +77,6 @@ public class AccountService {
         this.passwordEncoder = passwordEncoder;
         this.mailPort = mailPort;
         this.properties = properties;
-        this.apiKeyIssuer = apiKeyIssuer;
         this.sessionService = sessionService;
     }
 
@@ -181,10 +178,7 @@ public class AccountService {
                 "{}",
                 now));
 
-        if (membership.isOwner()) {
-            return apiKeyIssuer.issue(membership.getOrganizationId(), user.getId());
-        }
-        return new IssuedApiKeyResponse(null, null, null);
+        return new IssuedApiKeyResponse(null, null, null, null);
     }
 
     @Transactional

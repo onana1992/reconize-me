@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.ports.MailPort;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,8 +44,10 @@ class ApiKeySecretNotRelistedTest {
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();
+        Cookie session = AccountSupport.session(login);
+        AccountSupport.createIntegration(mockMvc, session, "Keys");
 
-        mockMvc.perform(get("/v1/console/api-keys").cookie(AccountSupport.session(login)))
+        mockMvc.perform(get("/v1/console/api-keys").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").exists())
                 .andExpect(jsonPath("$[0].key_prefix").exists())

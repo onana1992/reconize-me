@@ -2,8 +2,8 @@
 
 **Produit :** Recogniz-Me  
 **Livrable :** MVP métier — mise sur pied du service SaaS  
-**Version :** 1.3 — crédit d’organisation, recharge carte ; pas de facturation produit  
-**Date :** 9 septembre 2026  
+**Version :** 1.4 — intégrations test / live (plus de sélecteur Sandbox / Live)  
+**Date :** 14 septembre 2026  
 **Statut :** contrat d’implémentation du MVP  
 **Public :** produit, design, ingénierie, go-to-market
 
@@ -275,7 +275,8 @@ Aujourd’hui : une organisation et des clés **seedées**, console **sans login
 | **Utilisateur** | Personne (e-mail) qui se connecte à la console |
 | **Organisation** | Tenant facturé, isolé, déjà existant en base |
 | **Appartenance** | Lien user ↔ org + rôle |
-| **Clé API** | Identité machine ; distincte du login console |
+| **Intégration** | Environnement isolé d’un **service** (IDV au MVP) : `test` ou `live`. Porte ses clés, webhooks, callback, sessions. Pas un plan d’organisation, pas un mode d’écran. |
+| **Clé API** | Identité machine **de l’intégration** ; distincte du login console. `ky_test_` sur une intégration test ; `ky_live_` sur une intégration live. |
 
 Un utilisateur MVP appartient à **une** organisation. Créer un compte **crée** l’organisation (nom saisi à l’inscription).
 
@@ -291,8 +292,8 @@ Invitation par e-mail (lien à usage unique). Pas de SSO.
 ### 9.3 Authentification console
 
 - E-mail + mot de passe (hash adapté, jamais en clair)
-- Vérification d’e-mail **avant** l’accès console et l’émission de `ky_test_`
-- `ky_live_` : e-mail vérifié **et** solde ≥ une unité live (M3)
+- Vérification d’e-mail **avant** l’accès console et l’émission de la première intégration **test** (`ky_test_`)
+- Intégration **live** (`ky_live_`) : e-mail vérifié **et** solde ≥ une unité live (M3)
 - Session cookie httpOnly, Secure hors local
 - Déconnexion, mot de passe oublié
 - 2FA : **hors MVP** (prévu vision) ; le propriétaire est prévenu dans la console que ce sera exigé plus tard
@@ -308,9 +309,9 @@ Compte créé, e-mail de vérification
         ↓
 E-mail vérifié → organisation active, sandbox gratuit
         ↓
-Clé ky_test_ émise (affichée une fois)
+Intégration test créée + clé ky_test_ (affichée une fois)
         ↓
-Console : première vérification sandbox
+Console : première vérification sur cette intégration
 ```
 
 Règles :
@@ -327,8 +328,8 @@ Règles :
 | Login / signup / forgot | Charte |
 | Vérification e-mail | Attente + renvoyer |
 | Accueil | Sélecteur de services, usage consolidé du mois |
-| Service (IDV, biométrie, AML) | Onglets : vue, configuration, intégrations ; sélecteur Sandbox / Live |
-| Intégrations IDV | Clés API de ce service, badge **Sandbox** (`ky_test_`) / **Live** (`ky_live_`) |
+| Service (IDV, biométrie, AML) | Onglets : vue, configuration, intégrations — **pas** de sélecteur Sandbox / Live |
+| Intégrations IDV | Liste des intégrations (badge `test` / `live`) ; fiche = clés, webhook, callback, sessions de **cette** intégration |
 | Facturation org | Solde, recharge carte, ledger, consommation par service |
 | Équipe / activité / compte | Sidebar organisation |
 
@@ -336,14 +337,39 @@ La console actuelle (création de vérif, copie du lien) est **derrière login**
 
 ### 9.6 Organisation de la console
 
-La sidebar **ne change pas** selon le service (chrome de compte). Une fois dans un service, une barre d’onglets en haut porte le métier, plus un sélecteur **Sandbox / Live**. L’environnement n’est pas un mode d’organisation : il filtre la vue du service (sessions, clés, usage) et reste dans l’URL (`?env=`).
+La sidebar **ne change pas** selon le service (chrome de compte). Une fois dans un service, une barre d’onglets en haut porte le métier. **Pas** de radio Sandbox / Live, **pas** de `?env=`, **pas** de bannière d’environnement : test et live sont des **intégrations**, pas des modes d’écran.
 
 | Surface | Routes | Nature |
 |---|---|---|
 | Compte | `/`, `/settings/billing`, `/settings/team`, `/settings/activity`, `/settings/account` | Organisation |
 | Service | `/identity`, `/biometrics`, `/aml` + `/configuration`, `/integrations` | Produit |
+| Fiche intégration | `/identity/integrations/{id}` | Une intégration (clés, webhook, sessions) |
 
-Sandbox / live n’est **pas** un plan d’organisation. C’est le préfixe de clé (`ky_test_` / `ky_live_`) et le compteur du service. Les clés actuelles authentifient **Identity** ; un second produit aura les siennes.
+La vue d’ensemble du service (`/identity`) liste les sessions de l’org avec un badge d’intégration. Ouvrir une intégration restreint à **ses** sessions et **ses** credentials.
+
+Sandbox / live n’est **pas** un plan d’organisation. C’est le `mode` de l’intégration (`test` → `ky_test_`, `live` → `ky_live_`) et le compteur du service. Les clés authentifient **Identity** ; un second produit aura les siennes.
+
+### 9.7 Intégration (contrat)
+
+Une intégration est l’unité d’intégration client, modèle Veriff : on **crée une intégration**, on n’« active pas un écran live ».
+
+| | Intégration `test` | Intégration `live` |
+|---|---|---|
+| Clé | `ky_test_` (secrète, montrée une fois) | `ky_live_` (idem) |
+| Crédit | Jamais débité | Prix unitaire du service |
+| Analyse | Stub déterministe | AWS (Textract / Rekognition) — M5 |
+| Condition | Compte e-mail vérifié | Solde ≥ une unité live (M3) |
+| Webhook / callback | Propres à **cette** intégration (M5) | Idem |
+
+Règles :
+
+- Toute org naît avec **une** intégration `test` (créée à la vérif e-mail du owner) et sa première `ky_test_`.
+- Créer une intégration `live` exige `API_KEY_WRITE` **et** RG-SUB-02.
+- Une clé n’existe que rattachée à une intégration. Le préfixe de clé **est** le mode ; le SDK / l’API ne prennent pas de paramètre `env`.
+- `ky_test_` / `ky_live_` restent des **secrets Bearer**. Ils ne vont **pas** dans le navigateur (pas de publishable key au MVP).
+- Web flow : redirect vers `hosted_url`, ou iframe InContext **autour de la même URL**. La décision arrive par webhook / GET session, jamais par l’événement iframe.
+
+As-built M2/M4 : clés encore **au niveau org**, chrome `?env=` encore en place. Le chrome et l’entité `Integration` se livrent **avant M5** (les webhooks se signent par intégration). Sans crédit, on ne crée que des intégrations `test`.
 
 ---
 
@@ -353,7 +379,7 @@ Le client n’achète pas « l’IA ». Il **charge un crédit d’organisation*
 
 ### 10.1 Modèle
 
-| | Sandbox | Live |
+| | Intégration test | Intégration live |
 |---|---|---|
 | Clé | `ky_test_` | `ky_live_` |
 | Crédit | Jamais débité | Prix unitaire du service (IDV : indicatif 0,90 € / vérif, à figer avant Stripe) |
@@ -367,20 +393,20 @@ Chiffres de catalogue (exemple de travail, **non contractuels** tant que le pric
 - Packs de recharge indicatifs : 50 / 100 / 250 / 500 (unité de devise)
 - Biométrie et AML : **pas de débit** tant qu’ils ne sont pas vendus
 
-Le ledger interne est la **source de vérité du solde**. Stripe n’encaise que les **recharges carte**. IDV est le seul service qui débite au MVP. Solde insuffisant → clés / ressources live refusées ; le sandbox reste.
+Le ledger interne est la **source de vérité du solde**. Stripe n’encaise que les **recharges carte**. IDV est le seul service qui débite au MVP. Solde insuffisant → intégrations / ressources live refusées ; le test reste.
 
 **Canal MVP :** carte bancaire (Stripe Checkout). Hors MVP : virement, avoir ops, rechargement auto, bon de commande.
 
 ### 10.2 Cycle de vie
 
 ```
-Compte (sandbox gratuit, ky_test_, solde 0)
+Compte (intégration test + ky_test_, solde 0)
     ↓  Recharge carte (Stripe Checkout)
 Crédit au ledger
-    ↓  ky_live_ si solde ≥ une unité
+    ↓  intégration live + ky_live_ si solde ≥ une unité
 Usage live → débit du solde
     ↓  solde < une unité
-Live bloqué ; sandbox OK
+Intégrations live bloquées ; test OK
     ↓  nouvelle recharge carte
 Live de nouveau possible
 ```
@@ -389,9 +415,9 @@ Live de nouveau possible
 
 | ID | Règle |
 |---|---|
-| **RG-SUB-01** | Toute org naît avec le sandbox gratuit. Aucune carte ni crédit exigé pour `ky_test_`. |
-| **RG-SUB-02** | `ky_live_` seulement si le solde couvre au moins une unité live du service. |
-| **RG-SUB-03** | Une ressource **live** débite le crédit au prix unitaire. Le sandbox ne débite jamais. |
+| **RG-SUB-01** | Toute org naît avec une intégration **test** gratuite. Aucune carte ni crédit exigé pour `ky_test_`. |
+| **RG-SUB-02** | Une intégration **live** (`ky_live_`) seulement si le solde couvre au moins une unité live du service. |
+| **RG-SUB-03** | Une ressource **live** débite le crédit au prix unitaire. Une intégration test ne débite jamais. |
 | **RG-SUB-04** | Pas de quota inclus ni de plafond silencieux. Le ledger débite l’usage. Un seuil d’alerte / recharge auto pourra venir plus tard. |
 | **RG-SUB-05** | Recharge MVP = **carte** via Stripe Checkout. Pas de CB stockée chez nous. |
 | **RG-SUB-06** | Webhooks Stripe signés pour les recharges. Source de vérité du **solde** = ledger interne ; Stripe = vérité des paiements carte. |
@@ -446,7 +472,7 @@ Console + GET /v1/verifications/{id} + webhook verification.completed
 | Enrôlement biométrique | **Hors MVP** |
 | AML attaché | **Hors MVP** |
 
-Sandbox / local : **zéro appel AWS IA** (stubs). Live : Textract + Rekognition. Les ports `DocumentAiPort` / `BiometricAiPort` existent déjà : deux adaptateurs (`Aws*` / `Stub*`), choix par profil Spring (`sandbox` vs `live`) et par préfixe de clé.
+Sandbox / local : **zéro appel AWS IA** (stubs). Live : Textract + Rekognition. Les ports `DocumentAiPort` / `BiometricAiPort` existent déjà : deux adaptateurs (`Aws*` / `Stub*`), choix par **mode de l’intégration** (préfixe de clé `ky_test_` vs `ky_live_`).
 
 ### 11.3 Corridor documents MVP
 
@@ -496,6 +522,21 @@ Upload document / selfie : URLs signées + routes flow token, pas la clé applic
 
 Flow applicant (token) : hydratation, consentement, upload, statut — **inchangé dans l’esprit S1**, étendu à la capture.
 
+### 11.7 Web flow (redirect + InContext)
+
+Le parcours applicant est **une** page hébergée (`hosted_url`). Deux façons de l’ouvrir, comme Veriff :
+
+| Mode | Comportement |
+|---|---|
+| **Redirect** | `window.location = hosted_url` (déjà le happy path M4) |
+| **InContext** | iframe / modal autour de la **même** URL (`createFrame({ url })`) |
+
+Le backend client crée la session avec la clé **secrète** de l’intégration (`POST /v1/verifications`). Le front ne reçoit que `hosted_url`. Pas de `ky_*` dans le JS SDK au MVP.
+
+L’iframe émet `started` / `submitted` / `finished` / `canceled` — **ce n’est pas la décision**. La décision arrive par webhook (M5) ou `GET /v1/verifications/{id}`.
+
+InContext et le package JS SDK se livrent **après M4** (le hosted flow existe). Ce n’est pas un second flow métier.
+
 ---
 
 ## 12. Acteurs
@@ -517,16 +558,16 @@ Flow applicant (token) : hydratation, consentement, upload, statut — **inchang
 Le visiteur parcourt accueil, IDV, tarifs, teasers. Il distingue disponible / bientôt.
 
 **UC-ACC-01 — Créer un compte**  
-Inscription → e-mail → org + sandbox gratuit → clé test. Alternative : e-mail déjà pris ; mot de passe trop faible.
+Inscription → e-mail → org + intégration test gratuite → clé `ky_test_` une fois. Alternative : e-mail déjà pris ; mot de passe trop faible.
 
 **UC-ACC-02 — Se connecter et opérer**  
 Login → console. Session expirée → login. Invitation membre → acceptation → rôle membre.
 
 **UC-SUB-01 — Activer le live**  
-Recharge carte → solde ≥ une unité → `ky_live_` créable → vérifs live débitées.
+Recharge carte → solde ≥ une unité → intégration **live** créable (`ky_live_`) → vérifs live débitées.
 
 **UC-SUB-02 — Gérer le crédit**  
-Recharge carte, lecture du ledger et de la consommation. Solde insuffisant → live bloqué, sandbox OK, message console clair.
+Recharge carte, lecture du ledger et de la consommation. Solde insuffisant → intégrations live bloquées, test OK, message console clair.
 
 **UC-IDV-01 à 10**  
 Ceux de la spec IDV, dans les limites §11 (pas d’AML, pas d’enrôlement, analyse AWS/stub).
@@ -569,7 +610,7 @@ Stack inchangée : Java / Spring Boot, PostgreSQL, Next.js, Redis, S3. Ajouts MV
 
 ### 14.1 Entités nouvelles (indicatif)
 
-`User`, `Membership`, `EmailVerificationToken`, `PasswordResetToken`, `CreditAccount`, `CreditLedgerEntry`, miroir Stripe (`StripeCustomer` pour les recharges carte), `WebhookEndpoint` — en plus des entités S1.
+`User`, `Membership`, `EmailVerificationToken`, `PasswordResetToken`, `Integration`, `CreditAccount`, `CreditLedgerEntry`, miroir Stripe (`StripeCustomer` pour les recharges carte), `WebhookEndpoint` — en plus des entités S1. `WebhookEndpoint` et le HMAC sont **par intégration** (M5).
 
 ---
 
@@ -614,8 +655,8 @@ Le MVP est **démontrable** quand **toutes** les conditions suivantes sont vraie
 
 ### Compte et facturation
 
-4. Inscription → e-mail → login → sandbox gratuit → clé `ky_test_` affichée une fois.
-5. Recharge carte test Stripe → solde crédité → création d’une clé `ky_live_`.
+4. Inscription → e-mail → login → intégration test → clé `ky_test_` affichée une fois.
+5. Recharge carte test Stripe → solde crédité → création d’une intégration live (`ky_live_`).
 6. Solde insuffisant → plus de vérif live ; message console explicite.
 7. `GET /v1/usage` / solde et l’écran `/settings/billing` montrent les mêmes chiffres.
 
@@ -645,12 +686,13 @@ Lots **séquentiels**. Un lot n’est pas « vert » sans son critère démontra
 | **M0** | Charte : logo, tokens, application console + flow existants | Design |
 | **M1** | Site vitrine (pages §8.1) publié en local / preview | M0 |
 | **M2** | Compte : signup, e-mail, login, org, console derrière session | S1, M0 |
-| **M3** | Stripe Checkout carte → crédit → `ky_live_` → débit à l’unité | M2 |
+| **I** | Entité Integration + retrait chrome `?env=` | M2 |
+| **M3** | Stripe Checkout carte → crédit → intégration live (`ky_live_`) → débit à l’unité | M2 |
 | **M4** | Capture (S2) + pipeline IDV stub (qualité, « lecture », décision) | S1, M2 |
-| **M5** | Adaptateurs AWS live + webhooks résultat | M4, M3 |
+| **M5** | Adaptateurs AWS live + webhooks résultat **par intégration** | M4, M3 |
 | **M6** | Durcissement : rétention affichée, rate limit, staging, 1 design partner sandbox | M1–M5 |
 
-Ordre imposé : **M0 avant M1** (pas de vitrine au look actuel divergent). **M2 avant M3**. **M4 avant M5** (le stub prouve le métier sans facture AWS). M1 peut avancer en parallèle de M2 dès que les tokens M0 existent.
+Ordre imposé : **M0 avant M1** (pas de vitrine au look actuel divergent). **M2 avant M3**. **M4 avant M5** (le stub prouve le métier sans facture AWS). M1 peut avancer en parallèle de M2 dès que les tokens M0 existent. L’entité **Intégration** + retrait du chrome `?env=` se livrent **avant M5**. Le JS SDK InContext se livre **après M4**.
 
 L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md). La roadmap IDV S3–S9 (SageMaker, dataset) **n’est pas** le calendrier de ce MVP. Elle reprend **après** M6, comme chantier « avantage IA », pas comme condition de première vente sandbox.
 
@@ -667,10 +709,12 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 | Biométrie d’onboarding MVP | Rekognition live + stub sandbox |
 | Juge | Règles + scores, pas un LLM |
 | Auth console | E-mail / mot de passe ; 2FA plus tard |
-| Auth API | Clés `ky_test_` / `ky_live_` |
-| Facturation | Crédit d’organisation ; recharge carte (MVP) ; sandbox gratuit |
+| Auth API | Clés `ky_test_` / `ky_live_` **d’une intégration** (pas de clé dans le navigateur) |
+| Facturation | Crédit d’organisation ; recharge carte (MVP) ; intégration test gratuite |
 | Revue | Analyste du **client**, pas un service opéré par Recogniz-Me |
 | Compte | Une org par utilisateur fondateur ; invitations membres |
+| Console service | Pas de sélecteur Sandbox / Live ; liste d’intégrations `test` \| `live` |
+| Web flow | Même `hosted_url` : redirect ou InContext iframe ; décision hors iframe |
 | Régénération auto du lien KYC | Non (spec IDV) |
 | Discours IA propriétaire | Interdit sur le MVP |
 
@@ -684,10 +728,12 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 |---|---|
 | **Vitrine** | Site marketing public |
 | **Console** | Application client connecté |
-| **Sandbox** | Clés `ky_test_`, stubs, toujours gratuit — pas un plan d’organisation |
-| **Live** | Clés `ky_live_`, AWS IA, débité du crédit d’organisation |
+| **Intégration** | Environnement d’un service (`test` ou `live`) : clés, webhooks, sessions. Pas un écran, pas un plan. |
+| **Sandbox / test** | Intégration `test`, clés `ky_test_`, stubs, toujours gratuit — pas un plan d’organisation |
+| **Live** | Intégration `live`, clés `ky_live_`, AWS IA, débité du crédit d’organisation |
 | **Crédit** | Solde d’organisation, rechargé par carte (MVP), débité par l’usage live |
 | **Stub** | Adaptateur d’analyse déterministe, sans AWS |
+| **Web flow** | Page hébergée applicant ; redirect ou iframe InContext sur `hosted_url` |
 | **Teaser** | Page produit sans tarif ni API |
 | **Design partner** | Premier client réel en staging / sandbox, pas un lancement grand public |
 
@@ -699,4 +745,6 @@ Les termes IDV (session, applicant, lien hébergé, signal, revue) : spec IDV §
 
 Toute évolution de périmètre MVP se décide ici (version + date), pas dans un commentaire de sprint. Si un lot glisse (ex. Face Liveness reporté), le critère d’acceptation §17.9 est mis à jour **avant** de déclarer M5 terminé.
 
-Prochaine étape d’implémentation : **sprint M3** (crédit d’organisation, recharge carte) — voir la [roadmap](./roadmap-implementation-mvp.md).
+**1.4 (14 septembre 2026) :** retrait du sélecteur console Sandbox / Live (`?env=`). Test et live = type d’**intégration**, modèle Veriff. Web flow = même `hosted_url` (redirect ou InContext). Clés secrètes hors navigateur.
+
+Prochaine étape d’implémentation : **entité Integration + chrome** (retrait `?env=`), puis **sprint M3** (crédit d’organisation, recharge carte) — voir la [roadmap](./roadmap-implementation-mvp.md).

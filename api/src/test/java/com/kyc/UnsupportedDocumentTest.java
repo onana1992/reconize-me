@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +32,14 @@ class UnsupportedDocumentTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Test
     void unsupportedScenarioDeclinesWithStableCode() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Unsup Co", "unsup-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Unsup Co", "unsup-co");
         var created = IdvSupport.create(
                 mockMvc, KEY, "{\"metadata\":{\"sandbox_scenario\":\"unsupported\"}}");
         String token = IdvSupport.token(created);

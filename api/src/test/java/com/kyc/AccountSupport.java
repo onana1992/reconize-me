@@ -71,6 +71,19 @@ final class AccountSupport {
         return session(login);
     }
 
+    static JsonNode createIntegration(MockMvc mockMvc, Cookie cookie, String name) throws Exception {
+        MvcResult result = mockMvc.perform(post("/v1/console/integrations")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mode":"test","name":"%s"}
+                                """
+                                .formatted(name)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return JSON.readTree(result.getResponse().getContentAsString());
+    }
+
     static JsonNode me(MockMvc mockMvc, Cookie cookie) throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/console/me").cookie(cookie)).andExpect(status().isOk()).andReturn();
         return JSON.readTree(result.getResponse().getContentAsString());

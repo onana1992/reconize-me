@@ -22,6 +22,9 @@ public class ApiKey {
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
 
+    @Column(name = "integration_id", nullable = false, unique = true)
+    private UUID integrationId;
+
     @Column(name = "key_prefix", nullable = false, length = 16)
     private String keyPrefix;
 
@@ -37,14 +40,27 @@ public class ApiKey {
     @Column(name = "created_by_user_id")
     private UUID createdByUserId;
 
-    public ApiKey(UUID id, UUID organizationId, String keyPrefix, String keyHash, Instant createdAt) {
-        this(id, organizationId, keyPrefix, keyHash, createdAt, null);
+    public ApiKey(
+            UUID id,
+            UUID organizationId,
+            UUID integrationId,
+            String keyPrefix,
+            String keyHash,
+            Instant createdAt) {
+        this(id, organizationId, integrationId, keyPrefix, keyHash, createdAt, null);
     }
 
     public ApiKey(
-            UUID id, UUID organizationId, String keyPrefix, String keyHash, Instant createdAt, UUID createdByUserId) {
+            UUID id,
+            UUID organizationId,
+            UUID integrationId,
+            String keyPrefix,
+            String keyHash,
+            Instant createdAt,
+            UUID createdByUserId) {
         this.id = id;
         this.organizationId = organizationId;
+        this.integrationId = integrationId;
         this.keyPrefix = keyPrefix;
         this.keyHash = keyHash;
         this.revoked = false;

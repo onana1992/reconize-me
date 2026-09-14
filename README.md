@@ -5,7 +5,7 @@ SaaS de vérification d’identité (document + liveness + face match). Une iden
 ## Structure
 
 ```
-api/                  # Spring Boot unique (pom.xml) → :8080
+api/                  # Spring Boot unique (pom.xml) → :8080 — voir api/README.md
 web/console           # Back-office client (session) → :3000
 web/site              # Vitrine publique, FR + EN, SSG → :3002
 packages/brand        # Charte M0 — tokens CSS, logo, badges (@kyc/brand)

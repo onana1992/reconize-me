@@ -39,6 +39,9 @@ public class Verification {
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
 
+    @Column(name = "integration_id", nullable = false)
+    private UUID integrationId;
+
     @Column(name = "external_id")
     private String externalId;
 
@@ -87,6 +90,7 @@ public class Verification {
     public Verification(
             UUID id,
             UUID organizationId,
+            UUID integrationId,
             String externalId,
             String applicantFirstName,
             String applicantLastName,
@@ -98,6 +102,7 @@ public class Verification {
             Instant now) {
         this.id = id;
         this.organizationId = organizationId;
+        this.integrationId = integrationId;
         this.externalId = externalId;
         this.status = CREATED;
         this.applicantFirstName = applicantFirstName;

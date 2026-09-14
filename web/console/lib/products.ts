@@ -1,11 +1,10 @@
 import type { IconName } from "../components/nav-icons";
-import { withEnvironment, type ApiEnvironment } from "./environment";
 
 export const PRODUCT_IDS = ["identity", "biometrics", "aml"] as const;
 
 export type ProductId = (typeof PRODUCT_IDS)[number];
 
-export type ProductTabId = "overview" | "configuration" | "integrations";
+export type ProductTabId = "overview" | "integrations";
 
 export type ProductDef = {
   id: ProductId;
@@ -54,7 +53,6 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
 
 export const PRODUCT_TABS: { id: ProductTabId; path: string; labelKey: `console.product.tab.${ProductTabId}` }[] = [
   { id: "overview", path: "", labelKey: "console.product.tab.overview" },
-  { id: "configuration", path: "/configuration", labelKey: "console.product.tab.configuration" },
   { id: "integrations", path: "/integrations", labelKey: "console.product.tab.integrations" },
 ];
 
@@ -62,15 +60,59 @@ export function isProductId(value: string): value is ProductId {
   return (PRODUCT_IDS as readonly string[]).includes(value);
 }
 
-export function productTabHref(product: ProductId, tab: ProductTabId, env?: ApiEnvironment): string {
+export function productTabHref(product: ProductId, tab: ProductTabId): string {
   const path = PRODUCT_TABS.find((item) => item.id === tab)?.path ?? "";
-  const href = `${PRODUCTS[product].href}${path}`;
-  return env ? withEnvironment(href, env) : href;
+  return `${PRODUCTS[product].href}${path}`;
 }
 
 export function matchProductTab(pathname: string, product: ProductId, tab: ProductTabId): boolean {
   const href = productTabHref(product, tab);
   if (tab === "overview") {
+    return pathname === href;
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isIntegrationId(value: string): boolean {
+  return UUID.test(value);
+}
+
+export type IntegrationTabId = "sessions" | "keys" | "settings";
+
+export const INTEGRATION_TABS: {
+  id: IntegrationTabId;
+  path: string;
+  labelKey: `console.integrations.tab.${IntegrationTabId}`;
+}[] = [
+  { id: "sessions", path: "", labelKey: "console.integrations.tab.sessions" },
+  { id: "keys", path: "/keys", labelKey: "console.integrations.tab.keys" },
+  { id: "settings", path: "/settings", labelKey: "console.integrations.tab.settings" },
+];
+
+export function integrationWorkspaceId(pathname: string, product: ProductId): string | null {
+  const prefix = `${PRODUCTS[product].href}/integrations/`;
+  if (!pathname.startsWith(prefix)) {
+    return null;
+  }
+  const id = pathname.slice(prefix.length).split("/")[0] ?? "";
+  return UUID.test(id) ? id : null;
+}
+
+export function integrationTabHref(product: ProductId, id: string, tab: IntegrationTabId): string {
+  const path = INTEGRATION_TABS.find((item) => item.id === tab)?.path ?? "";
+  return `${PRODUCTS[product].href}/integrations/${id}${path}`;
+}
+
+export function matchIntegrationTab(
+  pathname: string,
+  product: ProductId,
+  id: string,
+  tab: IntegrationTabId,
+): boolean {
+  const href = integrationTabHref(product, id, tab);
+  if (tab === "sessions") {
     return pathname === href;
   }
   return pathname === href || pathname.startsWith(`${href}/`);

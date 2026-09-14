@@ -7,9 +7,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kyc.entities.ApiKey;
+import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.services.ApiKeyAuthenticator;
 import java.awt.Color;
@@ -34,6 +37,7 @@ final class IdvSupport {
 
     static String seedBearer(
             OrganizationRepository organizations,
+            IntegrationRepository integrations,
             ApiKeyRepository keys,
             PasswordEncoder encoder,
             String rawKey,
@@ -41,10 +45,19 @@ final class IdvSupport {
             String slug) {
         Instant now = Instant.parse("2026-09-10T12:00:00Z");
         UUID organizationId = UUID.randomUUID();
+        UUID integrationId = UUID.randomUUID();
         organizations.save(new Organization(organizationId, orgName, slug, now));
+        integrations.save(new Integration(
+                integrationId,
+                organizationId,
+                Integration.PRODUCT_IDENTITY,
+                Integration.MODE_TEST,
+                "Test",
+                now));
         keys.save(new ApiKey(
                 UUID.randomUUID(),
                 organizationId,
+                integrationId,
                 rawKey.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH),
                 encoder.encode(rawKey),
                 now));
@@ -62,13 +75,34 @@ final class IdvSupport {
     }
 
     static JsonNode createConsole(MockMvc mockMvc, Cookie cookie, String body) throws Exception {
+        ObjectNode payload = (ObjectNode) JSON.readTree(body == null || body.isBlank() ? "{}" : body);
+        if (!payload.hasNonNull("integration_id")) {
+            payload.put("integration_id", ensureConsoleIntegration(mockMvc, cookie));
+        }
         MvcResult result = mockMvc.perform(post("/v1/console/verifications")
                         .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body == null ? "{}" : body))
+                        .content(JSON.writeValueAsString(payload)))
                 .andExpect(status().isCreated())
                 .andReturn();
         return JSON.readTree(result.getResponse().getContentAsString());
+    }
+
+    static String ensureConsoleIntegration(MockMvc mockMvc, Cookie cookie) throws Exception {
+        MvcResult list = mockMvc.perform(get("/v1/console/integrations").cookie(cookie))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode rows = JSON.readTree(list.getResponse().getContentAsString());
+        if (rows.isArray() && rows.size() > 0) {
+            return rows.get(0).get("id").asText();
+        }
+        MvcResult created = mockMvc.perform(post("/v1/console/integrations")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mode\":\"test\",\"name\":\"Test\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return JSON.readTree(created.getResponse().getContentAsString()).get("id").asText();
     }
 
     static String token(JsonNode created) {

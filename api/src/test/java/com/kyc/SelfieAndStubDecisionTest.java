@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +32,14 @@ class SelfieAndStubDecisionTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Test
     void selfieThenApprovedWithReasons() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Selfie Co", "selfie-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Selfie Co", "selfie-co");
         var created = IdvSupport.create(mockMvc, KEY, "{}");
         String token = IdvSupport.token(created);
         String id = created.path("id").asText();

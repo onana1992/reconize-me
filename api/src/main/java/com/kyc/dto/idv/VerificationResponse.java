@@ -11,6 +11,8 @@ import java.util.UUID;
 public record VerificationResponse(
         UUID id,
         String status,
+        @JsonProperty("integration_id") UUID integrationId,
+        @JsonProperty("integration_mode") String integrationMode,
         @JsonProperty("hosted_url") String hostedUrl,
         @JsonProperty("expires_at") Instant expiresAt,
         Applicant applicant,

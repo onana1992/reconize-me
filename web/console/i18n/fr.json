@@ -217,7 +217,7 @@
       "settingsIdentityFlowBody": "Texte de consentement et expiration. Le branding du parcours applicant n’est pas dans le MVP.",
       "settingsBiometrics": "Le seuil de correspondance et la durée d’enrôlement se configureront ici.",
       "settingsAml": "Les listes sanctions, PEP et médias adverses se configureront ici.",
-      "integrationsLead": "Clés API, webhooks et page hébergée de ce service.",
+      "integrationsLead": "Chaque intégration a un mode test ou live, ses propres clés API, et plus tard ses webhooks.",
       "integrationsKeys": "Clés API",
       "integrationsKeysBodySandbox": "Clés ky_test_ de ce service. Gratuites, aucun débit de crédit. Le secret n’est montré qu’à l’émission.",
       "integrationsKeysBodyLive": "Clés ky_live_ de ce service. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis. Le secret n’est montré qu’à l’émission.",
@@ -227,6 +227,36 @@
       "billingNotSold": "Ce service ne débite pas encore le crédit.",
       "newVerification": "Nouvelle vérification",
       "openSession": "Ouvrir"
+    },
+    "integrations": {
+      "lead": "Créez une intégration, copiez sa clé, puis lancez les vérifications depuis sa page.",
+      "empty": "Aucune intégration pour l’instant.",
+      "name": "Nom",
+      "nameHint": "Obligatoire et unique dans l’organisation.",
+      "nameRequired": "Le nom est obligatoire.",
+      "nameTaken": "Une intégration porte déjà ce nom.",
+      "mode": "Mode",
+      "modeTest": "Test",
+      "modeLive": "Live",
+      "created": "Créée",
+      "open": "Ouvrir",
+      "create": "Nouvelle intégration",
+      "createTitle": "Créer une intégration",
+      "creating": "Création…",
+      "createError": "Impossible de créer l’intégration.",
+      "liveLocked": "Les intégrations live exigent un solde de crédit. La recharge carte n’est pas encore branchée.",
+      "forbidden": "Votre rôle ne permet pas de créer une intégration.",
+      "loadError": "Impossible de charger les intégrations.",
+      "back": "Retour aux intégrations",
+      "tabsLabel": "Onglets de l’intégration",
+      "tab": {
+        "sessions": "Vérifications",
+        "keys": "Clés API",
+        "settings": "Paramètres"
+      },
+      "details": "Identité de l’intégration",
+      "keysLeadTest": "Une seule clé ky_test_ par intégration, émise à la création. Le secret n’est montré qu’une fois.",
+      "keysLeadLive": "Clés ky_live_ de cette intégration. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis."
     },
     "verifications": {
       "lead": "Vérifications d’identité de l’organisation.",
@@ -367,10 +397,10 @@
       "active": "Active",
       "revoked": "Révoquée",
       "revoke": "Révoquer",
-      "empty": "Aucune clé API pour cette organisation.",
-      "emptySandbox": "Aucune clé sandbox (ky_test_) pour cette organisation.",
-      "emptyLive": "Aucune clé live (ky_live_) pour cette organisation.",
-      "issueSandbox": "Émettre une clé sandbox",
+      "empty": "Aucune clé API sur cette intégration.",
+      "emptySandbox": "Aucune clé test (ky_test_) sur cette intégration.",
+      "emptyLive": "Aucune clé live (ky_live_) sur cette intégration.",
+      "issueSandbox": "Émettre une clé test",
       "issueLive": "Émettre une clé live",
       "issuing": "Émission…",
       "issuedTitle": "Nouvelle clé {env}",
@@ -469,6 +499,7 @@
       "resourceUser": "Utilisateur",
       "resourceInvite": "Invitation",
       "resourceKey": "Clé API",
+      "resourceIntegration": "Intégration",
       "actionInvited": "Invitation envoyée",
       "actionInviteResent": "Invitation renvoyée",
       "actionInviteCancelled": "Invitation annulée",
@@ -480,7 +511,8 @@
       "actionKeyRevoked": "Clé révoquée",
       "actionLoginFailed": "Échec de connexion",
       "actionRegistered": "Compte créé",
-      "actionEmailVerified": "E-mail vérifié"
+      "actionEmailVerified": "E-mail vérifié",
+      "actionIntegrationCreated": "Intégration créée"
     }
   }
 }

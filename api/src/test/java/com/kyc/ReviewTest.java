@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kyc.ports.MailPort;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +38,14 @@ class ReviewTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Test
     void reviewThenApproveAndRejectOutOfWindow() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Review Co", "review-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Review Co", "review-co");
         var created = IdvSupport.create(mockMvc, KEY, "{\"metadata\":{\"sandbox_scenario\":\"review\"}}");
         String token = IdvSupport.token(created);
         String id = created.path("id").asText();

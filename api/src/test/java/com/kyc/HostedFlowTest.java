@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class HostedFlowTest {
     private OrganizationRepository organizations;
 
     @Autowired
+    private IntegrationRepository integrations;
+
+    @Autowired
     private ApiKeyRepository apiKeys;
 
     @Autowired
@@ -43,7 +47,7 @@ class HostedFlowTest {
 
     @Test
     void openConsentConflictAndExpired() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
         var created = IdvSupport.create(mockMvc, KEY, "{}");
         String token = IdvSupport.token(created);
         String id = created.path("id").asText();
@@ -83,7 +87,7 @@ class HostedFlowTest {
 
     @Test
     void declinedConsentHasNoMediaAndNextDone() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         mockMvc.perform(get("/v1/flow/" + token)).andExpect(status().isOk());
         mockMvc.perform(post("/v1/flow/" + token + "/consent")
@@ -99,7 +103,7 @@ class HostedFlowTest {
 
     @Test
     void consentAcceptsDecisionQueryWhenBodyMissing() throws Exception {
-        IdvSupport.seedBearer(organizations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
+        IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Flow Co", "flow-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
         mockMvc.perform(get("/v1/flow/" + token)).andExpect(status().isOk());
         mockMvc.perform(post("/v1/flow/" + token + "/consent").param("decision", "accepted"))

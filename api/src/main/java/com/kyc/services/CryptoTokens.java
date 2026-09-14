@@ -20,9 +20,13 @@ public final class CryptoTokens {
     }
 
     public static String randomApiKey() {
+        return randomApiKey(false);
+    }
+
+    public static String randomApiKey(boolean live) {
         byte[] bytes = new byte[24];
         RANDOM.nextBytes(bytes);
-        return "ky_test_" + HexFormat.of().formatHex(bytes);
+        return (live ? "ky_live_" : "ky_test_") + HexFormat.of().formatHex(bytes);
     }
 
     public static String sha256Hex(String value) {

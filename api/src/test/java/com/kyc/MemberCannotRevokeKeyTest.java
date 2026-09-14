@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.ports.MailPort;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,8 +47,10 @@ class MemberCannotRevokeKeyTest {
                                 """))
                 .andExpect(status().isNoContent())
                 .andReturn();
+        Cookie ownerSession = AccountSupport.session(ownerLogin);
+        AccountSupport.createIntegration(mockMvc, ownerSession, "Revoke");
 
-        var keys = mockMvc.perform(get("/v1/console/api-keys").cookie(AccountSupport.session(ownerLogin)))
+        var keys = mockMvc.perform(get("/v1/console/api-keys").cookie(ownerSession))
                 .andExpect(status().isOk())
                 .andReturn();
         String firstId = new com.fasterxml.jackson.databind.ObjectMapper()

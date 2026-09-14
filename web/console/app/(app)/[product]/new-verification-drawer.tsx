@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../../../i18n/client";
-import { withEnvironment, type ApiEnvironment } from "../../../lib/environment";
 import { createVerificationAction } from "./verifications/actions";
 
 const SCENARIOS = [
@@ -18,12 +17,12 @@ const SCENARIOS = [
 
 export function NewVerificationDrawer({
   product,
-  env,
-  live,
+  integrationId,
+  live = false,
 }: {
   product: string;
-  env: ApiEnvironment;
-  live: boolean;
+  integrationId?: string;
+  live?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -74,7 +73,7 @@ export function NewVerificationDrawer({
         return;
       }
       closeDrawer();
-      router.push(withEnvironment(`/${product}/verifications/${result.data.id}`, env));
+      router.push(`/${product}/verifications/${result.data.id}`);
       router.refresh();
     } finally {
       setPending(false);
@@ -111,6 +110,7 @@ export function NewVerificationDrawer({
         </button>
       </div>
       <form ref={formRef} onSubmit={onSubmit} className="rm-form rm-drawer-form">
+        {integrationId ? <input type="hidden" name="integration_id" value={integrationId} /> : null}
         <div className="rm-drawer-body">
           {error ? (
             <p role="alert" className="rm-alert">

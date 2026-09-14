@@ -5,7 +5,7 @@ import { StatusBadge } from "@kyc/brand";
 import { PageHeader } from "../../../../../components/page-header";
 import { getLocale, getT } from "../../../../../i18n";
 import { consoleApi, type MediaUrl, type Verification } from "../../../../../lib/api";
-import { resolveEnvironment, withEnvironment } from "../../../../../lib/environment";
+import { integrationModeTone, tIntegrationMode } from "../../../../../lib/environment";
 import { displayName } from "../../../../../lib/labels";
 import { parseProduct } from "../../../../../lib/parse-product";
 import { requireMe, sessionCookieHeader } from "../../../../../lib/session";
@@ -36,10 +36,8 @@ const EXTRACTED_KEYS = [
 
 export default async function VerificationDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ product: string; id: string }>;
-  searchParams: Promise<{ env?: string }>;
 }) {
   const resolved = await params;
   const productId = await parseProduct(Promise.resolve({ product: resolved.product }));
@@ -47,7 +45,6 @@ export default async function VerificationDetailPage({
   if (productId !== "identity") {
     notFound();
   }
-  const env = resolveEnvironment((await searchParams).env);
   const [me, t, locale, result] = await Promise.all([
     requireMe(),
     getT(),
@@ -78,7 +75,7 @@ export default async function VerificationDetailPage({
   return (
     <main className="rm-idv">
       <p className="rm-back">
-        <Link href={withEnvironment("/identity", env)}>{t("console.verifications.backToList")}</Link>
+        <Link href="/identity">{t("console.verifications.backToList")}</Link>
       </p>
       <PageHeader
         eyebrow={t("console.nav.idv")}
@@ -101,6 +98,19 @@ export default async function VerificationDetailPage({
           <div className="rm-details">
             <Detail label={t("console.verifications.id")}>
               <code>{verification.id}</code>
+            </Detail>
+            {verification.integration_id ? (
+              <Detail label={t("console.product.tab.integrations")}>
+                <Link href={`/identity/integrations/${encodeURIComponent(verification.integration_id)}`}>
+                  {t("console.integrations.open")}
+                </Link>
+              </Detail>
+            ) : null}
+            <Detail label={t("console.integrations.mode")}>
+              <StatusBadge
+                label={tIntegrationMode(t, verification.integration_mode)}
+                tone={integrationModeTone(verification.integration_mode)}
+              />
             </Detail>
             <Detail label={t("console.verifications.statusLabel")}>
               <StatusBadge label={tVerificationStatus(t, verification.status)} tone={verificationTone(verification.status)} />

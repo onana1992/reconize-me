@@ -11,6 +11,7 @@ export type Me = {
 
 export type ApiKeyItem = {
   id: string;
+  integration_id?: string | null;
   key_prefix: string;
   created_at: string;
   revoked: boolean;
@@ -20,6 +21,20 @@ export type IssuedApiKey = {
   id: string | null;
   key: string | null;
   key_prefix: string | null;
+  integration_id?: string | null;
+};
+
+export type IntegrationListItem = {
+  id: string;
+  product: string;
+  mode: string;
+  name: string;
+  created_at: string;
+};
+
+export type IntegrationResponse = IntegrationListItem & {
+  keys: ApiKeyItem[];
+  key?: string | null;
 };
 
 export type Team = {
@@ -156,6 +171,8 @@ export async function consoleApi<T>(path: string, cookieHeader: string, init?: R
 export type Verification = {
   id: string;
   status: string;
+  integration_id?: string | null;
+  integration_mode?: string | null;
   hosted_url?: string | null;
   expires_at: string;
   applicant?: { first_name?: string | null; last_name?: string | null; email?: string | null } | null;

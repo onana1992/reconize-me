@@ -10,6 +10,7 @@ import com.kyc.dto.idv.VerificationListResponse;
 import com.kyc.dto.idv.VerificationResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.IdempotencyKey;
+import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.VerificationMedia;
 import com.kyc.entities.VerificationSignal;
@@ -17,6 +18,7 @@ import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IdempotencyKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.VerificationMediaRepository;
 import com.kyc.repositories.VerificationRepository;
 import com.kyc.repositories.VerificationSignalRepository;
@@ -28,7 +30,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +52,7 @@ public class VerificationService {
     private final VerificationMediaRepository media;
     private final VerificationSignalRepository signals;
     private final AuditEventRepository auditEvents;
+    private final IntegrationRepository integrationRepository;
     private final HostedTokenStore hostedTokens;
     private final ObjectStoragePort objectStorage;
     private final KycProperties properties;
@@ -57,6 +64,7 @@ public class VerificationService {
             VerificationMediaRepository media,
             VerificationSignalRepository signals,
             AuditEventRepository auditEvents,
+            IntegrationRepository integrationRepository,
             HostedTokenStore hostedTokens,
             ObjectStoragePort objectStorage,
             KycProperties properties,
@@ -66,6 +74,7 @@ public class VerificationService {
         this.media = media;
         this.signals = signals;
         this.auditEvents = auditEvents;
+        this.integrationRepository = integrationRepository;
         this.hostedTokens = hostedTokens;
         this.objectStorage = objectStorage;
         this.properties = properties;
@@ -74,7 +83,12 @@ public class VerificationService {
 
     @Transactional
     public ResponseEntity<VerificationResponse> create(
-            UUID organizationId, String actorType, UUID actorId, CreateVerificationRequest request, String idempotencyKey) {
+            UUID organizationId,
+            Integration integration,
+            String actorType,
+            UUID actorId,
+            CreateVerificationRequest request,
+            String idempotencyKey) {
         Instant now = Instant.now();
         String bodyHash = CryptoTokens.sha256Hex(serialize(request));
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
@@ -96,7 +110,7 @@ public class VerificationService {
         }
         Map<String, Object> metadata = request == null ? null : request.metadata();
         String metadataJson = validateMetadata(metadata);
-        String scenario = sandboxScenario(metadata);
+        String scenario = integration.isLive() ? null : sandboxScenario(metadata);
         CreateVerificationRequest.Applicant applicant = request == null ? null : request.applicant();
         UUID id = UUID.randomUUID();
         String token = CryptoTokens.randomHostedToken();
@@ -104,6 +118,7 @@ public class VerificationService {
         Verification verification = new Verification(
                 id,
                 organizationId,
+                integration.getId(),
                 externalId,
                 applicant == null ? null : blankToNull(applicant.firstName()),
                 applicant == null ? null : blankToNull(applicant.lastName()),
@@ -136,15 +151,21 @@ public class VerificationService {
     }
 
     @Transactional(readOnly = true)
-    public VerificationListResponse list(UUID organizationId, String status, String cursor, int limit) {
+    public VerificationListResponse list(
+            UUID organizationId, String status, UUID integrationId, String cursor, int limit) {
         int size = Math.min(Math.max(limit, 1), 100);
         List<Verification> page;
         if (cursor == null || cursor.isBlank()) {
-            page = verifications.pageFirst(organizationId, blankToNull(status), PageRequest.of(0, size + 1));
+            page = verifications.pageFirst(organizationId, blankToNull(status), integrationId, PageRequest.of(0, size + 1));
         } else {
             Cursor decoded = Cursor.parse(cursor);
             page = verifications.pageAfter(
-                    organizationId, blankToNull(status), decoded.createdAt(), decoded.id(), PageRequest.of(0, size + 1));
+                    organizationId,
+                    blankToNull(status),
+                    integrationId,
+                    decoded.createdAt(),
+                    decoded.id(),
+                    PageRequest.of(0, size + 1));
         }
         String next = null;
         if (page.size() > size) {
@@ -152,7 +173,12 @@ public class VerificationService {
             Verification last = page.get(page.size() - 1);
             next = new Cursor(last.getCreatedAt(), last.getId()).encode();
         }
-        return new VerificationListResponse(page.stream().map(item -> toResponse(item, false)).toList(), next);
+        Map<UUID, Integration> integrationsById = loadIntegrations(page);
+        return new VerificationListResponse(
+                page.stream()
+                        .map(item -> toResponse(item, false, modeOf(item, integrationsById)))
+                        .toList(),
+                next);
     }
 
     @Transactional
@@ -201,14 +227,19 @@ public class VerificationService {
 
     public VerificationResponse toResponse(Verification verification, boolean detail) {
         String token = hostedTokens.tokenFor(verification.getId()).orElse(null);
-        return toResponse(verification, token, detail);
+        return toResponse(verification, token, detail, modeFor(verification));
+    }
+
+    private VerificationResponse toResponse(Verification verification, boolean detail, String mode) {
+        String token = hostedTokens.tokenFor(verification.getId()).orElse(null);
+        return toResponse(verification, token, detail, mode);
     }
 
     private VerificationResponse toResponse(Verification verification, String rawToken) {
-        return toResponse(verification, rawToken, true);
+        return toResponse(verification, rawToken, true, modeFor(verification));
     }
 
-    private VerificationResponse toResponse(Verification verification, String rawToken, boolean detail) {
+    private VerificationResponse toResponse(Verification verification, String rawToken, boolean detail, String mode) {
         String hostedUrl = null;
         if (rawToken != null
                 && !verification.expired(Instant.now())
@@ -227,6 +258,8 @@ public class VerificationService {
         return new VerificationResponse(
                 verification.getId(),
                 verification.getStatus(),
+                verification.getIntegrationId(),
+                mode,
                 hostedUrl,
                 verification.getHostedExpiresAt(),
                 new VerificationResponse.Applicant(
@@ -240,6 +273,27 @@ public class VerificationService {
                 extracted,
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
+    }
+
+    private Map<UUID, Integration> loadIntegrations(List<Verification> page) {
+        Set<UUID> ids = page.stream().map(Verification::getIntegrationId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return integrationRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Integration::getId, Function.identity()));
+    }
+
+    private static String modeOf(Verification verification, Map<UUID, Integration> byId) {
+        Integration row = byId.get(verification.getIntegrationId());
+        return row == null ? Integration.MODE_TEST : row.getMode();
+    }
+
+    private String modeFor(Verification verification) {
+        return integrationRepository
+                .findById(verification.getIntegrationId())
+                .map(Integration::getMode)
+                .orElse(Integration.MODE_TEST);
     }
 
     private String validateMetadata(Map<String, Object> metadata) {

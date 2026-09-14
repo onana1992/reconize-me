@@ -34,6 +34,18 @@ export function tEnvironment(t: Translate, env: ApiEnvironment): string {
   return env === "live" ? t("console.env.live") : t("console.env.sandbox");
 }
 
+export function environmentFromMode(mode: string | null | undefined): ApiEnvironment {
+  return mode === "live" ? "live" : "sandbox";
+}
+
+export function integrationModeTone(mode: string | null | undefined): BadgeTone {
+  return environmentTone(environmentFromMode(mode));
+}
+
+export function tIntegrationMode(t: Translate, mode: string | null | undefined): string {
+  return mode === "live" ? t("console.integrations.modeLive") : t("console.integrations.modeTest");
+}
+
 export function withEnvironment(href: string, env: ApiEnvironment): string {
   const [pathAndQuery, hash] = href.split("#");
   const [path, query] = pathAndQuery.split("?");

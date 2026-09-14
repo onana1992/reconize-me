@@ -6,8 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.entities.ApiKey;
+import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.services.ApiKeyAuthenticator;
 import java.time.Instant;
@@ -39,16 +41,28 @@ class ApiKeyAuthTest {
     private OrganizationRepository organizationRepository;
 
     @Autowired
+    private IntegrationRepository integrationRepository;
+
+    @Autowired
     private ApiKeyRepository apiKeyRepository;
 
     @BeforeEach
     void seed() {
         Instant now = Instant.parse("2026-08-26T12:00:00Z");
         UUID organizationId = UUID.fromString("018f0000-0000-7000-8000-000000000001");
+        UUID integrationId = UUID.fromString("018f0000-0000-7000-8000-000000000021");
         organizationRepository.save(new Organization(organizationId, "Tenant A", "tenant-a", now));
+        integrationRepository.save(new Integration(
+                integrationId,
+                organizationId,
+                Integration.PRODUCT_IDENTITY,
+                Integration.MODE_TEST,
+                "Test",
+                now));
         apiKeyRepository.save(new ApiKey(
                 UUID.fromString("018f0000-0000-7000-8000-000000000011"),
                 organizationId,
+                integrationId,
                 RAW_KEY.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH),
                 passwordEncoder.encode(RAW_KEY),
                 now));

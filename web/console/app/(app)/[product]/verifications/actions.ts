@@ -7,6 +7,7 @@ export async function listVerificationsAction(
   status?: string,
   cursor?: string,
   limit = 100,
+  integrationId?: string,
 ): Promise<Awaited<ReturnType<typeof consoleApi<VerificationList>>>> {
   const query = new URLSearchParams();
   if (status) {
@@ -14,6 +15,9 @@ export async function listVerificationsAction(
   }
   if (cursor) {
     query.set("cursor", cursor);
+  }
+  if (integrationId) {
+    query.set("integration_id", integrationId);
   }
   query.set("limit", String(limit));
   return consoleApi<VerificationList>(`/v1/console/verifications?${query}`, await sessionCookieHeader());
@@ -29,6 +33,7 @@ export async function createVerificationAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const externalId = String(formData.get("external_id") ?? "").trim();
   const scenario = String(formData.get("sandbox_scenario") ?? "approved").trim() || "approved";
+  const integrationId = String(formData.get("integration_id") ?? "").trim();
   const applicant =
     firstName || lastName || email
       ? {
@@ -41,6 +46,7 @@ export async function createVerificationAction(formData: FormData) {
     method: "POST",
     body: JSON.stringify({
       external_id: externalId || undefined,
+      integration_id: integrationId || undefined,
       applicant,
       metadata: { sandbox_scenario: scenario },
     }),

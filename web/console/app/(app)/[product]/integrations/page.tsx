@@ -1,11 +1,16 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { StatusBadge } from "@kyc/brand";
 import { PageHeader } from "../../../../components/page-header";
-import { getT } from "../../../../i18n";
-import { consoleApi, type ApiKeyItem } from "../../../../lib/api";
-import { resolveEnvironment } from "../../../../lib/environment";
+import { getLocale, getT } from "../../../../i18n";
+import { consoleApi, type IntegrationListItem } from "../../../../lib/api";
+import { integrationModeTone, tIntegrationMode } from "../../../../lib/environment";
 import { parseProduct } from "../../../../lib/parse-product";
-import { PRODUCTS } from "../../../../lib/products";
+import { isIntegrationId, PRODUCTS } from "../../../../lib/products";
 import { requireMe, sessionCookieHeader } from "../../../../lib/session";
-import { KeysManager } from "../../settings/keys/keys-manager";
+import { formatUtc } from "../../../../lib/status";
+import { CreateIntegrationButton } from "./create-form";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +19,17 @@ export default async function ProductIntegrationsPage({
   searchParams,
 }: {
   params: Promise<{ product: string }>;
-  searchParams: Promise<{ env?: string }>;
+  searchParams: Promise<{ id?: string }>;
 }) {
   const productId = await parseProduct(params);
   const product = PRODUCTS[productId];
-  const env = resolveEnvironment((await searchParams).env);
+  const selectedId = (await searchParams).id?.trim();
+  if (selectedId && isIntegrationId(selectedId)) {
+    redirect(`${product.href}/integrations/${selectedId}`);
+  }
   const me = await requireMe();
-  const t = await getT();
-  const permissions = me.permissions ?? [];
-  const canRead = permissions.includes("API_KEY_READ");
-  const canWrite = permissions.includes("API_KEY_WRITE");
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const canWrite = (me.permissions ?? []).includes("API_KEY_WRITE");
 
   if (!product.metered) {
     return (
@@ -40,35 +46,42 @@ export default async function ProductIntegrationsPage({
     );
   }
 
-  const keys = canRead ? await consoleApi<ApiKeyItem[]>("/v1/console/api-keys", await sessionCookieHeader()) : null;
+  const list = await consoleApi<IntegrationListItem[]>("/v1/console/integrations", await sessionCookieHeader());
 
   return (
     <main className="rm-idv">
       <PageHeader
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.integrations")}
-        lead={
-          env === "live" ? t("console.product.integrationsKeysBodyLive") : t("console.product.integrationsKeysBodySandbox")
-        }
+        lead={t("console.integrations.lead")}
+        actions={canWrite ? <CreateIntegrationButton product={productId} /> : null}
       />
-      <section className="rm-section">
-        <h2>{t("console.product.integrationsKeys")}</h2>
-        {!canRead ? (
-          <p role="alert" className="rm-alert">
-            {t("console.keys.forbidden")}
-          </p>
-        ) : !keys?.ok ? (
-          <p role="alert" className="rm-alert">
-            {keys?.message ?? t("console.keys.loadError")}
-          </p>
-        ) : (
-          <KeysManager keys={keys.data} canWrite={canWrite} environment={env} />
-        )}
-      </section>
-      <section className="rm-section">
-        <h2>{t("console.product.integrationsWebhooks")}</h2>
-        <p className="rm-lead">{t("console.product.integrationsWebhooksBody")}</p>
-      </section>
+      {!list.ok ? (
+        <p role="alert" className="rm-alert">
+          {list.message ?? t("console.integrations.loadError")}
+        </p>
+      ) : list.data.length === 0 ? (
+        <div className="rm-empty">
+          <p>{t("console.integrations.empty")}</p>
+        </div>
+      ) : (
+        <ul className="rm-int-list">
+          {list.data.map((item) => (
+            <li key={item.id}>
+              <Link href={`${product.href}/integrations/${item.id}`} className="rm-int-card">
+                <div className="rm-int-card-copy">
+                  <span className="rm-int-card-name">{item.name}</span>
+                  <span className="rm-int-card-meta">{formatUtc(item.created_at, locale)}</span>
+                </div>
+                <div className="rm-int-card-aside">
+                  <StatusBadge label={tIntegrationMode(t, item.mode)} tone={integrationModeTone(item.mode)} />
+                  <span className="rm-catalog-chevron" aria-hidden="true" />
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

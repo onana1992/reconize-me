@@ -6,9 +6,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.entities.ApiKey;
+import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
 import com.kyc.ports.MailPort;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.services.ApiKeyAuthenticator;
 import java.time.Instant;
@@ -42,6 +44,9 @@ class ApiKeyStillBearerTest {
     private OrganizationRepository organizationRepository;
 
     @Autowired
+    private IntegrationRepository integrationRepository;
+
+    @Autowired
     private ApiKeyRepository apiKeyRepository;
 
     @Test
@@ -70,9 +75,18 @@ class ApiKeyStillBearerTest {
         Instant now = Instant.parse("2026-08-26T12:00:00Z");
         UUID orgId = UUID.fromString("018f0000-0000-7000-8000-0000000000d1");
         organizationRepository.save(new Organization(orgId, "Seed", "seed-bearer", now));
+        UUID integrationId = UUID.fromString("018f0000-0000-7000-8000-0000000000d3");
+        integrationRepository.save(new Integration(
+                integrationId,
+                orgId,
+                Integration.PRODUCT_IDENTITY,
+                Integration.MODE_TEST,
+                "Test",
+                now));
         apiKeyRepository.save(new ApiKey(
                 UUID.fromString("018f0000-0000-7000-8000-0000000000d2"),
                 orgId,
+                integrationId,
                 SEED.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH),
                 passwordEncoder.encode(SEED),
                 now));

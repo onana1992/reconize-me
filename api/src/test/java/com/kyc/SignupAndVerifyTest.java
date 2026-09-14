@@ -1,6 +1,5 @@
 package com.kyc;
 
-import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -28,7 +27,7 @@ class SignupAndVerifyTest {
     private MailPort mailPort;
 
     @Test
-    void signupVerifyIssuesKeyOnce() throws Exception {
+    void signupVerifyDoesNotIssueKey() throws Exception {
         MvcResult signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -43,9 +42,7 @@ class SignupAndVerifyTest {
 
         mockMvc.perform(get("/v1/account/verify").param("token", token))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.key").value(startsWith("ky_test_")))
-                .andExpect(jsonPath("$.key_prefix").exists())
-                .andExpect(jsonPath("$.id").exists());
+                .andExpect(jsonPath("$.key").doesNotExist());
 
         mockMvc.perform(get("/v1/account/verify").param("token", token))
                 .andExpect(status().isBadRequest())

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record ApiKeyListItem(
         UUID id,
+        @JsonProperty("integration_id") UUID integrationId,
         @JsonProperty("key_prefix") String keyPrefix,
         @JsonProperty("created_at") Instant createdAt,
         boolean revoked) {}
