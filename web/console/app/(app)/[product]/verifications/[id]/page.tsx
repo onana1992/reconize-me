@@ -99,13 +99,6 @@ export default async function VerificationDetailPage({
             <Detail label={t("console.verifications.id")}>
               <code>{verification.id}</code>
             </Detail>
-            {verification.integration_id ? (
-              <Detail label={t("console.product.tab.integrations")}>
-                <Link href={`/identity/integrations/${encodeURIComponent(verification.integration_id)}`}>
-                  {t("console.integrations.open")}
-                </Link>
-              </Detail>
-            ) : null}
             <Detail label={t("console.integrations.mode")}>
               <StatusBadge
                 label={tIntegrationMode(t, verification.integration_mode)}

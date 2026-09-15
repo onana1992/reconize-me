@@ -251,10 +251,27 @@
       "tabsLabel": "Integration tabs",
       "tab": {
         "sessions": "Verifications",
+        "install": "Installation",
         "keys": "API keys",
         "settings": "Settings"
       },
       "details": "Integration identity",
+      "install": {
+        "lead": "Create the session on your server, then open the applicant flow with hosted_url. The secret key never leaves your backend.",
+        "keysLink": "The secret key is on the API keys tab.",
+        "apiTitle": "Create a session",
+        "apiBody": "POST /v1/verifications with this integration’s Bearer key. The response includes id and hosted_url.",
+        "curlLabel": "cURL",
+        "openTitle": "Open the flow (redirect)",
+        "openBody": "Send the applicant to hosted_url. This is the mode that ships today.",
+        "openLabel": "Browser",
+        "incontextTitle": "InContext (iframe)",
+        "incontextBody": "The same hosted_url, in an iframe or modal. The JS package is not shipped yet. The iframe does not carry the decision.",
+        "incontextSoon": "Coming soon",
+        "incontextLabel": "JS (target)",
+        "decisionTitle": "Read the decision",
+        "decisionBody": "Fetch the session. Signed webhooks will come later, per integration."
+      },
       "keysLeadTest": "One ky_test_ key per integration, issued on create. The secret is shown only once.",
       "keysLeadLive": "ky_live_ keys for this integration. Each resource debits organization credit. A sufficient balance is required."
     },

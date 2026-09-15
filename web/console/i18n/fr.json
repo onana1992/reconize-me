@@ -251,10 +251,27 @@
       "tabsLabel": "Onglets de l’intégration",
       "tab": {
         "sessions": "Vérifications",
+        "install": "Installation",
         "keys": "Clés API",
         "settings": "Paramètres"
       },
       "details": "Identité de l’intégration",
+      "install": {
+        "lead": "Créez la session sur votre serveur, puis ouvrez le parcours applicant avec hosted_url. La clé secrète ne quitte pas votre backend.",
+        "keysLink": "La clé secrète est dans l’onglet Clés API.",
+        "apiTitle": "Créer une session",
+        "apiBody": "POST /v1/verifications avec la clé Bearer de cette intégration. La réponse contient id et hosted_url.",
+        "curlLabel": "cURL",
+        "openTitle": "Ouvrir le parcours (redirect)",
+        "openBody": "Envoyez le candidat vers hosted_url. C’est le mode livré aujourd’hui.",
+        "openLabel": "Navigateur",
+        "incontextTitle": "InContext (iframe)",
+        "incontextBody": "Même hosted_url, dans une iframe ou une modal. Le package JS n’est pas encore livré. L’iframe n’émet pas la décision.",
+        "incontextSoon": "Bientôt",
+        "incontextLabel": "JS (cible)",
+        "decisionTitle": "Lire la décision",
+        "decisionBody": "Interrogez la session. Les webhooks signés arriveront plus tard, par intégration."
+      },
       "keysLeadTest": "Une seule clé ky_test_ par intégration, émise à la création. Le secret n’est montré qu’une fois.",
       "keysLeadLive": "Clés ky_live_ de cette intégration. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis."
     },

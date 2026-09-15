@@ -2385,6 +2385,58 @@ a.rm-idv-row:focus-visible {
   max-width: 44rem;
 }
 
+.rm-int-install {
+  display: grid;
+  gap: var(--rm-space-5);
+  max-width: 48rem;
+}
+
+.rm-int-install > .rm-lead {
+  margin: 0;
+}
+
+.rm-int-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+}
+
+.rm-int-snippet {
+  display: grid;
+  gap: var(--rm-space-2);
+  min-width: 0;
+}
+
+.rm-int-snippet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+  font-size: var(--rm-text-xs);
+  font-weight: 650;
+  letter-spacing: var(--rm-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+}
+
+.rm-int-snippet pre {
+  margin: 0;
+  padding: var(--rm-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface-sunken);
+  font-family: var(--rm-font-mono);
+  font-size: var(--rm-text-sm);
+  line-height: 1.6;
+}
+
+.rm-int-snippet code {
+  font: inherit;
+}
+
 .rm-int-panel {
   display: grid;
   gap: var(--rm-space-3);

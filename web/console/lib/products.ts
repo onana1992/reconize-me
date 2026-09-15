@@ -79,7 +79,7 @@ export function isIntegrationId(value: string): boolean {
   return UUID.test(value);
 }
 
-export type IntegrationTabId = "sessions" | "keys" | "settings";
+export type IntegrationTabId = "sessions" | "install" | "keys" | "settings";
 
 export const INTEGRATION_TABS: {
   id: IntegrationTabId;
@@ -87,6 +87,7 @@ export const INTEGRATION_TABS: {
   labelKey: `console.integrations.tab.${IntegrationTabId}`;
 }[] = [
   { id: "sessions", path: "", labelKey: "console.integrations.tab.sessions" },
+  { id: "install", path: "/install", labelKey: "console.integrations.tab.install" },
   { id: "keys", path: "/keys", labelKey: "console.integrations.tab.keys" },
   { id: "settings", path: "/settings", labelKey: "console.integrations.tab.settings" },
 ];
