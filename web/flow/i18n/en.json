@@ -1,33 +1,55 @@
 {
-  "title": "Identity verification",
-  "invalid": "This link is not valid.",
-  "network": "Could not reach the server. Check the connection, then try again.",
-  "expired": "This link has expired. Contact the company that sent it.",
-  "consentTitle": "Consent",
-  "consentBody": "We will photograph your identity document and your face to verify your identity. The images are sent to the company that opened this session.",
-  "accept": "I agree",
-  "consentError": "Consent could not be saved. Try again.",
-  "decline": "I decline",
-  "declined": "You declined. You can close this page.",
-  "documentTitle": "Photograph your document",
-  "documentLead": "Place the document in the frame, well lit, without glare.",
-  "frameDocument": "Document frame: align the document in the rectangle.",
-  "frameSelfie": "Face frame: place your face in the oval.",
-  "selfieTitle": "Photograph your face",
-  "selfieLead": "Look at the camera, face unobstructed, even lighting.",
-  "capture": "Take photo",
-  "uploading": "Uploading…",
-  "recapture": "The photo is not sharp enough. Try again.",
-  "tooSmall": "The photo is too small. Move closer to the document.",
-  "tooDark": "The photo is too dark. Add light, without flash.",
-  "tooBright": "Too much light or glare. Step away from a window or lamp.",
-  "faceNotFramed": "Place your face in the oval.",
-  "uploadError": "Upload failed. Try again.",
-  "decodeError": "This photo cannot be read. Take another with the camera.",
-  "wait": "Processing…",
-  "done": "You’re done. You can close this page.",
-  "cameraError": "Camera access failed.",
-  "retry": "Try again",
-  "langFr": "FR",
-  "langEn": "EN"
+  "meta": {
+    "title": "Recogniz-Me",
+    "description": "Identity verification"
+  },
+  "locale": {
+    "fr": "FR",
+    "en": "EN",
+    "switch": "Language"
+  },
+  "home": {
+    "title": "Recogniz-Me",
+    "lead": "Open the link provided by the company."
+  },
+  "errors": {
+    "invalid": "This link is not valid.",
+    "expired": "This link has expired. Contact the company that sent it.",
+    "network": "Could not reach the server. Check the connection, then try again.",
+    "retry": "Try again"
+  },
+  "consent": {
+    "title": "Consent",
+    "body": "We will photograph your identity document and your face to verify your identity. The images are sent to the company that opened this session.",
+    "accept": "I agree",
+    "decline": "I decline",
+    "error": "Consent could not be saved. Try again."
+  },
+  "document": {
+    "title": "Photograph your document",
+    "lead": "Place the document in the frame, well lit, without glare.",
+    "frame": "Document frame: align the document in the rectangle."
+  },
+  "selfie": {
+    "title": "Photograph your face",
+    "lead": "Look at the camera, face unobstructed, even lighting.",
+    "frame": "Face frame: place your face in the oval."
+  },
+  "capture": {
+    "action": "Take photo",
+    "uploading": "Uploading…",
+    "recapture": "The photo is not sharp enough. Try again.",
+    "tooSmall": "The photo is too small. Move closer to the document.",
+    "tooDark": "The photo is too dark. Add light, without flash.",
+    "tooBright": "Too much light or glare. Step away from a window or lamp.",
+    "faceNotFramed": "Place your face in the oval.",
+    "uploadError": "Upload failed. Try again.",
+    "decodeError": "This photo cannot be read. Take another with the camera.",
+    "cameraError": "Camera access failed."
+  },
+  "outcome": {
+    "wait": "Processing…",
+    "done": "You’re done. You can close this page.",
+    "declined": "You declined. You can close this page."
+  }
 }

@@ -1,13 +1,9 @@
 "use client";
 
-import { Wordmark } from "@kyc/brand";
 import { assessDocumentFrame, assessSelfieFrame } from "@kyc/capture-sdk";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
-import en from "../../../i18n/en.json";
-import fr from "../../../i18n/fr.json";
-
-type Locale = "fr" | "en";
-type Messages = typeof fr;
+import { FlowBrand } from "../../../components/flow-brand";
+import { useT, type MessageKey } from "../../../i18n/client";
 
 type Session = {
   verification_id: string;
@@ -17,15 +13,12 @@ type Session = {
   next: string;
 };
 
-const DICTS: Record<Locale, Messages> = { fr, en };
-
 export function FlowClient({ token }: { token: string }) {
-  const [locale, setLocale] = useState<Locale>("fr");
-  const t = DICTS[locale];
+  const t = useT();
   const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState<"invalid" | "expired" | "network" | null>(null);
   const [busy, setBusy] = useState(false);
-  const [hint, setHint] = useState<string | null>(null);
+  const [hint, setHint] = useState<MessageKey | null>(null);
   const [liveCamera, setLiveCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -86,9 +79,9 @@ export function FlowClient({ token }: { token: string }) {
           void videoRef.current.play();
         }
       })
-      .catch(() => setHint(t.cameraError));
+      .catch(() => setHint("capture.cameraError"));
     return () => stopCamera();
-  }, [liveCamera, session?.next, t.cameraError]);
+  }, [liveCamera, session?.next]);
 
   useEffect(() => {
     if (session?.next !== "wait") {
@@ -119,7 +112,7 @@ export function FlowClient({ token }: { token: string }) {
         return;
       }
       if (!response.ok) {
-        setHint(t.consentError);
+        setHint("consent.error");
         return;
       }
       const body = (await response.json()) as { status: string; next: string };
@@ -134,18 +127,18 @@ export function FlowClient({ token }: { token: string }) {
   async function submitFrame(kind: "selfie" | "document", image: ImageData, blob: Blob) {
     const assessment = kind === "selfie" ? assessSelfieFrame(image) : assessDocumentFrame(image);
     if (!assessment.usable) {
-      setHint(hintForReasons(t, assessment.reasons));
+      setHint(hintForReasons(assessment.reasons));
       return;
     }
     setBusy(true);
-    setHint(t.uploading);
+    setHint("capture.uploading");
     try {
       const prefix = kind === "selfie" ? "selfie" : "document";
       const upload = await fetch(`/v1/flow/${encodeURIComponent(token)}/${prefix}/uploads`, {
         method: "POST",
       });
       if (!upload.ok) {
-        setHint(t.uploadError);
+        setHint("capture.uploadError");
         return;
       }
       const signed = (await upload.json()) as { upload_url: string; attempt: number };
@@ -155,7 +148,7 @@ export function FlowClient({ token }: { token: string }) {
         body: blob,
       });
       if (!put.ok) {
-        setHint(t.uploadError);
+        setHint("capture.uploadError");
         return;
       }
       const complete = await fetch(`/v1/flow/${encodeURIComponent(token)}/${prefix}/complete`, {
@@ -164,12 +157,12 @@ export function FlowClient({ token }: { token: string }) {
         body: JSON.stringify({ attempt: signed.attempt }),
       });
       if (!complete.ok) {
-        setHint(t.uploadError);
+        setHint("capture.uploadError");
         return;
       }
       const result = (await complete.json()) as { status: string; next: string; accepted: boolean };
       if (!result.accepted) {
-        setHint(t.recapture);
+        setHint("capture.recapture");
       } else {
         setHint(null);
       }
@@ -193,7 +186,7 @@ export function FlowClient({ token }: { token: string }) {
     }
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) {
-      setHint(t.cameraError);
+      setHint("capture.cameraError");
       return;
     }
     const canvas = document.createElement("canvas");
@@ -201,7 +194,7 @@ export function FlowClient({ token }: { token: string }) {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      setHint(t.cameraError);
+      setHint("capture.cameraError");
       return;
     }
     ctx.drawImage(video, 0, 0);
@@ -220,40 +213,30 @@ export function FlowClient({ token }: { token: string }) {
       const { image, blob } = await frameFromFile(file);
       await submitFrame(kind, image, blob);
     } catch {
-      setHint(t.decodeError);
+      setHint("capture.decodeError");
     }
   }
 
   return (
     <main className="rm-flow">
-      <div className="rm-flow-brand">
-        <Wordmark size={24} tone="accent" />
-        <div className="rm-flow-lang">
-          <button type="button" data-variant="secondary" onClick={() => setLocale("fr")}>
-            {t.langFr}
-          </button>
-          <button type="button" data-variant="secondary" onClick={() => setLocale("en")}>
-            {t.langEn}
-          </button>
-        </div>
-      </div>
-      {error === "invalid" ? <h1>{t.invalid}</h1> : null}
-      {error === "expired" ? <h1>{t.expired}</h1> : null}
+      <FlowBrand />
+      {error === "invalid" ? <h1>{t("errors.invalid")}</h1> : null}
+      {error === "expired" ? <h1>{t("errors.expired")}</h1> : null}
       {error === "network" ? (
         <>
-          <h1>{t.network}</h1>
+          <h1>{t("errors.network")}</h1>
           <div className="rm-actions">
             <button type="button" onClick={() => void load()}>
-              {t.retry}
+              {t("errors.retry")}
             </button>
           </div>
         </>
       ) : null}
       {!error && session?.next === "consent" ? (
         <>
-          <h1>{t.consentTitle}</h1>
-          <p>{t.consentBody}</p>
-          {hint ? <p>{hint}</p> : null}
+          <h1>{t("consent.title")}</h1>
+          <p>{t("consent.body")}</p>
+          {hint ? <p>{t(hint)}</p> : null}
           <form
             className="rm-actions"
             onSubmit={(event) => {
@@ -262,36 +245,36 @@ export function FlowClient({ token }: { token: string }) {
             }}
           >
             <button type="submit" disabled={busy}>
-              {busy ? t.uploading : t.accept}
+              {busy ? t("capture.uploading") : t("consent.accept")}
             </button>
             <button type="button" data-variant="secondary" disabled={busy} onClick={() => void consent("declined")}>
-              {t.decline}
+              {t("consent.decline")}
             </button>
           </form>
         </>
       ) : null}
       {!error && (session?.next === "capture_document" || session?.next === "capture_selfie") ? (
         <>
-          <h1>{session.next === "capture_selfie" ? t.selfieTitle : t.documentTitle}</h1>
-          <p>{session.next === "capture_selfie" ? t.selfieLead : t.documentLead}</p>
+          <h1>{session.next === "capture_selfie" ? t("selfie.title") : t("document.title")}</h1>
+          <p>{session.next === "capture_selfie" ? t("selfie.lead") : t("document.lead")}</p>
           <div
             className="rm-flow-stage"
             data-kind={session.next === "capture_selfie" ? "selfie" : "document"}
             role="img"
-            aria-label={session.next === "capture_selfie" ? t.frameSelfie : t.frameDocument}
+            aria-label={session.next === "capture_selfie" ? t("selfie.frame") : t("document.frame")}
           >
             {liveCamera ? <video ref={videoRef} autoPlay playsInline muted /> : <span className="rm-flow-guide" aria-hidden="true" />}
             <span className="rm-flow-frame" aria-hidden="true" />
           </div>
-          {hint ? <p>{hint}</p> : null}
+          {hint ? <p>{t(hint)}</p> : null}
           <div className="rm-actions">
             {liveCamera ? (
               <button type="button" disabled={busy} onClick={() => void capture()}>
-                {busy ? t.uploading : t.capture}
+                {busy ? t("capture.uploading") : t("capture.action")}
               </button>
             ) : (
               <label className="rm-button rm-flow-file">
-                {busy ? t.uploading : t.capture}
+                {busy ? t("capture.uploading") : t("capture.action")}
                 <input
                   type="file"
                   accept="image/*"
@@ -306,28 +289,30 @@ export function FlowClient({ token }: { token: string }) {
       ) : null}
       {!error && session?.next === "wait" ? (
         <>
-          <h1>{t.wait}</h1>
+          <h1>{t("outcome.wait")}</h1>
         </>
       ) : null}
-      {!error && session?.next === "done" ? <h1>{t.done}</h1> : null}
+      {!error && session?.next === "done" ? (
+        <h1>{session.status === "declined" ? t("outcome.declined") : t("outcome.done")}</h1>
+      ) : null}
     </main>
   );
 }
 
-function hintForReasons(t: Messages, reasons: string[]): string {
+function hintForReasons(reasons: string[]): MessageKey {
   if (reasons.includes("too_small")) {
-    return t.tooSmall;
+    return "capture.tooSmall";
   }
   if (reasons.includes("too_dark")) {
-    return t.tooDark;
+    return "capture.tooDark";
   }
   if (reasons.includes("too_bright")) {
-    return t.tooBright;
+    return "capture.tooBright";
   }
   if (reasons.includes("face_not_framed")) {
-    return t.faceNotFramed;
+    return "capture.faceNotFramed";
   }
-  return t.recapture;
+  return "capture.recapture";
 }
 
 const SERVER_MIN_SHORT_SIDE = 720;

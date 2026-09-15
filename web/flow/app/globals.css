@@ -19,6 +19,11 @@
   margin-left: auto;
 }
 
+.rm-flow-lang button[aria-pressed="true"] {
+  color: var(--rm-text);
+  border-color: var(--rm-border-strong);
+}
+
 .rm-flow-brand {
   display: flex;
   align-items: center;

@@ -1,8 +1,13 @@
-export default function Home() {
+import { FlowBrand } from "../components/flow-brand";
+import { getT } from "../i18n";
+
+export default async function Home() {
+  const t = await getT();
   return (
     <main className="rm-flow">
-      <h1>Recogniz-Me</h1>
-      <p>Ouvrez le lien fourni par l’entreprise.</p>
+      <FlowBrand />
+      <h1>{t("home.title")}</h1>
+      <p>{t("home.lead")}</p>
     </main>
   );
 }
