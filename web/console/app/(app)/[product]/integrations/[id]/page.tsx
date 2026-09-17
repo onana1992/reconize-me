@@ -1,48 +1,85 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StatusBadge } from "@kyc/brand";
 import { getT } from "../../../../../i18n";
-import { consoleApi, type VerificationList } from "../../../../../lib/api";
+import { API_BASE } from "../../../../../lib/api";
 import { parseProduct } from "../../../../../lib/parse-product";
-import { requireMe, sessionCookieHeader } from "../../../../../lib/session";
-import { IdentityTable } from "../../identity-table";
+import { integrationTabHref } from "../../../../../lib/products";
 import { loadIntegration } from "../load";
+import { Snippet } from "./install/snippet";
 
 export const dynamic = "force-dynamic";
 
-export default async function IntegrationSessionsPage({
+function curlCreate(apiBase: string, keyPrefix: string): string {
+  return `curl -X POST "${apiBase}/v1/verifications" \\
+  -H "Authorization: Bearer ${keyPrefix}" \\
+  -H "Content-Type: application/json" \\
+  -H "Idempotency-Key: order-123" \\
+  -d '{
+    "external_id": "order-123",
+    "applicant": {
+      "first_name": "Ada",
+      "last_name": "Lovelace",
+      "email": "ada@example.com"
+    }
+  }'`;
+}
+
+function curlGet(apiBase: string, keyPrefix: string): string {
+  return `curl "${apiBase}/v1/verifications/{id}" \\
+  -H "Authorization: Bearer ${keyPrefix}"`;
+}
+
+const REDIRECT_SNIPPET = `window.location = hosted_url;`;
+
+const INCONTEXT_SNIPPET = `createFrame({ url: hosted_url });`;
+
+export default async function IntegrationInstallPage({
   params,
 }: {
   params: Promise<{ product: string; id: string }>;
 }) {
   const resolved = await params;
-  await parseProduct(Promise.resolve({ product: resolved.product }));
-  const [me, t, integration] = await Promise.all([
-    requireMe(),
-    getT(),
-    loadIntegration(resolved.id),
-  ]);
-  if (!integration.ok) {
+  const productId = await parseProduct(Promise.resolve({ product: resolved.product }));
+  const [t, result] = await Promise.all([getT(), loadIntegration(resolved.id)]);
+  if (!result.ok) {
     notFound();
   }
-  const canRead = (me.permissions ?? []).includes("VERIFICATION_READ");
-  if (!canRead) {
-    return <p className="rm-lead">{t("console.product.sessionsLocked")}</p>;
-  }
-  const sessions = await consoleApi<VerificationList>(
-    `/v1/console/verifications?limit=100&integration_id=${encodeURIComponent(integration.data.id)}`,
-    await sessionCookieHeader(),
-  );
-  if (!sessions.ok) {
-    return (
-      <p role="alert" className="rm-alert">
-        {sessions.message ?? t("console.verifications.loadError")}
-      </p>
-    );
-  }
+  const integration = result.data;
+  const apiBase = API_BASE.replace(/\/$/, "");
+  const keyPrefix = integration.mode === "live" ? "ky_live_…" : "ky_test_…";
+
   return (
-    <IdentityTable
-      initialItems={sessions.data.items}
-      initialCursor={sessions.data.next_cursor ?? null}
-      integrationId={integration.data.id}
-    />
+    <div className="rm-int-install">
+      <p className="rm-lead">{t("console.integrations.install.lead")}</p>
+      <p className="rm-lead">
+        <Link href={integrationTabHref(productId, integration.id, "keys")}>
+          {t("console.integrations.install.keysLink")}
+        </Link>
+      </p>
+      <section className="rm-int-panel">
+        <h2>{t("console.integrations.install.apiTitle")}</h2>
+        <p className="rm-lead">{t("console.integrations.install.apiBody")}</p>
+        <Snippet label={t("console.integrations.install.curlLabel")} value={curlCreate(apiBase, keyPrefix)} />
+      </section>
+      <section className="rm-int-panel">
+        <h2>{t("console.integrations.install.openTitle")}</h2>
+        <p className="rm-lead">{t("console.integrations.install.openBody")}</p>
+        <Snippet label={t("console.integrations.install.openLabel")} value={REDIRECT_SNIPPET} />
+      </section>
+      <section className="rm-int-panel">
+        <div className="rm-int-panel-head">
+          <h2>{t("console.integrations.install.incontextTitle")}</h2>
+          <StatusBadge label={t("console.integrations.install.incontextSoon")} tone="neutral" />
+        </div>
+        <p className="rm-lead">{t("console.integrations.install.incontextBody")}</p>
+        <Snippet label={t("console.integrations.install.incontextLabel")} value={INCONTEXT_SNIPPET} />
+      </section>
+      <section className="rm-int-panel">
+        <h2>{t("console.integrations.install.decisionTitle")}</h2>
+        <p className="rm-lead">{t("console.integrations.install.decisionBody")}</p>
+        <Snippet label={t("console.integrations.install.curlLabel")} value={curlGet(apiBase, keyPrefix)} />
+      </section>
+    </div>
   );
 }

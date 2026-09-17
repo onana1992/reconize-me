@@ -16,10 +16,12 @@ export function IdentityTable({
   initialItems,
   initialCursor,
   integrationId,
+  integrationNames = {},
 }: {
   initialItems: Verification[];
   initialCursor: string | null;
   integrationId?: string;
+  integrationNames?: Record<string, string>;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -42,16 +44,19 @@ export function IdentityTable({
         const applicant = displayName(item.applicant?.first_name, item.applicant?.last_name, item.applicant?.email ?? "")
           || t("console.verifications.untitled");
         const email = item.applicant?.email?.trim() || "—";
+        const integrationLabel =
+          (item.integration_id && integrationNames[item.integration_id]) || "—";
         return {
           item,
           applicant,
           email,
+          integrationLabel,
           whenLabel: formatUtc(item.created_at, locale),
           statusLabel: tVerificationStatus(t, item.status),
           idLabel: item.id.slice(0, 8),
         };
       }),
-    [items, locale, t],
+    [integrationNames, items, locale, t],
   );
 
   const filtered = useMemo(() => {
@@ -144,7 +149,7 @@ export function IdentityTable({
             <tr>
               <th>{t("console.verifications.applicant")}</th>
               <th>{t("console.verifications.email")}</th>
-              <th>{t("console.integrations.mode")}</th>
+              <th>{t("console.verifications.integration")}</th>
               <th>{t("console.verifications.createdAt")}</th>
               <th>{t("console.verifications.statusLabel")}</th>
               <th>{t("console.verifications.id")}</th>
@@ -244,10 +249,13 @@ export function IdentityTable({
                   <td>{row.applicant}</td>
                   <td>{row.email}</td>
                   <td>
-                    <StatusBadge
-                      label={tIntegrationMode(t, row.item.integration_mode)}
-                      tone={integrationModeTone(row.item.integration_mode)}
-                    />
+                    <span className="rm-int-cell">
+                      {row.integrationLabel}
+                      <StatusBadge
+                        label={tIntegrationMode(t, row.item.integration_mode)}
+                        tone={integrationModeTone(row.item.integration_mode)}
+                      />
+                    </span>
                   </td>
                   <td>{row.whenLabel}</td>
                   <td>

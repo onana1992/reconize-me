@@ -4,8 +4,8 @@
     "description": "Identity verification"
   },
   "locale": {
-    "fr": "FR",
-    "en": "EN",
+    "fr": "Français",
+    "en": "English",
     "switch": "Language"
   },
   "home": {

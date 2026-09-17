@@ -7,7 +7,7 @@ export default async function Home() {
     <main className="rm-flow">
       <FlowBrand />
       <h1>{t("home.title")}</h1>
-      <p>{t("home.lead")}</p>
+      <p className="rm-lead">{t("home.lead")}</p>
     </main>
   );
 }

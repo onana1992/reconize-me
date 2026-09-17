@@ -3,5 +3,5 @@ import { parseProduct } from "../../../../lib/parse-product";
 
 export default async function ProductConfigurationRedirect({ params }: { params: Promise<{ product: string }> }) {
   const product = await parseProduct(params);
-  redirect(`/${product}`);
+  redirect(`/${product}/rules`);
 }

@@ -8,23 +8,33 @@ import { PRODUCTS, productTabHref } from "../../../lib/products";
 import { requireMe } from "../../../lib/session";
 import { IdentityOverview } from "./identity-overview";
 
-export default async function ProductOverviewPage({ params }: { params: Promise<{ product: string }> }) {
+export default async function ProductOverviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ product: string }>;
+  searchParams: Promise<{ integration?: string }>;
+}) {
   const productId = await parseProduct(params);
   const product = PRODUCTS[productId];
   const me = await requireMe();
   const t = await getT();
   const locale = await getLocale();
   const canReadSessions = me.permissions.includes("VERIFICATION_READ");
+  const canWriteSessions = me.permissions.includes("VERIFICATION_WRITE");
+  const integrationId = (await searchParams).integration?.trim();
 
   if (productId === "identity") {
-    return <IdentityOverview canRead={canReadSessions} />;
+    return (
+      <IdentityOverview canRead={canReadSessions} canWrite={canWriteSessions} integrationId={integrationId} />
+    );
   }
 
   return (
     <main>
       <PageHeader
         eyebrow={t("console.nav.services")}
-        title={t(product.titleKey)}
+        title={t("console.product.tab.verifications")}
         lead={t(product.leadKey)}
         actions={
           <StatusBadge
@@ -46,6 +56,10 @@ export default async function ProductOverviewPage({ params }: { params: Promise<
           <Link href={productTabHref(productId, "integrations")} className="rm-card rm-link-card">
             <h3>{t("console.product.tab.integrations")}</h3>
             <p>{t("console.product.integrationsLead")}</p>
+          </Link>
+          <Link href={productTabHref(productId, "rules")} className="rm-card rm-link-card">
+            <h3>{t("console.product.tab.rules")}</h3>
+            <p>{t("console.product.settingsLead")}</p>
           </Link>
         </div>
       </section>

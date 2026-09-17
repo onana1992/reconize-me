@@ -127,9 +127,11 @@ export function FlowClient({ token }: { token: string }) {
   async function submitFrame(kind: "selfie" | "document", image: ImageData, blob: Blob) {
     const assessment = kind === "selfie" ? assessSelfieFrame(image) : assessDocumentFrame(image);
     if (!assessment.usable) {
+      alert(assessment.reasons);
       setHint(hintForReasons(assessment.reasons));
       return;
     }
+   
     setBusy(true);
     setHint("capture.uploading");
     try {
@@ -235,8 +237,12 @@ export function FlowClient({ token }: { token: string }) {
       {!error && session?.next === "consent" ? (
         <>
           <h1>{t("consent.title")}</h1>
-          <p>{t("consent.body")}</p>
-          {hint ? <p>{t(hint)}</p> : null}
+          <p className="rm-lead">{t("consent.body")}</p>
+          {hint ? (
+            <p role="alert" className="rm-alert">
+              {t(hint)}
+            </p>
+          ) : null}
           <form
             className="rm-actions"
             onSubmit={(event) => {
@@ -256,34 +262,40 @@ export function FlowClient({ token }: { token: string }) {
       {!error && (session?.next === "capture_document" || session?.next === "capture_selfie") ? (
         <>
           <h1>{session.next === "capture_selfie" ? t("selfie.title") : t("document.title")}</h1>
-          <p>{session.next === "capture_selfie" ? t("selfie.lead") : t("document.lead")}</p>
-          <div
-            className="rm-flow-stage"
-            data-kind={session.next === "capture_selfie" ? "selfie" : "document"}
-            role="img"
-            aria-label={session.next === "capture_selfie" ? t("selfie.frame") : t("document.frame")}
-          >
-            {liveCamera ? <video ref={videoRef} autoPlay playsInline muted /> : <span className="rm-flow-guide" aria-hidden="true" />}
-            <span className="rm-flow-frame" aria-hidden="true" />
-          </div>
-          {hint ? <p>{t(hint)}</p> : null}
-          <div className="rm-actions">
-            {liveCamera ? (
-              <button type="button" disabled={busy} onClick={() => void capture()}>
-                {busy ? t("capture.uploading") : t("capture.action")}
-              </button>
-            ) : (
-              <label className="rm-button rm-flow-file">
-                {busy ? t("capture.uploading") : t("capture.action")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture={session.next === "capture_selfie" ? "user" : "environment"}
-                  disabled={busy}
-                  onChange={(event) => void onPick(event)}
-                />
-              </label>
-            )}
+          <p className="rm-lead">{session.next === "capture_selfie" ? t("selfie.lead") : t("document.lead")}</p>
+          <div className="rm-flow-capture">
+            <div
+              className="rm-flow-stage"
+              data-kind={session.next === "capture_selfie" ? "selfie" : "document"}
+              role="img"
+              aria-label={session.next === "capture_selfie" ? t("selfie.frame") : t("document.frame")}
+            >
+              {liveCamera ? <video ref={videoRef} autoPlay playsInline muted /> : <span className="rm-flow-guide" aria-hidden="true" />}
+              <span className="rm-flow-frame" aria-hidden="true" />
+            </div>
+            {hint ? (
+              <p className={hint === "capture.uploading" ? "rm-hint" : "rm-alert"} role={hint === "capture.uploading" ? undefined : "alert"}>
+                {t(hint)}
+              </p>
+            ) : null}
+            <div className="rm-actions">
+              {liveCamera ? (
+                <button type="button" disabled={busy} onClick={() => void capture()}>
+                  {busy ? t("capture.uploading") : t("capture.action")}
+                </button>
+              ) : (
+                <label className="rm-button rm-flow-file">
+                  {busy ? t("capture.uploading") : t("capture.action")}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture={session.next === "capture_selfie" ? "user" : "environment"}
+                    disabled={busy}
+                    onChange={(event) => void onPick(event)}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </>
       ) : null}

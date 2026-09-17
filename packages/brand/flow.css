@@ -1,8 +1,7 @@
 /*
  * Recogniz-Me — atmosphère Hosted flow (applicant).
- * Même marque, sans chrome d'application : un humain devant une caméra,
- * pas un back-office. Mobile d'abord, cibles tactiles larges.
- * Dépend de tokens.css + base.css.
+ * Même marque et même densité que la console (police, taille, boutons),
+ * sans chrome d'application. Dépend de tokens.css + base.css + density.css.
  */
 
 body {
@@ -18,24 +17,89 @@ body {
 .rm-flow-brand {
   display: flex;
   align-items: center;
-  gap: var(--rm-space-2);
+  justify-content: space-between;
+  gap: var(--rm-space-3);
   margin: 0 0 var(--rm-space-6);
-  font-size: var(--rm-text-sm);
-  font-weight: 600;
-  color: var(--rm-text-muted);
 }
 
-.rm-flow h1 {
-  font-size: var(--rm-text-2xl);
-}
-
-.rm-flow p {
+.rm-flow-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  color: var(--rm-text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
   font-size: var(--rm-text-lg);
-  line-height: var(--rm-leading-normal);
+}
+
+.rm-lang-menu {
+  position: relative;
+}
+
+.rm-lang-trigger {
+  padding: var(--rm-space-2) var(--rm-space-3);
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+}
+
+.rm-lang-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--rm-space-2));
+  z-index: 30;
+  min-width: 10.5rem;
+  padding: var(--rm-space-1);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+  box-shadow: var(--rm-shadow-md);
+}
+
+.rm-lang-panel button {
+  width: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  color: var(--rm-text);
+  border: 0;
+  border-radius: var(--rm-radius-sm);
+  padding: var(--rm-space-2) var(--rm-space-3);
+  font-size: var(--rm-text-sm);
+  font-weight: 500;
+}
+
+.rm-lang-panel button:hover:not(:disabled) {
+  background: var(--rm-surface-sunken);
+}
+
+.rm-lang-panel button[aria-current="true"] {
+  font-weight: 650;
+  background: var(--rm-surface-sunken);
 }
 
 .rm-flow .rm-actions {
   margin-top: var(--rm-space-6);
+}
+
+.rm-hint {
+  font-size: var(--rm-text-xs);
+  font-weight: 400;
+  color: var(--rm-text-muted);
+}
+
+.rm-flow button[type="submit"],
+.rm-flow .rm-actions > button:not([data-variant]),
+.rm-flow .rm-actions > .rm-button:not([data-variant]) {
+  font-weight: 650;
+}
+
+.rm-flow-capture {
+  display: grid;
+  gap: var(--rm-space-6);
+  margin-top: var(--rm-space-5);
+}
+
+.rm-flow-capture .rm-actions {
+  margin-top: 0;
 }
 
 .rm-flow-stage {
@@ -43,7 +107,7 @@ body {
   position: relative;
   overflow: hidden;
   width: 100%;
-  margin: var(--rm-space-5) 0 0;
+  margin: 0;
   aspect-ratio: 3 / 4;
   border-radius: var(--rm-radius-lg);
   background: var(--rm-surface-sunken);
@@ -61,6 +125,10 @@ body {
   object-fit: cover;
   border-radius: 0;
   background: var(--rm-surface-sunken);
+}
+
+.rm-flow-stage[data-kind="selfie"] video {
+  transform: scaleX(-1);
 }
 
 .rm-flow-guide {
@@ -115,13 +183,13 @@ body {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+  min-height: 0;
+  padding: 0;
+  border: 0;
 }
 
 .rm-flow button,
 .rm-flow .rm-button {
-  padding: var(--rm-space-4) var(--rm-space-5);
-  font-size: var(--rm-text-base);
-  min-height: 2.75rem;
   touch-action: manipulation;
 }
 

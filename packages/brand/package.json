@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./tokens.css": "./tokens.css",
     "./base.css": "./base.css",
+    "./density.css": "./density.css",
     "./console.css": "./console.css",
     "./flow.css": "./flow.css",
     "./site.css": "./site.css",

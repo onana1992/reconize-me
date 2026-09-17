@@ -4,7 +4,7 @@ export const PRODUCT_IDS = ["identity", "biometrics", "aml"] as const;
 
 export type ProductId = (typeof PRODUCT_IDS)[number];
 
-export type ProductTabId = "overview" | "integrations";
+export type ProductTabId = "verifications" | "integrations" | "rules";
 
 export type ProductDef = {
   id: ProductId;
@@ -52,8 +52,9 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
 };
 
 export const PRODUCT_TABS: { id: ProductTabId; path: string; labelKey: `console.product.tab.${ProductTabId}` }[] = [
-  { id: "overview", path: "", labelKey: "console.product.tab.overview" },
+  { id: "verifications", path: "", labelKey: "console.product.tab.verifications" },
   { id: "integrations", path: "/integrations", labelKey: "console.product.tab.integrations" },
+  { id: "rules", path: "/rules", labelKey: "console.product.tab.rules" },
 ];
 
 export function isProductId(value: string): value is ProductId {
@@ -67,8 +68,8 @@ export function productTabHref(product: ProductId, tab: ProductTabId): string {
 
 export function matchProductTab(pathname: string, product: ProductId, tab: ProductTabId): boolean {
   const href = productTabHref(product, tab);
-  if (tab === "overview") {
-    return pathname === href;
+  if (tab === "verifications") {
+    return pathname === href || pathname.startsWith(`${href}/verifications`);
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -79,15 +80,14 @@ export function isIntegrationId(value: string): boolean {
   return UUID.test(value);
 }
 
-export type IntegrationTabId = "sessions" | "install" | "keys" | "settings";
+export type IntegrationTabId = "install" | "keys" | "settings";
 
 export const INTEGRATION_TABS: {
   id: IntegrationTabId;
   path: string;
   labelKey: `console.integrations.tab.${IntegrationTabId}`;
 }[] = [
-  { id: "sessions", path: "", labelKey: "console.integrations.tab.sessions" },
-  { id: "install", path: "/install", labelKey: "console.integrations.tab.install" },
+  { id: "install", path: "", labelKey: "console.integrations.tab.install" },
   { id: "keys", path: "/keys", labelKey: "console.integrations.tab.keys" },
   { id: "settings", path: "/settings", labelKey: "console.integrations.tab.settings" },
 ];
@@ -113,8 +113,8 @@ export function matchIntegrationTab(
   tab: IntegrationTabId,
 ): boolean {
   const href = integrationTabHref(product, id, tab);
-  if (tab === "sessions") {
-    return pathname === href;
+  if (tab === "install") {
+    return pathname === href || pathname === `${href}/install`;
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

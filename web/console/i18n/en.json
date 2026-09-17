@@ -197,8 +197,10 @@
       "tabsLabel": "Service sections",
       "tab": {
         "overview": "Overview",
+        "verifications": "Verifications",
         "configuration": "Configuration",
-        "integrations": "Integrations"
+        "integrations": "Integrations",
+        "rules": "Rules"
       },
       "sandboxFree": "Sandbox is free.",
       "metered": "Draws credit",
@@ -217,7 +219,7 @@
       "settingsIdentityFlowBody": "Consent text and expiry. Organization branding of the applicant flow is not in the MVP.",
       "settingsBiometrics": "Match threshold and enrollment lifetime will be configured here.",
       "settingsAml": "Sanctions, PEP and adverse-media lists will be configured here.",
-      "integrationsLead": "Each integration has a test or live mode, its own API keys, and later its webhooks.",
+      "integrationsLead": "Each integration is an API entry point (test or live), with its own keys and later its webhooks. It is not the verification queue.",
       "integrationsKeys": "API keys",
       "integrationsKeysBodySandbox": "ky_test_ keys for this service. Free, no credit debit. The secret is shown only at issuance.",
       "integrationsKeysBodyLive": "ky_live_ keys for this service. Each resource debits organization credit. A sufficient balance is required. The secret is shown only at issuance.",
@@ -229,7 +231,8 @@
       "openSession": "Open"
     },
     "integrations": {
-      "lead": "Create an integration, copy its key, then run verifications from its page.",
+      "lead": "Create an integration, copy its key, then create verifications from the Verifications tab.",
+      "viewVerifications": "View verifications",
       "empty": "No integrations yet.",
       "name": "Name",
       "nameHint": "Required and unique in this organization.",
@@ -278,6 +281,12 @@
     "verifications": {
       "lead": "Identity verifications for this organization.",
       "createLead": "Optional fields. A hosted link is issued on create.",
+      "integration": "Integration",
+      "pickIntegration": "Which integration?",
+      "pickIntegrationHint": "Test integrations never debit credit. Live integrations do.",
+      "noIntegrations": "Create an integration first, then you can start a verification.",
+      "filteredTo": "Showing verifications for {name}.",
+      "clearIntegrationFilter": "Show all",
       "applicantSection": "Applicant",
       "applicantHint": "Used to find the session in the list.",
       "externalIdHint": "Your internal identifier, unique in this organization.",
@@ -314,7 +323,7 @@
       "hostedLink": "Applicant link",
       "copyLink": "Copy link",
       "expires": "Expires",
-      "backToList": "Back to list",
+      "backToList": "Back to verifications",
       "session": "Session",
       "updatedAt": "Updated",
       "openLink": "Open",

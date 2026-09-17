@@ -47,6 +47,7 @@ export default async function ProductIntegrationsPage({
   }
 
   const list = await consoleApi<IntegrationListItem[]>("/v1/console/integrations", await sessionCookieHeader());
+  const items = list.ok ? list.data.filter((item) => item.product === productId) : [];
 
   return (
     <main className="rm-idv">
@@ -60,13 +61,13 @@ export default async function ProductIntegrationsPage({
         <p role="alert" className="rm-alert">
           {list.message ?? t("console.integrations.loadError")}
         </p>
-      ) : list.data.length === 0 ? (
+      ) : items.length === 0 ? (
         <div className="rm-empty">
           <p>{t("console.integrations.empty")}</p>
         </div>
       ) : (
         <ul className="rm-int-list">
-          {list.data.map((item) => (
+          {items.map((item) => (
             <li key={item.id}>
               <Link href={`${product.href}/integrations/${item.id}`} className="rm-int-card">
                 <div className="rm-int-card-copy">

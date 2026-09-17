@@ -105,6 +105,13 @@ export default async function VerificationDetailPage({
                 tone={integrationModeTone(verification.integration_mode)}
               />
             </Detail>
+            {verification.integration_id ? (
+              <Detail label={t("console.verifications.integration")}>
+                <Link href={`/identity?integration=${encodeURIComponent(verification.integration_id)}`}>
+                  {t("console.integrations.viewVerifications")}
+                </Link>
+              </Detail>
+            ) : null}
             <Detail label={t("console.verifications.statusLabel")}>
               <StatusBadge label={tVerificationStatus(t, verification.status)} tone={verificationTone(verification.status)} />
             </Detail>

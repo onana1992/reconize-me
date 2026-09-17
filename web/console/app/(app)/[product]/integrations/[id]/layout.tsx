@@ -20,18 +20,13 @@ export default async function IntegrationLayout({
   if (!product.metered) {
     notFound();
   }
-  const [me, result] = await Promise.all([requireMe(), loadIntegration(resolved.id)]);
+  const [, result] = await Promise.all([requireMe(), loadIntegration(resolved.id)]);
   if (!result.ok) {
     notFound();
   }
-  const canWriteSessions = (me.permissions ?? []).includes("VERIFICATION_WRITE");
 
   return (
-    <IntegrationWorkspace
-      productId={productId}
-      integration={result.data}
-      canWriteSessions={canWriteSessions}
-    >
+    <IntegrationWorkspace productId={productId} integration={result.data}>
       {children}
     </IntegrationWorkspace>
   );

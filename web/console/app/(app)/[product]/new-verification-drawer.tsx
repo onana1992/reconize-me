@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../../../i18n/client";
+import { tIntegrationMode } from "../../../lib/environment";
 import { createVerificationAction } from "./verifications/actions";
 
 const SCENARIOS = [
@@ -15,14 +16,20 @@ const SCENARIOS = [
   ["review", "console.verifications.scenarioReview"],
 ] as const;
 
+export type DrawerIntegration = {
+  id: string;
+  name: string;
+  mode: string;
+};
+
 export function NewVerificationDrawer({
   product,
-  integrationId,
-  live = false,
+  integrations,
+  defaultIntegrationId,
 }: {
   product: string;
-  integrationId?: string;
-  live?: boolean;
+  integrations: DrawerIntegration[];
+  defaultIntegrationId?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -31,14 +38,20 @@ export function NewVerificationDrawer({
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const initialId = defaultIntegrationId ?? integrations[0]?.id ?? "";
+  const [selectedId, setSelectedId] = useState(initialId);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const selected = integrations.find((item) => item.id === selectedId) ?? integrations[0];
+  const live = selected?.mode === "live";
+
   function openDrawer() {
     setError(null);
     setPending(false);
+    setSelectedId(defaultIntegrationId ?? integrations[0]?.id ?? "");
     formRef.current?.reset();
     dialogRef.current?.showModal();
     window.requestAnimationFrame(() => {
@@ -110,12 +123,32 @@ export function NewVerificationDrawer({
         </button>
       </div>
       <form ref={formRef} onSubmit={onSubmit} className="rm-form rm-drawer-form">
-        {integrationId ? <input type="hidden" name="integration_id" value={integrationId} /> : null}
+        {integrations.length <= 1 ? <input type="hidden" name="integration_id" value={selected?.id ?? ""} /> : null}
         <div className="rm-drawer-body">
           {error ? (
             <p role="alert" className="rm-alert">
               {error}
             </p>
+          ) : null}
+          {integrations.length > 1 ? (
+            <section className="rm-drawer-section">
+              <label>
+                {t("console.verifications.pickIntegration")}
+                <span className="rm-hint">{t("console.verifications.pickIntegrationHint")}</span>
+                <select
+                  name="integration_id"
+                  value={selectedId}
+                  disabled={pending}
+                  onChange={(event) => setSelectedId(event.target.value)}
+                >
+                  {integrations.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} ({tIntegrationMode(t, item.mode)})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
           ) : null}
           <section className="rm-drawer-section">
             <h3 className="rm-drawer-section-title">{t("console.verifications.applicantSection")}</h3>
@@ -161,7 +194,7 @@ export function NewVerificationDrawer({
           <button type="button" data-variant="secondary" onClick={closeDrawer}>
             {t("common.cancel")}
           </button>
-          <button type="submit" disabled={pending}>
+          <button type="submit" disabled={pending || !selected}>
             {pending ? t("console.verifications.pending") : t("console.verifications.submit")}
           </button>
         </div>
@@ -171,7 +204,7 @@ export function NewVerificationDrawer({
 
   return (
     <>
-      <button type="button" className="rm-button" onClick={openDrawer}>
+      <button type="button" className="rm-button" onClick={openDrawer} disabled={integrations.length === 0}>
         {t("console.product.newVerification")}
       </button>
       {mounted ? createPortal(drawer, document.body) : null}

@@ -197,8 +197,10 @@
       "tabsLabel": "Sections du service",
       "tab": {
         "overview": "Vue d’ensemble",
+        "verifications": "Vérifications",
         "configuration": "Configuration",
-        "integrations": "Intégrations"
+        "integrations": "Intégrations",
+        "rules": "Règles"
       },
       "sandboxFree": "Le sandbox est gratuit.",
       "metered": "Débite le crédit",
@@ -217,7 +219,7 @@
       "settingsIdentityFlowBody": "Texte de consentement et expiration. Le branding du parcours applicant n’est pas dans le MVP.",
       "settingsBiometrics": "Le seuil de correspondance et la durée d’enrôlement se configureront ici.",
       "settingsAml": "Les listes sanctions, PEP et médias adverses se configureront ici.",
-      "integrationsLead": "Chaque intégration a un mode test ou live, ses propres clés API, et plus tard ses webhooks.",
+      "integrationsLead": "Chaque intégration est un point d’entrée API (test ou live), avec ses clés et plus tard ses webhooks. Ce n’est pas la file des dossiers.",
       "integrationsKeys": "Clés API",
       "integrationsKeysBodySandbox": "Clés ky_test_ de ce service. Gratuites, aucun débit de crédit. Le secret n’est montré qu’à l’émission.",
       "integrationsKeysBodyLive": "Clés ky_live_ de ce service. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis. Le secret n’est montré qu’à l’émission.",
@@ -229,7 +231,8 @@
       "openSession": "Ouvrir"
     },
     "integrations": {
-      "lead": "Créez une intégration, copiez sa clé, puis lancez les vérifications depuis sa page.",
+      "lead": "Créez une intégration, copiez sa clé, puis lancez les vérifications depuis l’onglet Vérifications.",
+      "viewVerifications": "Voir les vérifications",
       "empty": "Aucune intégration pour l’instant.",
       "name": "Nom",
       "nameHint": "Obligatoire et unique dans l’organisation.",
@@ -278,6 +281,12 @@
     "verifications": {
       "lead": "Vérifications d’identité de l’organisation.",
       "createLead": "Champs optionnels. Un lien hébergé est émis à la création.",
+      "integration": "Intégration",
+      "pickIntegration": "Quelle intégration ?",
+      "pickIntegrationHint": "Les intégrations test ne débitent pas le crédit. Les live, si.",
+      "noIntegrations": "Créez d’abord une intégration, puis vous pourrez lancer une vérification.",
+      "filteredTo": "Vérifications de {name}.",
+      "clearIntegrationFilter": "Tout afficher",
       "applicantSection": "Candidat",
       "applicantHint": "Pour retrouver la session dans la liste.",
       "externalIdHint": "Votre identifiant interne, unique dans l’organisation.",
@@ -314,7 +323,7 @@
       "hostedLink": "Lien applicant",
       "copyLink": "Copier le lien",
       "expires": "Expire",
-      "backToList": "Retour à la liste",
+      "backToList": "Retour aux vérifications",
       "session": "Session",
       "updatedAt": "Mise à jour",
       "openLink": "Ouvrir",

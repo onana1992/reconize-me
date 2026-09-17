@@ -5,22 +5,18 @@ import type { IntegrationResponse } from "../../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../../lib/environment";
 import { PRODUCTS, type ProductId } from "../../../../../lib/products";
 import { formatUtc } from "../../../../../lib/status";
-import { NewVerificationDrawer } from "../../new-verification-drawer";
 import { IntegrationTabs } from "./integration-tabs";
 
 export async function IntegrationWorkspace({
   productId,
   integration,
-  canWriteSessions,
   children,
 }: {
   productId: ProductId;
   integration: IntegrationResponse;
-  canWriteSessions: boolean;
   children: React.ReactNode;
 }) {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
-  const live = integration.mode === "live";
 
   return (
     <div className="rm-int">
@@ -40,11 +36,15 @@ export async function IntegrationWorkspace({
             </div>
             <p className="rm-int-meta">{formatUtc(integration.created_at, locale)}</p>
           </div>
-          {canWriteSessions ? (
-            <div className="rm-int-head-actions">
-              <NewVerificationDrawer product={productId} integrationId={integration.id} live={live} />
-            </div>
-          ) : null}
+          <div className="rm-int-head-actions">
+            <Link
+              href={`${PRODUCTS[productId].href}?integration=${encodeURIComponent(integration.id)}`}
+              className="rm-button"
+              data-variant="secondary"
+            >
+              {t("console.integrations.viewVerifications")}
+            </Link>
+          </div>
         </header>
       </div>
       <IntegrationTabs product={productId} id={integration.id} />

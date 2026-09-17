@@ -1,0 +1,45 @@
+/*
+ * Recogniz-Me — densité compacte (console et hosted flow).
+ * Police, taille, boutons et champs identiques sur les deux surfaces produit.
+ * Dépend de tokens.css + base.css.
+ */
+
+html {
+  font-size: 14px;
+}
+
+h1 {
+  font-size: var(--rm-text-xl);
+}
+
+h2 {
+  font-size: var(--rm-text-lg);
+}
+
+.rm-lead {
+  font-size: var(--rm-text-sm);
+}
+
+button,
+.rm-button {
+  padding: 0.4rem 0.75rem;
+  min-height: 2.15rem;
+  border-radius: var(--rm-radius-sm);
+}
+
+label {
+  gap: var(--rm-space-1);
+}
+
+input,
+select {
+  padding: 0.4rem 0.65rem;
+  min-height: 2.15rem;
+  font-size: 1rem;
+  border-radius: var(--rm-radius-sm);
+}
+
+select {
+  padding-right: 1.85rem;
+  background-position: right 0.45rem center;
+}

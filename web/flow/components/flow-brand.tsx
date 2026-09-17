@@ -6,7 +6,9 @@ import { LanguageSwitch } from "./language-switch";
 export function FlowBrand() {
   return (
     <div className="rm-flow-brand">
-      <Wordmark size={24} tone="accent" />
+      <span className="rm-flow-wordmark">
+        <Wordmark size={24} />
+      </span>
       <LanguageSwitch />
     </div>
   );

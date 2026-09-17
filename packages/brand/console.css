@@ -1,49 +1,8 @@
 /*
  * Recogniz-Me — atmosphère Console (client SaaS).
  * Chrome d'application : barre de navigation, page cadrée, densité back-office.
- * Dépend de tokens.css + base.css.
+ * Dépend de tokens.css + base.css + density.css.
  */
-
-/* Densité compacte — console seulement (la vitrine et le flow gardent l'échelle produit). */
-html {
-  font-size: 14px;
-}
-
-h1 {
-  font-size: var(--rm-text-xl);
-}
-
-h2 {
-  font-size: var(--rm-text-lg);
-}
-
-.rm-lead {
-  font-size: var(--rm-text-sm);
-}
-
-button,
-.rm-button {
-  padding: 0.4rem 0.75rem;
-  min-height: 2.15rem;
-  border-radius: var(--rm-radius-sm);
-}
-
-label {
-  gap: var(--rm-space-1);
-}
-
-input,
-select {
-  padding: 0.4rem 0.65rem;
-  min-height: 2.15rem;
-  font-size: 1rem;
-  border-radius: var(--rm-radius-sm);
-}
-
-select {
-  padding-right: 1.85rem;
-  background-position: right 0.45rem center;
-}
 
 /* --- Chrome --- */
 
@@ -1421,6 +1380,13 @@ a.rm-stat:hover {
   padding: var(--rm-space-8) var(--rm-space-4);
 }
 
+.rm-int-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-2);
+  flex-wrap: wrap;
+}
+
 .rm-rich-table-foot {
   display: flex;
   flex-wrap: wrap;
@@ -2223,11 +2189,7 @@ a.rm-idv-row:focus-visible {
   }
 }
 
-/* Intégration — page workspace (onglets internes type Veriff) */
-.rm-shell-body:has(.rm-int) .rm-product-bar {
-  display: none;
-}
-
+/* Intégration — page workspace (onglets internes sous la barre produit) */
 .rm-shell-body:has(.rm-int) > .rm-page,
 .rm-page.rm-int-page {
   flex: 1;

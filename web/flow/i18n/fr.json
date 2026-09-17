@@ -4,8 +4,8 @@
     "description": "Parcours de vérification d’identité"
   },
   "locale": {
-    "fr": "FR",
-    "en": "EN",
+    "fr": "Français",
+    "en": "English",
     "switch": "Langue"
   },
   "home": {
