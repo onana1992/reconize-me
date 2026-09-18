@@ -55,7 +55,7 @@ export default async function ProductIntegrationsPage({
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.integrations")}
         lead={t("console.integrations.lead")}
-        actions={canWrite ? <CreateIntegrationButton product={productId} /> : null}
+        actions={canWrite ? <CreateIntegrationButton product={productId} liveUnlocked={Boolean(me.live_unlocked)} /> : null}
       />
       {!list.ok ? (
         <p role="alert" className="rm-alert">

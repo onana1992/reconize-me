@@ -2,8 +2,8 @@
 
 **Plateforme :** Recogniz-Me  
 **Livrable :** premier service vendable (marque, vitrine, compte, crédit d’organisation, IDV)  
-**Version du document :** 1.5 — intégrations test / live (CDC 1.4)  
-**Date :** 14 septembre 2026  
+**Version du document :** 1.6 — M3 crédit d’organisation (USD)  
+**Date :** 17 septembre 2026  
 **Statut :** ordre de build du MVP  
 **Documents liés :**
 - [`cahier-des-charges-mvp.md`](./cahier-des-charges-mvp.md) — *quoi* (contrat métier)
@@ -14,6 +14,8 @@
 - [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + équipe T (spécification as-built)
 - [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`roadmap-implementation-team.md`](./roadmap-implementation-team.md) — cycle T (équipe type Onfido / Veriff)
+- [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) — M3 crédit d’organisation, recharge carte (B1–B4)
+- [`guide-stripe-sandbox.md`](./guide-stripe-sandbox.md) — Checkout sandbox local (`sk_test_`, Stripe CLI)
 - [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + IDV stub (*quoi*)
 - [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) — M4 ordre de build C1–C4
 - [`charte-visuelle.md`](./charte-visuelle.md) — M0 **livré** (as-built)
@@ -77,8 +79,8 @@ S1 fondation (fait)
 | **M1** | Vitrine | Site public, pages CDC §8.1, CTA compte | **Livré** (`web/site`, FR + EN) |
 | **M2** | Compte | Signup → e-mail → login → org Sandbox → console derrière session | **Livré** ([spec](./specification-m2-compte-client.md)) |
 | **T** | Équipe | Cycle de vie puis rôles type Onfido / Veriff | **T0–T4 livrés** ([roadmap](./roadmap-implementation-team.md)) |
-| **I** | Intégration | Entité `Integration` (`test` \| `live`), clés rattachées, retrait `?env=` | à faire — **avant M5** (CDC 1.4) |
-| **M3** | Facturation | Checkout carte test → crédit → intégration live (`ky_live_`) → débit à l’unité | à faire |
+| **I** | Intégration | Entité `Integration` (`test` \| `live`), clés rattachées, retrait `?env=` | **Livré** (V15–V16 ; live ouvert par M3 si solde ≥ une unité) |
+| **M3** | Facturation | Checkout carte test → crédit → intégration live (`ky_live_`) → débit à l’unité | **Livré** — [B1–B4](./roadmap-implementation-m3.md) |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
 | **M5** | IDV live | Textract + Rekognition + webhook **par intégration** | à faire |
 | **M6** | Go-live | Rate limit, rétention affichée, staging, 1 design partner sandbox | à faire |
@@ -220,6 +222,8 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 
 **Spécification :** [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) §17.
 
+**Statut :** livré (V15–V16). Reliquat cosmétique : helpers `?env=` / cookie `rm_console_env` dans `web/console/lib/environment.ts`.
+
 **Livrable :** plus de sélecteur Sandbox / Live (`?env=`). Une org a des **intégrations**. Signup (ou migration) pose une intégration `test` et y rattache les `ky_test_`. La console liste `/identity/integrations` ; la fiche porte clés et (plus tard) webhook. Sessions IDV portent `integration_id` dès que M4 est là.
 
 | In | Out |
@@ -237,7 +241,8 @@ Workspace `web/site` (port 3002), 11 routes × 2 langues = **22 pages prégéné
 
 **Durée :** 1–2 semaines.  
 **CDC :** §10. **Objectif O4.**  
-**Prérequis :** M2. **Freeze pricing** avant le premier Checkout (voir §6).
+**Prérequis :** M2. **Freeze pricing** avant le premier Checkout (voir §6).  
+**Ordre de build :** [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) (B1–B4).
 
 **Livrable :** Stripe Checkout **test** (carte) → crédit au ledger → intégration **live** créable si solde ≥ une unité → solde / `GET /v1/usage` = écran `/settings/billing`. Solde insuffisant → plus de vérif live, intégrations test OK.
 
@@ -375,12 +380,12 @@ Ne bloquent **pas** M0–M2.
 
 ### Avant M3 (paiement)
 
-| Décision | Proposition | Bloque |
+| Décision | Choix | Bloque |
 |---|---|---|
-| Devise Stripe | EUR **ou** CAD | M3 |
-| Prix unitaire IDV live | Ordre de grandeur : ~0,90 € | M3 |
+| Devise Stripe | **USD** (figé 17 sept. 2026 ; vitrine encore EUR jusqu’à B1) | M3 |
+| Prix unitaire IDV live | **0,90 $** | M3 |
 | Comptage | À la **création** live | M3 |
-| Packs de recharge | 50 / 100 / 250 / 500 (unité de devise) | M3 |
+| Packs de recharge | **50 / 100 / 250 / 500 $** | M3 |
 | Canal MVP | **Carte** seule (Checkout) | M3 |
 | Plafond de dépense / recharge auto | Hors MVP | — |
 
@@ -441,12 +446,13 @@ Ordre conseillé, **pas** dans le MVP :
 
 - Changement de périmètre → version du **CDC**, pas un commentaire de PR.
 - Glissement d’un critère (ex. Liveness) → CDC §17 **puis** cette roadmap.
-- Prochain sprint à ouvrir : **I — intégrations** (retrait `?env=`), puis **M3 — crédit d’organisation**.
+- Prochain sprint à ouvrir : **M3 — crédit d’organisation** ([B1 — ledger + freeze](./roadmap-implementation-m3.md)).
 
 **Journal des changements de périmètre**
 
 | Date | Changement | Trace |
 |---|---|---|
+| 17 sept. 2026 | Freeze M3 : **USD**, **0,90 $** / vérif live, packs **50 / 100 / 250 / 500 $**. Roadmap M3 B1–B4. I (intégrations) marqué livré. | CDC v1.5 §10.1 ; [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) |
 | 14 sept. 2026 | Plus de sélecteur Sandbox / Live. Test / live = type d’**intégration**. Web flow = `hosted_url` (redirect ou InContext). | CDC v1.4 §9.6–9.7, §11.7 |
 | 9 sept. 2026 | Crédit d’organisation, recharge **carte** MVP (plus de meter / facture d’usage). Facturation org seulement. | CDC v1.3 §10 |
 | 9 sept. 2026 | Facturation **à l’usage** (plus de plan mensuel / forfait). Console par service (sidebar compte + onglets produit). | CDC v1.2 §9.6, §10 |

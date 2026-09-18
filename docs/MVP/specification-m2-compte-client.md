@@ -787,7 +787,7 @@ UI : middleware vérifié (`/` → `/login?next=/`).
 
 ## 16. Suite
 
-M2 + T verts → **entité Integration + chrome** (CDC 1.4, §17) **avant M5**, puis [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Crédit d’organisation**. Freeze pricing **avant** le premier Checkout. M3 ajoute le ledger, Stripe Checkout **carte**, intégration `live` / `ky_live_`, usage réel et l’écran `/settings/billing` du CDC §9.5 / §10, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.
+M2 + T verts → **entité Integration + chrome** (CDC 1.4, §17) **avant M5**, puis [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) **M3 — Crédit d’organisation** (B1–B4). Freeze pricing **avant** le premier Checkout. M3 ajoute le ledger, Stripe Checkout **carte**, intégration `live` / `ky_live_`, usage réel et l’écran `/settings/billing` du CDC §9.5 / §10, branché sur **`BILLING_WRITE`** (pas `if owner`). M4 reprend les stubs `/v1/console/verifications*` sans changer la matrice T2.
 
 ---
 

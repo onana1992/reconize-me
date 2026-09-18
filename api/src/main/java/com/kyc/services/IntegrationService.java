@@ -27,16 +27,19 @@ public class IntegrationService {
     private final ApiKeyRepository apiKeys;
     private final AuditEventRepository auditEvents;
     private final ApiKeyIssuer apiKeyIssuer;
+    private final CreditService credits;
 
     public IntegrationService(
             IntegrationRepository integrations,
             ApiKeyRepository apiKeys,
             AuditEventRepository auditEvents,
-            ApiKeyIssuer apiKeyIssuer) {
+            ApiKeyIssuer apiKeyIssuer,
+            CreditService credits) {
         this.integrations = integrations;
         this.apiKeys = apiKeys;
         this.auditEvents = auditEvents;
         this.apiKeyIssuer = apiKeyIssuer;
+        this.credits = credits;
     }
 
     @Transactional
@@ -70,7 +73,9 @@ public class IntegrationService {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
         String normalized = normalizeMode(mode);
         if (Integration.MODE_LIVE.equals(normalized)) {
-            throw ApiException.forbidden("live_locked", "Live integrations require a credit balance");
+            if (!credits.coversUnit(principal.organizationId())) {
+                throw ApiException.forbidden("insufficient_credit", "Live integrations require a credit balance");
+            }
         }
         String resolvedName = requireUniqueName(principal.organizationId(), name);
         Integration saved = saveNew(principal.organizationId(), normalized, resolvedName, principal.userId());
@@ -82,9 +87,6 @@ public class IntegrationService {
     public IssuedApiKeyResponse issueKey(ConsolePrincipal principal, UUID integrationId) {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
         Integration integration = requireInOrg(principal.organizationId(), integrationId);
-        if (integration.isLive()) {
-            throw ApiException.forbidden("live_locked", "Live keys require a credit balance");
-        }
         requireNoKey(integration.getId());
         return apiKeyIssuer.issue(integration, principal.userId());
     }

@@ -131,7 +131,7 @@
         "body": "Français et anglais, sur le parcours comme sur ce site. Le parcours suit la langue du navigateur de votre client."
       },
       {
-        "value": "0 €",
+        "value": "0 $",
         "title": "Coût du sandbox",
         "body": "Le sandbox répond sur des jeux de données fixes, sans appel de traitement facturé. Aucune carte bancaire à l’inscription."
       },
@@ -571,8 +571,8 @@
     "eyebrow": "Tarifs",
     "title": "Intégrez gratuitement, payez quand vous vérifiez pour de vrai",
     "lead": "Un seul service débite le crédit aujourd’hui : la vérification d’identité. Le sandbox ne débite jamais. Recharge par carte. Pas de plan mensuel.",
-    "provisionalTitle": "Tarifs provisoires",
-    "provisionalBody": "Ces montants sont indicatifs et seront figés à l’ouverture du live. Ils ne constituent pas une offre contractuelle.",
+    "provisionalTitle": "Tarifs",
+    "provisionalBody": "Vérification d’identité live : 0,90 $ l’unité. Packs de recharge 50 / 100 / 250 / 500 $. Devise USD. Le sandbox reste gratuit.",
     "plansTitle": "Comment vous payez",
     "plansNote": "L’authentification biométrique et le criblage AML n’ont pas de ligne tarifaire : ils ne sont pas disponibles, donc ils ne sont pas vendus.",
     "perMonth": "par vérification live",
@@ -617,7 +617,7 @@
       {
         "item": "Prix unitaire",
         "sandbox": "Gratuit",
-        "production": "À l’unité (indicatif)"
+        "production": "0,90 $"
       },
       {
         "item": "Débite le crédit",

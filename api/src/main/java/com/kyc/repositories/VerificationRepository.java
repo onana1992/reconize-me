@@ -50,4 +50,14 @@ public interface VerificationRepository extends JpaRepository<Verification, UUID
             @Param("status") String status,
             @Param("integrationId") UUID integrationId,
             Pageable pageable);
+
+    @Query(
+            """
+            select i.mode, count(v.id)
+            from Verification v, Integration i
+            where v.organizationId = :org
+              and i.id = v.integrationId
+            group by i.mode
+            """)
+    List<Object[]> countByIntegrationMode(@Param("org") UUID organizationId);
 }

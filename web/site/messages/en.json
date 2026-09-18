@@ -131,7 +131,7 @@
         "body": "French and English, in the flow as on this site. The flow follows your customer’s browser language."
       },
       {
-        "value": "€0",
+        "value": "$0",
         "title": "Cost of the sandbox",
         "body": "The sandbox answers from fixed data sets, with no billed processing call. No card required at signup."
       },
@@ -571,8 +571,8 @@
     "eyebrow": "Pricing",
     "title": "Integrate for free, pay when you verify for real",
     "lead": "Only one service draws credit today: identity verification. Sandbox never debits. Top up by card. No monthly plan.",
-    "provisionalTitle": "Provisional pricing",
-    "provisionalBody": "These amounts are indicative and will be fixed when live billing opens. They do not constitute a contractual offer.",
+    "provisionalTitle": "Pricing",
+    "provisionalBody": "Live identity verification: $0.90 each. Top-up packs $50 / $100 / $250 / $500. Currency USD. Sandbox stays free.",
     "plansTitle": "How you pay",
     "plansNote": "Biometric authentication and AML screening have no price line: they are not available, so they are not sold.",
     "perMonth": "per live verification",
@@ -617,7 +617,7 @@
       {
         "item": "Unit price",
         "sandbox": "Free",
-        "production": "Per use (indicative)"
+        "production": "$0.90"
       },
       {
         "item": "Debits credit",

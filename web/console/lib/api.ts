@@ -7,6 +7,11 @@ export type Me = {
   role: string;
   permissions: string[];
   organization: { id: string; name: string; slug: string };
+  currency?: string;
+  balance_minor?: number;
+  sandbox_count?: number;
+  live_count?: number;
+  live_unlocked?: boolean;
 };
 
 export type ApiKeyItem = {
@@ -57,6 +62,38 @@ export type AuditEvent = {
 export type AuditList = {
   events: AuditEvent[];
   next_cursor: string | null;
+};
+
+export type BillingUsage = {
+  product: string;
+  sandbox_count: number;
+  live_count: number;
+  live_debit_minor: number;
+};
+
+export type LedgerEntry = {
+  id: string;
+  entry_type: string;
+  amount_minor: number;
+  balance_after_minor: number;
+  product?: string | null;
+  resource_type?: string | null;
+  resource_id?: string | null;
+  created_at: string;
+};
+
+export type Billing = {
+  currency: string;
+  balance_minor: number;
+  unit_amount_minor: number;
+  live_unlocked: boolean;
+  packs: number[];
+  usage: BillingUsage[];
+  ledger: { entries: LedgerEntry[]; next_cursor: string | null };
+};
+
+export type CheckoutSession = {
+  url: string;
 };
 
 export type ApiResult<T> =

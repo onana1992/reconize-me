@@ -1,14 +1,13 @@
 /*
  * Organization credit is debited per live resource. Sandbox is always free.
- * Amounts stay provisional until Stripe card Checkout (M3).
+ * Frozen M3: USD, $0.90 per live verification, packs $50 / $100 / $250 / $500.
  */
 
 import type { Locale } from "./locales";
 
-/** Passera à `false` au gel des prix (M3), avec les montants réels. */
-export const PROVISIONAL: boolean = true;
+export const PROVISIONAL: boolean = false;
 
-const CURRENCY = "EUR";
+const CURRENCY = "USD";
 
 export const PRICING = {
   identity: {

@@ -57,6 +57,7 @@ public class VerificationService {
     private final ObjectStoragePort objectStorage;
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
+    private final CreditService creditService;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -68,7 +69,8 @@ public class VerificationService {
             HostedTokenStore hostedTokens,
             ObjectStoragePort objectStorage,
             KycProperties properties,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            CreditService creditService) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -79,6 +81,7 @@ public class VerificationService {
         this.objectStorage = objectStorage;
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.creditService = creditService;
     }
 
     @Transactional
@@ -113,6 +116,9 @@ public class VerificationService {
         String scenario = integration.isLive() ? null : sandboxScenario(metadata);
         CreateVerificationRequest.Applicant applicant = request == null ? null : request.applicant();
         UUID id = UUID.randomUUID();
+        if (integration.isLive()) {
+            creditService.debitForLiveVerification(organizationId, id, actorId, actorType);
+        }
         String token = CryptoTokens.randomHostedToken();
         Duration ttl = Duration.ofSeconds(properties.hostedUrlTtlSeconds());
         Verification verification = new Verification(

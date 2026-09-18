@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { StatusBadge } from "@kyc/brand";
@@ -102,10 +101,8 @@ export function KeysManager({
           </table>
         </div>
       )}
-      {live ? (
-        <p className="rm-lead">
-          {t("console.keys.liveLocked")} <Link href="/settings/billing">{t("console.nav.billing")}</Link>
-        </p>
+      {live && visible.length === 0 ? (
+        <p className="rm-lead">{t("console.keys.emptyLive")}</p>
       ) : null}
     </>
   );

@@ -247,7 +247,7 @@
       "createTitle": "Create an integration",
       "creating": "Creating…",
       "createError": "Could not create the integration.",
-      "liveLocked": "Live integrations require a credit balance. Card top-up is not wired yet.",
+      "liveLocked": "Live integrations need a balance of at least one verification. Top up credit first.",
       "forbidden": "Your role cannot create an integration.",
       "loadError": "Could not load integrations.",
       "back": "Back to integrations",
@@ -307,6 +307,7 @@
       "loadMore": "Load more verifications",
       "loadError": "Could not load verifications.",
       "createError": "Could not create the verification.",
+      "insufficientCredit": "Balance too low for a live verification. Top up credit. Test integrations still work.",
       "firstName": "First name",
       "lastName": "Last name",
       "email": "Email",
@@ -398,9 +399,19 @@
       "topupLead": "In the MVP, top-ups are by card. Other channels will come later.",
       "topupPackHint": "Credit added to the balance after the card payment.",
       "topupCard": "Pay by card",
-      "topupOwner": "Stripe Checkout is not wired yet. The button stays inactive until M3.",
+      "topupPending": "Redirecting…",
+      "topupOwner": "Payment is handled by Stripe. We do not store cards.",
       "topupForbidden": "Your role cannot top up credit.",
+      "checkoutError": "Could not open card checkout.",
+      "checkoutSuccess": "Payment received. The balance updates once Stripe confirms.",
+      "checkoutCancel": "Payment cancelled. No credit was added.",
+      "liveStatus": "Live",
       "ledger": "Transactions",
+      "when": "When",
+      "type": "Type",
+      "amount": "Amount",
+      "entryTopup": "Top-up",
+      "entryDebit": "Debit",
       "ledgerEmpty": "No top-ups or debits yet.",
       "consumption": "Consumption",
       "consumptionLead": "What drew down the credit, per service. This is not an invoice: collection is the balance above.",
@@ -409,7 +420,7 @@
       "unit": "Live unit price",
       "free": "Free",
       "notSold": "Not sold",
-      "provisional": "Amounts stay provisional until card top-up is connected."
+      "provisional": "Amounts are fixed: $0.90 per live verification, top-ups $50 / $100 / $250 / $500."
     },
     "settings": {
       "label": "Settings"
@@ -431,7 +442,7 @@
       "issuing": "Issuing…",
       "issuedTitle": "New {env} key",
       "issuedBody": "Copy it now. It will not be shown again.",
-      "liveLocked": "Live keys require a credit balance. Card top-up is not wired yet.",
+      "liveLocked": "Live keys require a credit balance. Top up from Billing.",
       "issueForbidden": "You don’t have permission to issue a key.",
       "revokeForbidden": "You don’t have permission to revoke a key."
     },
@@ -538,7 +549,13 @@
       "actionLoginFailed": "Failed sign-in",
       "actionRegistered": "Account created",
       "actionEmailVerified": "Email verified",
-      "actionIntegrationCreated": "Integration created"
+      "actionIntegrationCreated": "Integration created",
+      "actionCheckoutCreated": "Checkout session created",
+      "actionCreditToppedUp": "Credit topped up",
+      "actionCreditDebited": "Credit debited",
+      "actionCreditTopupIgnored": "Top-up ignored",
+      "resourceCredit": "Credit",
+      "resourceOrg": "Organization"
     }
   }
 }

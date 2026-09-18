@@ -336,7 +336,13 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
         className="rm-drawer"
         aria-labelledby="activity-drawer-title"
         onClose={() => setSelectedId(null)}
-        onClick={(event) => {
+        onPointerDown={(event) => {
+          if (event.target !== event.currentTarget) {
+            return;
+          }
+          if (event.clientX === 0 && event.clientY === 0) {
+            return;
+          }
           const rect = event.currentTarget.getBoundingClientRect();
           const inside =
             event.clientX >= rect.left &&

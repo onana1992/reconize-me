@@ -10,7 +10,12 @@ public record MeResponse(
         @JsonProperty("last_name") String lastName,
         OrganizationMe organization,
         String role,
-        List<String> permissions) {
+        List<String> permissions,
+        String currency,
+        @JsonProperty("balance_minor") long balanceMinor,
+        @JsonProperty("sandbox_count") long sandboxCount,
+        @JsonProperty("live_count") long liveCount,
+        @JsonProperty("live_unlocked") boolean liveUnlocked) {
 
     public record OrganizationMe(UUID id, String name, String slug) {}
 }

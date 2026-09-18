@@ -48,6 +48,15 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.FORBIDDEN, code, message);
     }
 
+    public static ApiException insufficientCredit() {
+        return new ApiException(
+                HttpStatus.PAYMENT_REQUIRED, "insufficient_credit", "Credit balance is insufficient");
+    }
+
+    public static ApiException invalidSignature() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "invalid_signature", "Invalid Stripe signature");
+    }
+
     public static ApiException tooManyRequests() {
         return new ApiException(HttpStatus.TOO_MANY_REQUESTS, "rate_limited", "Too many attempts, try again later");
     }

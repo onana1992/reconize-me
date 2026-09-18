@@ -53,6 +53,7 @@ public class ConsoleService {
     private final IntegrationService integrationService;
     private final AccountService accountService;
     private final SessionService sessionService;
+    private final CreditService creditService;
     private final ObjectMapper objectMapper;
 
     public ConsoleService(
@@ -65,6 +66,7 @@ public class ConsoleService {
             IntegrationService integrationService,
             AccountService accountService,
             SessionService sessionService,
+            CreditService creditService,
             ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
@@ -75,6 +77,7 @@ public class ConsoleService {
         this.integrationService = integrationService;
         this.accountService = accountService;
         this.sessionService = sessionService;
+        this.creditService = creditService;
         this.objectMapper = objectMapper;
     }
 
@@ -84,13 +87,22 @@ public class ConsoleService {
         Organization organization = organizationRepository
                 .findById(principal.organizationId())
                 .orElseThrow(() -> ApiException.notFound("Organization not found"));
+        var billing = creditService.summary(principal.organizationId());
+        var usage = billing.usage().isEmpty()
+                ? new com.kyc.dto.billing.BillingResponse.ProductUsage("identity", 0, 0, 0)
+                : billing.usage().get(0);
         return new MeResponse(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
                 new MeResponse.OrganizationMe(organization.getId(), organization.getName(), organization.getSlug()),
                 principal.role(),
-                ConsoleAuth.permissionNames(principal.role()));
+                ConsoleAuth.permissionNames(principal.role()),
+                billing.currency(),
+                billing.balanceMinor(),
+                usage.sandboxCount(),
+                usage.liveCount(),
+                billing.liveUnlocked());
     }
 
     @Transactional(readOnly = true)

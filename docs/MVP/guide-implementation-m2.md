@@ -298,4 +298,4 @@ Ne pas « profiter » de M2 pour du SSO ou de la 2FA.
 
 ## 14. Suite
 
-M2 vert → [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) **M3 — Facturation à l’usage**. Freeze pricing **avant** le premier Checkout.
+M2 vert → [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) **M3 — Crédit d’organisation**. Freeze pricing **avant** le premier Checkout.

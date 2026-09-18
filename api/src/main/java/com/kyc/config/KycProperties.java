@@ -15,7 +15,9 @@ public record KycProperties(
         @DefaultValue("false") boolean sessionCookieSecure,
         @DefaultValue("5") int authRateLimit,
         @DefaultValue("15") int authRateWindowMinutes,
-        @DefaultValue Mail mail) {
+        @DefaultValue Mail mail,
+        @DefaultValue Billing billing,
+        @DefaultValue Stripe stripe) {
 
     public record Mail(
             @DefaultValue("log") String mode,
@@ -24,6 +26,31 @@ public record KycProperties(
 
         public String redirectTo() {
             return emailRedirectTo == null ? "" : emailRedirectTo.trim();
+        }
+    }
+
+    public record Billing(
+            @DefaultValue("usd") String currency,
+            @DefaultValue("900") long unitAmountMinor) {
+
+        public static final java.util.List<Long> PACKS = java.util.List.of(5000L, 10000L, 25000L, 50000L);
+
+        public java.util.List<Long> packs() {
+            return PACKS;
+        }
+
+        public boolean isAllowedPack(long packMinor) {
+            return PACKS.contains(packMinor);
+        }
+    }
+
+    public record Stripe(
+            @DefaultValue("log") String mode,
+            @DefaultValue("") String secretKey,
+            @DefaultValue("whsec_test") String webhookSecret) {
+
+        public boolean usesLiveApi() {
+            return "stripe".equalsIgnoreCase(mode);
         }
     }
 

@@ -74,7 +74,7 @@ class IntegrationLifecycleTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"mode\":\"live\",\"name\":\"Production\"}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error.code").value("live_locked"));
+                .andExpect(jsonPath("$.error.code").value("insufficient_credit"));
 
         mockMvc.perform(post("/v1/console/integrations/" + integrationId + "/api-keys").cookie(owner))
                 .andExpect(status().isConflict())

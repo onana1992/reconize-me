@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../../../i18n/client";
 import { tIntegrationMode } from "../../../lib/environment";
@@ -37,6 +38,7 @@ export function NewVerificationDrawer({
   const formRef = useRef<HTMLFormElement>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditBlocked, setCreditBlocked] = useState(false);
   const [pending, setPending] = useState(false);
   const initialId = defaultIntegrationId ?? integrations[0]?.id ?? "";
   const [selectedId, setSelectedId] = useState(initialId);
@@ -50,6 +52,7 @@ export function NewVerificationDrawer({
 
   function openDrawer() {
     setError(null);
+    setCreditBlocked(false);
     setPending(false);
     setSelectedId(defaultIntegrationId ?? integrations[0]?.id ?? "");
     formRef.current?.reset();
@@ -63,7 +66,14 @@ export function NewVerificationDrawer({
     dialogRef.current?.close();
   }
 
-  function onBackdropClick(event: MouseEvent<HTMLDialogElement>) {
+  function onBackdropPointerDown(event: PointerEvent<HTMLDialogElement>) {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    // Native <select> menus paint outside the panel and can emit a 0,0 click on the dialog.
+    if (event.clientX === 0 && event.clientY === 0) {
+      return;
+    }
     const rect = event.currentTarget.getBoundingClientRect();
     const inside =
       event.clientX >= rect.left &&
@@ -79,10 +89,18 @@ export function NewVerificationDrawer({
     event.preventDefault();
     setPending(true);
     setError(null);
+    setCreditBlocked(false);
     try {
       const result = await createVerificationAction(new FormData(event.currentTarget));
       if (!result.ok) {
-        setError(result.code === "forbidden" ? t("console.product.sessionsLocked") : t("console.verifications.createError"));
+        setCreditBlocked(result.code === "insufficient_credit");
+        setError(
+          result.code === "insufficient_credit"
+            ? t("console.verifications.insufficientCredit")
+            : result.code === "forbidden"
+              ? t("console.product.sessionsLocked")
+              : t("console.verifications.createError"),
+        );
         return;
       }
       closeDrawer();
@@ -98,9 +116,10 @@ export function NewVerificationDrawer({
       ref={dialogRef}
       className="rm-drawer rm-drawer-wide"
       aria-labelledby="create-verification-title"
-      onClick={onBackdropClick}
+      onPointerDown={onBackdropPointerDown}
       onClose={() => {
         setError(null);
+        setCreditBlocked(false);
         setPending(false);
       }}
     >
@@ -128,6 +147,12 @@ export function NewVerificationDrawer({
           {error ? (
             <p role="alert" className="rm-alert">
               {error}
+              {creditBlocked ? (
+                <>
+                  {" "}
+                  <Link href="/settings/billing">{t("console.nav.billing")}</Link>
+                </>
+              ) : null}
             </p>
           ) : null}
           {integrations.length > 1 ? (
@@ -139,6 +164,8 @@ export function NewVerificationDrawer({
                   name="integration_id"
                   value={selectedId}
                   disabled={pending}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                   onChange={(event) => setSelectedId(event.target.value)}
                 >
                   {integrations.map((item) => (

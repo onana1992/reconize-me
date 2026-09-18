@@ -1,7 +1,7 @@
 import { CopyButton } from "./copy-button";
 
 type Props = {
-  title: string;
+  title?: string;
   description: string;
   value: string;
   copyLabel?: string;
@@ -10,8 +10,8 @@ type Props = {
 export function SecretBlock({ title, description, value, copyLabel }: Props) {
   return (
     <section className="rm-card rm-secret-card">
-      <h2>{title}</h2>
-      <p>{description}</p>
+      {title ? <h3>{title}</h3> : null}
+      <p className="rm-lead">{description}</p>
       <div className="rm-secret">
         <code>{value}</code>
         <CopyButton value={value} label={copyLabel} />

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.ports.MailPort;
 import com.kyc.services.SessionService;
 import jakarta.servlet.http.Cookie;
+import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -87,6 +88,10 @@ final class AccountSupport {
     static JsonNode me(MockMvc mockMvc, Cookie cookie) throws Exception {
         MvcResult result = mockMvc.perform(get("/v1/console/me").cookie(cookie)).andExpect(status().isOk()).andReturn();
         return JSON.readTree(result.getResponse().getContentAsString());
+    }
+
+    static UUID organizationId(MockMvc mockMvc, Cookie cookie) throws Exception {
+        return UUID.fromString(me(mockMvc, cookie).get("organization").get("id").asText());
     }
 
     static JsonNode team(MockMvc mockMvc, Cookie cookie) throws Exception {

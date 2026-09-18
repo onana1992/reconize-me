@@ -3,7 +3,7 @@ import { StatusBadge } from "@kyc/brand";
 import { NavIcon } from "../../components/nav-icons";
 import { PageHeader } from "../../components/page-header";
 import { getLocale, getT } from "../../i18n";
-import { formatCount, formatMoney } from "../../lib/pricing";
+import { formatCount, formatMinor } from "../../lib/pricing";
 import { PRODUCTS, PRODUCT_IDS, type ProductId } from "../../lib/products";
 import { requireMe } from "../../lib/session";
 
@@ -18,9 +18,9 @@ export default async function HomePage() {
   const me = await requireMe();
   const t = await getT();
   const locale = await getLocale();
-  const sandboxCount = 0;
-  const liveCount = 0;
-  const balance = 0;
+  const sandboxCount = me.sandbox_count ?? 0;
+  const liveCount = me.live_count ?? 0;
+  const balance = me.balance_minor ?? 0;
   const sandboxLabel = formatCount(locale, sandboxCount);
   const liveLabel = formatCount(locale, liveCount);
 
@@ -41,7 +41,7 @@ export default async function HomePage() {
           </article>
           <Link href="/settings/billing" className="rm-stat">
             <p className="rm-eyebrow">{t("console.billing.balance")}</p>
-            <p className="rm-stat-value">{formatMoney(locale, balance)}</p>
+            <p className="rm-stat-value">{formatMinor(locale, balance)}</p>
             <p className="rm-stat-hint">{t("console.home.balanceHint")}</p>
           </Link>
         </section>

@@ -54,6 +54,7 @@ public class AccountService {
     private final MailPort mailPort;
     private final KycProperties properties;
     private final SessionService sessionService;
+    private final CreditService creditService;
 
     public AccountService(
             UserRepository userRepository,
@@ -66,7 +67,8 @@ public class AccountService {
             PasswordEncoder passwordEncoder,
             MailPort mailPort,
             KycProperties properties,
-            SessionService sessionService) {
+            SessionService sessionService,
+            CreditService creditService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.membershipRepository = membershipRepository;
@@ -78,6 +80,7 @@ public class AccountService {
         this.mailPort = mailPort;
         this.properties = properties;
         this.sessionService = sessionService;
+        this.creditService = creditService;
     }
 
     @Transactional
@@ -114,6 +117,7 @@ public class AccountService {
                     OrganizationSlugs.fromName(organizationName), organizationRepository::existsBySlug);
             organizationRepository.save(new Organization(organizationId, organizationName.trim(), slug, now));
             membershipRepository.save(new Membership(userId, organizationId, Membership.ROLE_OWNER, now));
+            creditService.ensureAccount(organizationId);
             auditEventRepository.save(new AuditEvent(
                     organizationId, "user", userId, "user.registered", "user", userId, "{}", now));
         } else {

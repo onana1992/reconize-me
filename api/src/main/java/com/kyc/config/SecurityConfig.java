@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/account/invites")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/webhooks/stripe")
+                        .permitAll()
                         .requestMatchers("/v1/flow/**", "/v1/objects")
                         .permitAll()
                         .requestMatchers("/v1/account/**", "/v1/console/**")

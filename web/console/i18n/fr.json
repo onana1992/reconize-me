@@ -247,7 +247,7 @@
       "createTitle": "Créer une intégration",
       "creating": "Création…",
       "createError": "Impossible de créer l’intégration.",
-      "liveLocked": "Les intégrations live exigent un solde de crédit. La recharge carte n’est pas encore branchée.",
+      "liveLocked": "Les intégrations live exigent un solde d’au moins une vérification. Rechargez le crédit.",
       "forbidden": "Votre rôle ne permet pas de créer une intégration.",
       "loadError": "Impossible de charger les intégrations.",
       "back": "Retour aux intégrations",
@@ -307,6 +307,7 @@
       "loadMore": "Charger plus de vérifications",
       "loadError": "Impossible de charger les vérifications.",
       "createError": "Impossible de créer la vérification.",
+      "insufficientCredit": "Solde insuffisant pour une vérification live. Rechargez le crédit. Les intégrations test restent disponibles.",
       "firstName": "Prénom",
       "lastName": "Nom",
       "email": "E-mail",
@@ -398,9 +399,19 @@
       "topupLead": "Au MVP, la recharge se fait par carte bancaire. D’autres canaux viendront plus tard.",
       "topupPackHint": "Crédit ajouté au solde après paiement carte.",
       "topupCard": "Payer par carte",
-      "topupOwner": "Stripe Checkout n’est pas encore branché. Le bouton restera inactif jusqu’à M3.",
+      "topupPending": "Redirection…",
+      "topupOwner": "Le paiement est traité par Stripe. Nous ne stockons pas de carte.",
       "topupForbidden": "Votre rôle ne permet pas de recharger le crédit.",
+      "checkoutError": "Impossible d’ouvrir le paiement carte.",
+      "checkoutSuccess": "Paiement reçu. Le solde se met à jour dès confirmation Stripe.",
+      "checkoutCancel": "Paiement annulé. Aucun crédit n’a été ajouté.",
+      "liveStatus": "Live",
       "ledger": "Transactions",
+      "when": "Quand",
+      "type": "Type",
+      "amount": "Montant",
+      "entryTopup": "Recharge",
+      "entryDebit": "Débit",
       "ledgerEmpty": "Aucune recharge ni aucun débit pour l’instant.",
       "consumption": "Consommation",
       "consumptionLead": "Ce qui a débité le crédit, par service. Ce n’est pas une facture : l’encaissement est le solde ci-dessus.",
@@ -409,7 +420,7 @@
       "unit": "Prix unitaire live",
       "free": "Gratuit",
       "notSold": "Non vendu",
-      "provisional": "Les montants restent provisoires tant que la recharge carte n’est pas connectée."
+      "provisional": "Montants figés : 0,90 $ par vérification live, recharges 50 / 100 / 250 / 500 $."
     },
     "settings": {
       "label": "Paramètres"
@@ -431,7 +442,7 @@
       "issuing": "Émission…",
       "issuedTitle": "Nouvelle clé {env}",
       "issuedBody": "Copiez-la maintenant. Elle ne sera plus montrée.",
-      "liveLocked": "Les clés live exigent un solde de crédit. La recharge carte n’est pas encore branchée.",
+      "liveLocked": "Les clés live exigent un solde de crédit. Rechargez depuis Facturation.",
       "issueForbidden": "Vous n’avez pas le droit d’émettre une clé.",
       "revokeForbidden": "Vous n’avez pas le droit de révoquer une clé."
     },
@@ -538,7 +549,13 @@
       "actionLoginFailed": "Échec de connexion",
       "actionRegistered": "Compte créé",
       "actionEmailVerified": "E-mail vérifié",
-      "actionIntegrationCreated": "Intégration créée"
+      "actionIntegrationCreated": "Intégration créée",
+      "actionCheckoutCreated": "Session de paiement créée",
+      "actionCreditToppedUp": "Crédit rechargé",
+      "actionCreditDebited": "Crédit débité",
+      "actionCreditTopupIgnored": "Recharge ignorée",
+      "resourceCredit": "Crédit",
+      "resourceOrg": "Organisation"
     }
   }
 }

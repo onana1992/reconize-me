@@ -4,6 +4,7 @@ import {
   consoleApi,
   type ApiResult,
   type AuditList,
+  type CheckoutSession,
   type IntegrationResponse,
 } from "../../../lib/api";
 import { sessionCookieHeader } from "../../../lib/session";
@@ -103,5 +104,12 @@ export async function changePasswordAction(formData: FormData): Promise<ApiResul
       current_password: String(formData.get("current_password") ?? ""),
       new_password: String(formData.get("new_password") ?? ""),
     }),
+  });
+}
+
+export async function createCheckoutAction(packMinor: number): Promise<ApiResult<CheckoutSession>> {
+  return consoleApi("/v1/console/billing/checkout", await sessionCookieHeader(), {
+    method: "POST",
+    body: JSON.stringify({ pack_minor: packMinor }),
   });
 }

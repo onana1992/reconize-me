@@ -2,13 +2,14 @@
 
 **Produit :** Recogniz-Me  
 **Livrable :** MVP métier — mise sur pied du service SaaS  
-**Version :** 1.4 — intégrations test / live (plus de sélecteur Sandbox / Live)  
-**Date :** 14 septembre 2026  
+**Version :** 1.5 — pricing figé (USD, 0,90 $, packs 50–500 $)  
+**Date :** 17 septembre 2026  
 **Statut :** contrat d’implémentation du MVP  
 **Public :** produit, design, ingénierie, go-to-market
 
 **Documents liés**
 
+- [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) — M3 crédit d’organisation, recharge carte (B1–B4)
 - [`roadmap-implementation-mvp.md`](./roadmap-implementation-mvp.md) — *quand* (ordre de build)
 - [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + cycle équipe T0–T4 (architecture, données, UC, règles)
 - [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + pipeline IDV stub (sandbox)
@@ -382,15 +383,15 @@ Le client n’achète pas « l’IA ». Il **charge un crédit d’organisation*
 | | Intégration test | Intégration live |
 |---|---|---|
 | Clé | `ky_test_` | `ky_live_` |
-| Crédit | Jamais débité | Prix unitaire du service (IDV : indicatif 0,90 € / vérif, à figer avant Stripe) |
+| Crédit | Jamais débité | **0,90 $** / vérif IDV live |
 | Analyse | Stub déterministe | AWS (Textract / Rekognition) |
 | Condition | Compte e-mail vérifié | Solde ≥ une unité live |
 
-Chiffres de catalogue (exemple de travail, **non contractuels** tant que le pricing n’est pas figé) :
+Chiffres de catalogue **figés** (17 septembre 2026) :
 
-- IDV live : au-dessus du COGS (~0,10–0,20 $ chargé à petit volume) et sous le marché (0,80–4 $)
-- Devise Stripe : **à figer** (EUR ou CAD) avant la première recharge
-- Packs de recharge indicatifs : 50 / 100 / 250 / 500 (unité de devise)
+- IDV live : **0,90 $** / vérification
+- Devise Stripe : **USD**
+- Packs de recharge : **50 / 100 / 250 / 500 $**
 - Biométrie et AML : **pas de débit** tant qu’ils ne sont pas vendus
 
 Le ledger interne est la **source de vérité du solde**. Stripe n’encaise que les **recharges carte**. IDV est le seul service qui débite au MVP. Solde insuffisant → intégrations / ressources live refusées ; le test reste.
@@ -710,7 +711,7 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 | Juge | Règles + scores, pas un LLM |
 | Auth console | E-mail / mot de passe ; 2FA plus tard |
 | Auth API | Clés `ky_test_` / `ky_live_` **d’une intégration** (pas de clé dans le navigateur) |
-| Facturation | Crédit d’organisation ; recharge carte (MVP) ; intégration test gratuite |
+| Facturation | Crédit d’organisation ; recharge carte (MVP) ; intégration test gratuite ; **USD** ; **0,90 $** / IDV live ; packs **50 / 100 / 250 / 500 $** |
 | Revue | Analyste du **client**, pas un service opéré par Recogniz-Me |
 | Compte | Une org par utilisateur fondateur ; invitations membres |
 | Console service | Pas de sélecteur Sandbox / Live ; liste d’intégrations `test` \| `live` |
@@ -718,7 +719,7 @@ L’ordre détaillé (dépendances, In/Out, démos, freeze) est dans [`roadmap-i
 | Régénération auto du lien KYC | Non (spec IDV) |
 | Discours IA propriétaire | Interdit sur le MVP |
 
-**À figer avant M3 (ne bloque pas M0–M2) :** devises, prix unitaire IDV live, comptage à la création vs à la décision, liste corridor pays × types.
+**À figer avant M3 (ne bloque pas M0–M2) :** comptage à la création vs à la décision (recommandation : création — déjà dans la [roadmap M3](./roadmap-implementation-m3.md)), liste corridor pays × types. Devise, prix unitaire et packs sont **figés** (§10.1).
 
 ---
 
@@ -745,6 +746,8 @@ Les termes IDV (session, applicant, lien hébergé, signal, revue) : spec IDV §
 
 Toute évolution de périmètre MVP se décide ici (version + date), pas dans un commentaire de sprint. Si un lot glisse (ex. Face Liveness reporté), le critère d’acceptation §17.9 est mis à jour **avant** de déclarer M5 terminé.
 
+**1.5 (17 septembre 2026) :** pricing figé — devise **USD**, IDV live **0,90 $**, packs **50 / 100 / 250 / 500 $**.
+
 **1.4 (14 septembre 2026) :** retrait du sélecteur console Sandbox / Live (`?env=`). Test et live = type d’**intégration**, modèle Veriff. Web flow = même `hosted_url` (redirect ou InContext). Clés secrètes hors navigateur.
 
-Prochaine étape d’implémentation : **entité Integration + chrome** (retrait `?env=`), puis **sprint M3** (crédit d’organisation, recharge carte) — voir la [roadmap](./roadmap-implementation-mvp.md).
+Prochaine étape d’implémentation : **sprint M3** (crédit d’organisation, recharge carte) — voir la [roadmap M3](./roadmap-implementation-m3.md).
