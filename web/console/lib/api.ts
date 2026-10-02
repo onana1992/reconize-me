@@ -42,8 +42,18 @@ export type IntegrationResponse = IntegrationListItem & {
   key?: string | null;
 };
 
+export type TeamMember = {
+  id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  role: string;
+  status: string;
+  created_at: string;
+};
+
 export type Team = {
-  members: { id: string; email: string; role: string; status: string; created_at: string }[];
+  members: TeamMember[];
   invites: { id: string; email: string; role: string; expires_at: string }[];
 };
 

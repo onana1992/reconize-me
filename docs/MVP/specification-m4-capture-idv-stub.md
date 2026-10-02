@@ -931,7 +931,7 @@ Ne pas casser `SignupAndVerifyTest`, `TeamRolesTest`, `TeamLifecycleTest`, etc.
 | Entité `Integration` + retrait chrome `?env=` | **Avant M5** (CDC 1.4) |
 | Checkout carte, crédit, intégration `live` / `ky_live_` | **M3** (peut tourner en parallèle ; **avant** M5) |
 | InContext / JS SDK (`createFrame` sur `hosted_url`) | **Après M4** |
-| Textract + Rekognition + webhook **par intégration**, même fiche console | **M5** |
+| Textract + Rekognition + webhook **par intégration**, même fiche console | **M5** — [spec](./specification-m5-aws-live-webhook.md), [roadmap D1–D4](./roadmap-implementation-m5.md) |
 | Rate limit vérifs, rétention, staging partenaire | **M6** |
 
 M5 **réutilise** ports, statuts, raisons, flow et fiche. Seuls les adaptateurs IA et la livraison webhook s’ajoutent. Le stub reste le chemin des intégrations `test` (`ky_test_`).

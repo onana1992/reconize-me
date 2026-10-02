@@ -291,7 +291,7 @@ Si C4 n’est pas démontrable, **ne pas** ouvrir M5.
 | Après C4 vert | Sprint |
 |---|---|
 | Crédit, Checkout, `ky_live_` | **M3** s’il n’est pas déjà livré |
-| Adaptateurs AWS + webhook, **même** API et fiche | **M5** |
+| Adaptateurs AWS + webhook, **même** API et fiche | **M5** — [spec](./specification-m5-aws-live-webhook.md), [roadmap D1–D4](./roadmap-implementation-m5.md) |
 | Rate limit `POST /verifications`, rétention, staging | **M6** |
 
 M5 ne change pas les routes flow ni les statuts. Il ajoute `Aws*` derrière les ports déjà utilisés par le stub, et la livraison `verification.completed`.

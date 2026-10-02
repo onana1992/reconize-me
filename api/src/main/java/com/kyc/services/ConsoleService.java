@@ -156,6 +156,8 @@ public class ConsoleService {
             members.add(new TeamResponse.MemberItem(
                     user.getId(),
                     user.getEmail(),
+                    user.getFirstName(),
+                    user.getLastName(),
                     membership.getRole(),
                     membership.getStatus(),
                     membership.getCreatedAt()));

@@ -94,7 +94,7 @@ export function SetupForm({ email, invite }: { email: string; invite: string }) 
           title={t("setup.passwordHint")}
           {...NEW_PASSWORD_ATTRS}
         />
-        <span className="su-hint">{t("setup.passwordHint")}</span>
+        <span className="rm-hint">{t("setup.passwordHint")}</span>
       </label>
 
       <div className="su-checks">

@@ -98,7 +98,7 @@ function PasswordForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel
           title={t("setup.passwordHint")}
           {...NEW_PASSWORD_ATTRS}
         />
-        <span className="rm-hint rm-hint-danger">{t("setup.passwordHint")}</span>
+        <span className="rm-hint">{t("setup.passwordHint")}</span>
       </label>
       {error ? (
         <p role="alert" className="rm-alert">

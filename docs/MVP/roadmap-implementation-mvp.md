@@ -2,8 +2,8 @@
 
 **Plateforme :** Recogniz-Me  
 **Livrable :** premier service vendable (marque, vitrine, compte, crédit d’organisation, IDV)  
-**Version du document :** 1.6 — M3 crédit d’organisation (USD)  
-**Date :** 17 septembre 2026  
+**Version du document :** 1.7 — corridor live M5 = permis QC  
+**Date :** 20 septembre 2026  
 **Statut :** ordre de build du MVP  
 **Documents liés :**
 - [`cahier-des-charges-mvp.md`](./cahier-des-charges-mvp.md) — *quoi* (contrat métier)
@@ -18,6 +18,9 @@
 - [`guide-stripe-sandbox.md`](./guide-stripe-sandbox.md) — Checkout sandbox local (`sk_test_`, Stripe CLI)
 - [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + IDV stub (*quoi*)
 - [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) — M4 ordre de build C1–C4
+- [`specification-m5-aws-live-webhook.md`](./specification-m5-aws-live-webhook.md) — M5 AWS live + webhooks (*quoi*)
+- [`roadmap-implementation-m5.md`](./roadmap-implementation-m5.md) — M5 ordre de build D1–D4
+- [`guide-aws-textract.md`](./guide-aws-textract.md) — M5 palier D1 : mesurer AnalyzeID (permis QC)
 - [`charte-visuelle.md`](./charte-visuelle.md) — M0 **livré** (as-built)
 
 Ce document dit **quand** et **dans quel ordre** on construit le MVP. Le *quoi* reste dans le CDC. Un sprint n’est pas vert sans son **livrable démontrable**.
@@ -82,7 +85,7 @@ S1 fondation (fait)
 | **I** | Intégration | Entité `Integration` (`test` \| `live`), clés rattachées, retrait `?env=` | **Livré** (V15–V16 ; live ouvert par M3 si solde ≥ une unité) |
 | **M3** | Facturation | Checkout carte test → crédit → intégration live (`ky_live_`) → débit à l’unité | **Livré** — [B1–B4](./roadmap-implementation-m3.md) |
 | **M4** | IDV | Capture + pipeline stub → décision sans AWS | à faire |
-| **M5** | IDV live | Textract + Rekognition + webhook **par intégration** | à faire |
+| **M5** | IDV live | Textract + Rekognition + webhook **par intégration** ; démo **permis QC** | à faire |
 | **M6** | Go-live | Rate limit, rétention affichée, staging, 1 design partner sandbox | à faire |
 
 ### Parallélisme autorisé
@@ -306,28 +309,37 @@ Si M4 n’est pas démontrable, **ne pas** ouvrir M5.
 ### M5 — AWS live + webhooks
 
 **Durée :** 2 semaines.  
-**CDC :** §11 live, §11.6, critère §17.9. **Objectif O5 (production).**  
-**Prérequis :** M4 **et** M3.
+**CDC :** §11 live, §11.3, §11.6, critère §17.9. **Objectif O5 (production).**  
+**Prérequis :** M4 **et** M3.  
+**Spécification :** [`specification-m5-aws-live-webhook.md`](./specification-m5-aws-live-webhook.md) (workflow, architecture, UC, mapping QC, HMAC).  
+**Ordre de build :** [`roadmap-implementation-m5.md`](./roadmap-implementation-m5.md) (D1–D4).  
+**Runbook D1 :** [`guide-aws-textract.md`](./guide-aws-textract.md) — un AnalyzeID staging sur un recto QC **avant** le mapper.  
+**Corridor live figé :** une classe — **Canada × permis de conduire × Québec** (génération photographiée en staging). Pas « permis canadien », pas de passeport live tant qu’il n’est pas mesuré. Amender le CDC §11.3 **avant** de déclarer M5 vert.
 
-**Livrable :** une vérif d’une intégration **`live`** (`ky_live_`) en staging parcourt Textract AnalyzeID + CompareFaces (+ Face Liveness **ou** liveness stub **documenté** si Liveness n’est pas prêt — alors mettre à jour le CDC §17.9 **avant** de déclarer M5 vert). Webhook `verification.completed` signé **par intégration**, **sans** médias dans le payload.
+**Livrable :** une vérif d’une intégration **`live`** (`ky_live_`) en staging, pièce = **recto d’un permis QC**, parcourt Textract AnalyzeID + CompareFaces (+ Face Liveness **ou** liveness stub **documenté** si Liveness n’est pas prêt — alors mettre à jour le CDC §17.9 **avant** le vert). Webhook `verification.completed` signé **par intégration**, **sans** médias dans le payload.
 
 | In | Out |
 |---|---|
 | Adaptateurs `AwsDocumentAi` / `AwsBiometric` derrière les ports existants | SageMaker, Bedrock, Ground Truth |
 | Choix stub vs AWS selon le mode de l’intégration (`ky_test_` vs `ky_live_`) | Heuristiques de coins en prod |
-| Parseur MRZ déterministe si zone présente | Authenticité ML |
+| Mapping AnalyzeID → `driving_license` + `CA` si juridiction QC / Québec | Catalogue « tout permis CA » / tout document |
+| Parseur MRZ déterministe **si** zone présente ; permis QC → `mrz_unavailable` **non bloquant** | Authenticité ML ; juge LLM |
 | `POST /v1/webhooks` + livraison signée + retry borné | Catalogue d’événements vision (liveness.started, etc.) |
-| Hors corridor AnalyzeID → `unsupported_document` | |
+| Hors mapping QC → `unsupported_document` | Queries / Bedrock vision comme OCR par défaut |
+| Recto seulement (verso `document_back` non exigé) | Code-barres verso comme 2ᵉ source |
 
 **Travaux**
 
+- **Mesurer d’abord :** un AnalyzeID staging sur une photo nette du recto QC (qualité SDK déjà OK). Go si type + nom / naissance / expiration / numéro sont là ; sinon DetectText + mapping **de ce spécimen** seulement, et amender le CDC §11.2 **avant** le vert. Pas de Bedrock vision.
 - Qualité **avant** tout appel payant (CDC / COGS).
 - Journaliser `verification_id` + type d’appel AWS, **pas** les champs d’identité.
-- Console : même fiche qu’en stub (extraits réels).
-- Sandbox : **toujours** 0 Textract / Rekognition (test automatisé).
+- `IdvDecisionEngine` consomme les signaux du port en live (`sandbox_scenario` ignoré, RG-M4-13).
+- Console : même fiche qu’en stub (extraits **réels** du permis QC).
+- Sandbox : **toujours** 0 Textract / Rekognition (test automatisé). Fixture stub M4 (passeport FR) **reste** le sandbox ; la vitrine n’affiche que le corridor **live** (permis QC).
+- Vitrine `/products/identity-verification` : une ligne Canada / permis QC / champs, pas de MRZ.
 
-**Démo :** 1 passeport de test live → décision ; webhook reçu par un endpoint de test ; org B 404.  
-**Kill :** sandbox qui facture AWS ; URL média permanente dans un webhook ; juge LLM.
+**Démo :** 1 permis de conduire **québécois** live (`ky_live_`) → décision ; webhook reçu par un endpoint de test ; org B 404.  
+**Kill :** sandbox qui facture AWS ; URL média permanente dans un webhook ; juge LLM ; corridor publié plus large que le permis QC réellement testé.
 
 ---
 
@@ -389,14 +401,17 @@ Ne bloquent **pas** M0–M2.
 | Canal MVP | **Carte** seule (Checkout) | M3 |
 | Plafond de dépense / recharge auto | Hors MVP | — |
 
-### Avant M4 (corridor affiché = corridor réel)
+### Avant M4 / M5 (corridor affiché = corridor réel)
 
-| Décision | Proposition | Bloque |
+| Décision | Choix | Bloque |
 |---|---|---|
-| Pays × types | Liste courte testée (ex. passeport CA/FR + CNI FR) | M4 copy + mapping |
+| Pays × types **live** | **Canada — permis de conduire Québec** (une classe). Figé 20 sept. 2026. | M5 mapping + copy vitrine ; CDC §11.3 |
+| Sandbox M4 | Fixture stub inchangée (passeport FR fictif). Pas la liste publiée live. | M4 |
 | Politique pièce expirée | Refus | M4 |
+| MRZ sur permis QC | Absente → `mrz_unavailable`, **pas** un refus | M5 |
 | Seuil face match stub / live | Versionné, pas « au feeling » | M4 / M5 |
 | Face Liveness AWS au M5 | Oui **ou** stub documenté + CDC §17.9 amendé | M5 |
+| Lecture live | AnalyzeID d’abord ; DetectText + mapping QC seulement si le test AnalyzeID échoue (alors §11.2) | M5 |
 
 ### Avant paiement Stripe *live* (pas le mode test)
 
@@ -446,12 +461,13 @@ Ordre conseillé, **pas** dans le MVP :
 
 - Changement de périmètre → version du **CDC**, pas un commentaire de PR.
 - Glissement d’un critère (ex. Liveness) → CDC §17 **puis** cette roadmap.
-- Prochain sprint à ouvrir : **M3 — crédit d’organisation** ([B1 — ledger + freeze](./roadmap-implementation-m3.md)).
+- Prochain sprint à ouvrir : **M5 — AWS live + webhooks** ([D1 — mesure AnalyzeID](./roadmap-implementation-m5.md)).
 
 **Journal des changements de périmètre**
 
 | Date | Changement | Trace |
 |---|---|---|
+| 20 sept. 2026 | Corridor live M5 = **permis de conduire Québec** (une classe). Démo M5 : plus un passeport. `mrz_unavailable` non bloquant. Vitrine = liste live, pas la fixture sandbox. | CDC §11.3 **à amender** avant le vert M5 |
 | 17 sept. 2026 | Freeze M3 : **USD**, **0,90 $** / vérif live, packs **50 / 100 / 250 / 500 $**. Roadmap M3 B1–B4. I (intégrations) marqué livré. | CDC v1.5 §10.1 ; [`roadmap-implementation-m3.md`](./roadmap-implementation-m3.md) |
 | 14 sept. 2026 | Plus de sélecteur Sandbox / Live. Test / live = type d’**intégration**. Web flow = `hosted_url` (redirect ou InContext). | CDC v1.4 §9.6–9.7, §11.7 |
 | 9 sept. 2026 | Crédit d’organisation, recharge **carte** MVP (plus de meter / facture d’usage). Facturation org seulement. | CDC v1.3 §10 |

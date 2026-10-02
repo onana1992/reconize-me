@@ -67,6 +67,7 @@ class AuthRateLimiterTest {
                 15,
                 new KycProperties.Mail("log", "noreply@localhost", ""),
                 new KycProperties.Billing("usd", 900L),
-                new KycProperties.Stripe("log", "", "whsec_test"));
+                new KycProperties.Stripe("log", "", "whsec_test"),
+                new KycProperties.Aws(false, "ca-central-1"));
     }
 }

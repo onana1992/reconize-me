@@ -96,10 +96,14 @@
     "lead": "Choose a new password to access the console.",
     "missingToken": "Incomplete link. Request a new email.",
     "password": "New password",
+    "confirmPassword": "Confirm password",
     "passwordHint": "12 characters min., with uppercase, lowercase, a digit and a special character.",
+    "passwordMismatch": "The two passwords do not match.",
     "submit": "Reset password",
     "pending": "Saving…",
     "invalidToken": "Invalid or expired link.",
+    "doneTitle": "Password updated",
+    "doneLead": "You can sign in to the console.",
     "done": "Password updated.",
     "login": "Log in",
     "back": "Log in"
@@ -224,11 +228,25 @@
       "integrationsKeysBodySandbox": "ky_test_ keys for this service. Free, no credit debit. The secret is shown only at issuance.",
       "integrationsKeysBodyLive": "ky_live_ keys for this service. Each resource debits organization credit. A sufficient balance is required. The secret is shown only at issuance.",
       "integrationsWebhooks": "Webhooks",
-      "integrationsWebhooksBody": "Decision callbacks will be signed per integration. Not wired yet.",
+      "integrationsWebhooksBody": "Decision callbacks are signed per integration (HMAC). Media URLs are never included.",
       "integrationsUnavailable": "This service has no API yet. Keys stay under Identity until it ships.",
       "billingNotSold": "This service does not debit credit yet.",
       "newVerification": "New verification",
       "openSession": "Open"
+    },
+    "webhooks": {
+      "url": "Endpoint URL",
+      "save": "Save webhook",
+      "saving": "Saving…",
+      "prefix": "Secret prefix",
+      "status": "Status",
+      "secretOnce": "Copy this secret now — it will not be shown again:",
+      "rotate": "Regenerate secret",
+      "delete": "Remove webhook",
+      "deliveries": "Recent deliveries",
+      "noDeliveries": "No deliveries yet.",
+      "retry": "Retry",
+      "readonly": "You need API key write permission to configure webhooks."
     },
     "integrations": {
       "lead": "Create an integration, copy its key, then create verifications from the Verifications tab.",
@@ -462,7 +480,7 @@
       "enabling": "Reactivating…",
       "disable": "Disable",
       "disabling": "Disabling…",
-      "disableConfirm": "Disable {email}? Their session will be closed.",
+      "disableConfirm": "Disable {email}? Their console session will be closed. They won’t be able to sign in until they are reactivated.",
       "remove": "Remove",
       "removing": "Removing…",
       "removeConfirm": "Remove {email} from the organization?",
@@ -481,7 +499,10 @@
       "alreadyInvited": "An invitation is already pending for this email.",
       "alreadyMember": "This address is already a member of the organization.",
       "inviteForbidden": "You don’t have permission to invite people.",
-      "invalidRole": "Invalid invitation role."
+      "invalidRole": "Invalid invitation role.",
+      "profileTitle": "Member profile",
+      "memberSince": "Member since",
+      "you": "You"
     },
     "account": {
       "lead": "Your identity and organization.",

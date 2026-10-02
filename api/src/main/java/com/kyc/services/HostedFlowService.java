@@ -11,6 +11,7 @@ import com.kyc.dto.idv.FlowSessionResponse;
 import com.kyc.dto.idv.UploadResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Consent;
+import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.VerificationMedia;
 import com.kyc.entities.VerificationSignal;
@@ -18,8 +19,10 @@ import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.DocumentAiPort;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
+import com.kyc.ports.ProviderUnavailableException;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.ConsentRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.VerificationMediaRepository;
 import com.kyc.repositories.VerificationRepository;
 import com.kyc.repositories.VerificationSignalRepository;
@@ -30,6 +33,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,13 +51,17 @@ public class HostedFlowService {
     private final VerificationMediaRepository media;
     private final VerificationSignalRepository signals;
     private final AuditEventRepository auditEvents;
+    private final IntegrationRepository integrations;
     private final HostedTokenStore hostedTokens;
     private final ObjectStoragePort objectStorage;
-    private final DocumentAiPort documentAi;
-    private final BiometricAiPort biometricAi;
+    private final DocumentAiPort stubDocumentAi;
+    private final DocumentAiPort liveDocumentAi;
+    private final BiometricAiPort stubBiometricAi;
+    private final BiometricAiPort liveBiometricAi;
     private final IdvDecisionEngine engine;
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
+    private final WebhookService webhookService;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -61,24 +69,32 @@ public class HostedFlowService {
             VerificationMediaRepository media,
             VerificationSignalRepository signals,
             AuditEventRepository auditEvents,
+            IntegrationRepository integrations,
             HostedTokenStore hostedTokens,
             ObjectStoragePort objectStorage,
-            DocumentAiPort documentAi,
-            BiometricAiPort biometricAi,
+            @Qualifier("stubDocumentAi") DocumentAiPort stubDocumentAi,
+            @Qualifier("liveDocumentAi") DocumentAiPort liveDocumentAi,
+            @Qualifier("stubBiometricAi") BiometricAiPort stubBiometricAi,
+            @Qualifier("liveBiometricAi") BiometricAiPort liveBiometricAi,
             KycProperties properties,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            WebhookService webhookService) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
         this.signals = signals;
         this.auditEvents = auditEvents;
+        this.integrations = integrations;
         this.hostedTokens = hostedTokens;
         this.objectStorage = objectStorage;
-        this.documentAi = documentAi;
-        this.biometricAi = biometricAi;
+        this.stubDocumentAi = stubDocumentAi;
+        this.liveDocumentAi = liveDocumentAi;
+        this.stubBiometricAi = stubBiometricAi;
+        this.liveBiometricAi = liveBiometricAi;
         this.engine = new IdvDecisionEngine();
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.webhookService = webhookService;
     }
 
     @Transactional
@@ -198,10 +214,23 @@ public class HostedFlowService {
                 .orElseThrow(() -> ApiException.conflict("invalid_status", "Selfie is required"));
         byte[] documentBytes = objectStorage.read(document.getObjectKey());
         byte[] selfieBytes = objectStorage.read(selfie.getObjectKey());
-        String scenario = verification.getSandboxScenario() == null ? "approved" : verification.getSandboxScenario();
-        documentAi.analyze(documentBytes, scenario);
-        biometricAi.evaluate(documentBytes, selfieBytes, scenario);
-        IdvDecisionEngine.Result result = engine.decide(scenario);
+        Integration integration = integrations
+                .findById(verification.getIntegrationId())
+                .orElseThrow(() -> ApiException.notFound("Integration not found"));
+
+        IdvDecisionEngine.Result result;
+        String rulesVersion;
+        if (integration.isLive()) {
+            rulesVersion = IdvDecisionEngine.LIVE_RULES_VERSION;
+            result = decideLive(documentBytes, selfieBytes);
+        } else {
+            rulesVersion = IdvDecisionEngine.RULES_VERSION;
+            String scenario = verification.getSandboxScenario() == null ? "approved" : verification.getSandboxScenario();
+            stubDocumentAi.analyze(documentBytes, scenario);
+            stubBiometricAi.evaluate(documentBytes, selfieBytes, scenario);
+            result = engine.decide(scenario);
+        }
+
         String reasons;
         String extracted;
         try {
@@ -213,12 +242,27 @@ public class HostedFlowService {
             reasons = "[]";
             extracted = null;
         }
-        verification.decide(result.decision(), reasons, IdvDecisionEngine.RULES_VERSION, extracted, now);
+        verification.decide(result.decision(), reasons, rulesVersion, extracted, now);
         for (IdvDecisionEngine.Signal signal : result.signals()) {
             signals.save(new VerificationSignal(
                     UUID.randomUUID(), verification.getId(), signal.code(), signal.outcome(), signal.score(), now));
         }
         audit(loaded, "verification.completed", "{\"decision\":\"" + result.decision() + "\"}", now);
+        webhookService.enqueueCompleted(verification, now);
+    }
+
+    private IdvDecisionEngine.Result decideLive(byte[] documentBytes, byte[] selfieBytes) {
+        try {
+            DocumentAiPort.DocumentSignals docSignals = liveDocumentAi.analyze(documentBytes, null);
+            if (!docSignals.supported()) {
+                return engine.decideLive(docSignals, null);
+            }
+            BiometricAiPort.BiometricSignals bioSignals =
+                    liveBiometricAi.evaluate(documentBytes, selfieBytes, null);
+            return engine.decideLive(docSignals, bioSignals);
+        } catch (ProviderUnavailableException e) {
+            return engine.providerUnavailable();
+        }
     }
 
     private UploadResponse issueUpload(Loaded loaded, String kind) {

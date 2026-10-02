@@ -58,6 +58,7 @@ public class VerificationService {
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
     private final CreditService creditService;
+    private final WebhookService webhookService;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -70,7 +71,8 @@ public class VerificationService {
             ObjectStoragePort objectStorage,
             KycProperties properties,
             ObjectMapper objectMapper,
-            CreditService creditService) {
+            CreditService creditService,
+            WebhookService webhookService) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -82,6 +84,7 @@ public class VerificationService {
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.creditService = creditService;
+        this.webhookService = webhookService;
     }
 
     @Transactional
@@ -216,6 +219,7 @@ public class VerificationService {
         Instant now = Instant.now();
         verification.applyReview(decision, now);
         audit(organizationId, actorType, actorId, "verification.reviewed", "verification", id, "{\"decision\":\"" + decision + "\"}", now);
+        webhookService.enqueueCompleted(verification, now);
         return toResponse(verification, true);
     }
 
@@ -275,6 +279,7 @@ public class VerificationService {
                 parseMap(verification.getMetadata()),
                 verification.getDecision(),
                 parseStrings(verification.getDecisionReasons()),
+                verification.getRulesVersion(),
                 signalItems.isEmpty() ? null : signalItems,
                 extracted,
                 verification.getCreatedAt(),

@@ -79,12 +79,6 @@
   padding-right: 2.4rem;
 }
 
-.su-hint {
-  font-size: var(--rm-text-xs);
-  font-weight: 400;
-  color: var(--rm-tone-danger-fg);
-}
-
 .su-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

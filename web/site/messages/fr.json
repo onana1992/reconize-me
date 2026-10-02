@@ -474,22 +474,12 @@
     },
     "corridorRows": [
       {
-        "country": "France",
-        "document": "Passeport",
-        "reading": "Champs et bande de lecture optique"
-      },
-      {
-        "country": "France",
-        "document": "Carte nationale d’identité",
-        "reading": "Champs"
-      },
-      {
         "country": "Canada",
-        "document": "Passeport",
-        "reading": "Champs et bande de lecture optique"
+        "document": "Permis de conduire du Québec (recto)",
+        "reading": "Nom, naissance, numéro, expiration (AnalyzeID)"
       }
     ],
-    "corridorNote": "Un document hors de cette liste est refusé, avec la raison correspondante. Vous ne trouverez pas de « et le reste du monde » sous ce tableau, ni de compte de documents pris en charge.",
+    "corridorNote": "Un document hors de cette liste est refusé, avec la raison correspondante. Pas de MRZ exigée sur ce corridor. Le sandbox utilise une fixture stub (passeport FR fictif) qui n’est pas la liste publiée.",
     "integrationEyebrow": "Intégrer",
     "integrationTitle": "Deux voies, une seule à écrire",
     "integrationLead": "Le lien hébergé suffit à la plupart des intégrations. L’API sert à piloter et à lire.",

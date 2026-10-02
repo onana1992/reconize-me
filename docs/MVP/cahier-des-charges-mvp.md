@@ -14,6 +14,9 @@
 - [`specification-m2-compte-client.md`](./specification-m2-compte-client.md) — M2 compte + cycle équipe T0–T4 (architecture, données, UC, règles)
 - [`specification-m4-capture-idv-stub.md`](./specification-m4-capture-idv-stub.md) — M4 capture + pipeline IDV stub (sandbox)
 - [`roadmap-implementation-m4.md`](./roadmap-implementation-m4.md) — M4 ordre de build C1–C4
+- [`specification-m5-aws-live-webhook.md`](./specification-m5-aws-live-webhook.md) — M5 AWS live + webhooks (permis QC, HMAC)
+- [`roadmap-implementation-m5.md`](./roadmap-implementation-m5.md) — M5 ordre de build D1–D4
+- [`guide-aws-textract.md`](./guide-aws-textract.md) — mesurer AnalyzeID (D1) avant le mapping live
 - [`guide-implementation-m2.md`](./guide-implementation-m2.md) — M2 compte (comment construire)
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) — vision produit (moteurs IA propriétaires, hors MVP)
 - [`../specs/specification-fonctionnelle-idv.md`](../specs/specification-fonctionnelle-idv.md) — métier Identity & Document Verification
@@ -466,7 +469,7 @@ Console + GET /v1/verifications/{id} + webhook verification.completed
 | Lecture (OCR) | **Amazon Textract AnalyzeID** (live) ; stub champs (sandbox) |
 | MRZ | Parseur déterministe si zone présente ; sinon signal `mrz_unavailable` |
 | Authenticité / fraude ML | **Hors MVP**. Signaux déterministes seulement : expiration, checksum MRZ, mismatch OCR/MRZ, type fichier. Score d’authenticité stubbable (`PASS` sandbox) |
-| Liveness | **Rekognition Face Liveness** (live) ; stub `liveness_pass` (sandbox) |
+| Liveness | **Stub qualité** en live pour M5 (média selfie `accepted` → `liveness_pass`). **Rekognition Face Liveness** reporté après M5 (amendement §17.9). Stub scénario en sandbox |
 | Face match | **Rekognition CompareFaces** (live) ; stub score (sandbox) |
 | Risque + décision | **Règles Spring** versionnées, comme la spec. Pas de LLM juge |
 | Revue | File console, analyste **du client** approuve ou refuse |
@@ -479,10 +482,12 @@ Sandbox / local : **zéro appel AWS IA** (stubs). Live : Textract + Rekognition.
 
 Liste courte, affichée sur le site et refus hors liste :
 
-- Passeport (ICAO) — au moins CA, FR, US **ou** le sous-ensemble réellement testé
-- Carte d’identité nationale — uniquement les pays **effectivement** parsés
+> Live (staging / prod) : **Canada — permis de conduire du Québec**, recto. Hors mapping → `unsupported_document`.  
+> Sandbox : fixture stub (passeport FR fictif) ; **n’est pas** la liste publiée.
 
-La liste publiée = la liste du classifieur / mapping AnalyzeID. Pas de « et le reste du monde ».
+Champs lus en live : nom, naissance, numéro, expiration. **Pas** de MRZ exigée sur ce corridor.
+
+La liste publiée = la liste du classifieur / mapping AnalyzeID mesuré (D1). Pas de « et le reste du monde ».
 
 ### 11.4 Décision (politique par défaut)
 
@@ -664,11 +669,10 @@ Le MVP est **démontrable** quand **toutes** les conditions suivantes sont vraie
 ### IDV
 
 8. Sandbox : pièce + selfie → décision **sans** AWS IA, raisons persistées.
-9. Live (staging) : même parcours avec Textract + Rekognition (ou liveness stub **documenté** si Face Liveness n’est pas encore branché — dans ce cas le critère live liveness est reporté, le face match AWS reste exigé).
+9. Live (staging) : même parcours avec Textract AnalyzeID + Rekognition CompareFaces. **Liveness = stub qualité documenté** (Face Liveness AWS reporté après M5). Le face match AWS reste exigé.
 10. Org B ne lit pas le dossier de A (404 identique).
 11. Webhook de décision signé, médias absents du payload.
 12. Hors corridor → refus `unsupported_document`.
-
 ### Vérité commerciale
 
 13. Aucune page ne présente biométrie auth ou AML comme un service activable.

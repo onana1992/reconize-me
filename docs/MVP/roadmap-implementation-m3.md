@@ -388,7 +388,7 @@ Console : Server Action `createCheckoutAction` (même pattern que `createIntegra
 | Après B4 vert | Sprint |
 |---|---|
 | Capture + stub si pas déjà démontrés | **M4** (peut déjà être vert en parallèle) |
-| Textract + Rekognition + webhook **client** par intégration | **M5** |
+| Textract + Rekognition + webhook **client** par intégration | **M5** — [spec](./specification-m5-aws-live-webhook.md), [roadmap D1–D4](./roadmap-implementation-m5.md) |
 | Rate limit, rétention, staging, Stripe **live** après juridique | **M6** |
 
 M5 ne change pas le ledger. Il refuse toujours le live si B4 renvoie 402, **avant** tout appel AWS (COGS).

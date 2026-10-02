@@ -12,18 +12,17 @@ export default async function ResetPage({
 
   return (
     <main className="rm-card rm-auth-card">
-      <h1>{t("reset.title")}</h1>
       {token ? (
-        <>
-          <p className="rm-lead">{t("reset.lead")}</p>
-          <ResetForm token={token} />
-        </>
+        <ResetForm token={token} />
       ) : (
-        <p className="rm-alert">{t("reset.missingToken")}</p>
+        <>
+          <h1>{t("reset.title")}</h1>
+          <p className="rm-alert">{t("reset.missingToken")}</p>
+          <p className="rm-auth-links">
+            <Link href="/login">{t("reset.back")}</Link>
+          </p>
+        </>
       )}
-      <p className="rm-auth-links">
-        <Link href="/login">{t("reset.back")}</Link>
-      </p>
     </main>
   );
 }

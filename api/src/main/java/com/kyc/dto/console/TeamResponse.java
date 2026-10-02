@@ -10,6 +10,8 @@ public record TeamResponse(List<MemberItem> members, List<InviteItem> invites) {
     public record MemberItem(
             UUID id,
             String email,
+            @JsonProperty("first_name") String firstName,
+            @JsonProperty("last_name") String lastName,
             String role,
             String status,
             @JsonProperty("created_at") Instant createdAt) {}

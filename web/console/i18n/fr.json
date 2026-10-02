@@ -96,10 +96,14 @@
     "lead": "Choisissez un nouveau mot de passe pour accéder à la console.",
     "missingToken": "Lien incomplet. Demandez un nouvel e-mail.",
     "password": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
     "passwordHint": "12 caractères min., avec majuscule, minuscule, chiffre et caractère spécial.",
+    "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
     "submit": "Réinitialiser",
     "pending": "Enregistrement…",
     "invalidToken": "Lien invalide ou expiré.",
+    "doneTitle": "Mot de passe mis à jour",
+    "doneLead": "Vous pouvez vous connecter à la console.",
     "done": "Mot de passe mis à jour.",
     "login": "Se connecter",
     "back": "Connexion"
@@ -224,11 +228,25 @@
       "integrationsKeysBodySandbox": "Clés ky_test_ de ce service. Gratuites, aucun débit de crédit. Le secret n’est montré qu’à l’émission.",
       "integrationsKeysBodyLive": "Clés ky_live_ de ce service. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis. Le secret n’est montré qu’à l’émission.",
       "integrationsWebhooks": "Webhooks",
-      "integrationsWebhooksBody": "Les callbacks de décision seront signés par intégration. Pas encore branchés.",
+      "integrationsWebhooksBody": "Les callbacks de décision sont signés par intégration (HMAC). Aucune URL média dans le payload.",
       "integrationsUnavailable": "Ce service n’a pas encore d’API. Les clés restent sous Identité jusqu’à sa mise en ligne.",
       "billingNotSold": "Ce service ne débite pas encore le crédit.",
       "newVerification": "Nouvelle vérification",
       "openSession": "Ouvrir"
+    },
+    "webhooks": {
+      "url": "URL de l’endpoint",
+      "save": "Enregistrer le webhook",
+      "saving": "Enregistrement…",
+      "prefix": "Préfixe du secret",
+      "status": "Statut",
+      "secretOnce": "Copiez ce secret maintenant — il ne sera plus affiché :",
+      "rotate": "Régénérer le secret",
+      "delete": "Supprimer le webhook",
+      "deliveries": "Livraisons récentes",
+      "noDeliveries": "Aucune livraison pour l’instant.",
+      "retry": "Renvoyer",
+      "readonly": "La permission d’écriture des clés API est requise pour configurer les webhooks."
     },
     "integrations": {
       "lead": "Créez une intégration, copiez sa clé, puis lancez les vérifications depuis l’onglet Vérifications.",
@@ -462,7 +480,7 @@
       "enabling": "Réactivation…",
       "disable": "Désactiver",
       "disabling": "Désactivation…",
-      "disableConfirm": "Désactiver {email} ? La session sera fermée.",
+      "disableConfirm": "Désactiver {email} ? Sa session console sera fermée. Il ne pourra plus se connecter tant qu’il n’est pas réactivé.",
       "remove": "Retirer",
       "removing": "Retrait…",
       "removeConfirm": "Retirer {email} de l’organisation ?",
@@ -481,7 +499,10 @@
       "alreadyInvited": "Une invitation est déjà en cours pour cet e-mail.",
       "alreadyMember": "Cette adresse fait déjà partie de l’organisation.",
       "inviteForbidden": "Vous n’avez pas le droit d’inviter.",
-      "invalidRole": "Rôle d’invitation invalide."
+      "invalidRole": "Rôle d’invitation invalide.",
+      "profileTitle": "Profil du membre",
+      "memberSince": "Membre depuis",
+      "you": "Vous"
     },
     "account": {
       "lead": "Votre identité et votre organisation.",

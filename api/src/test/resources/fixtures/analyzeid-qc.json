@@ -1,0 +1,40 @@
+{
+  "IdentityDocuments": [
+    {
+      "IdentityDocumentFields": [
+        {
+          "Type": { "Text": "FIRST_NAME" },
+          "ValueDetection": { "Text": "ANNE-MARIE", "Confidence": 99.0 }
+        },
+        {
+          "Type": { "Text": "LAST_NAME" },
+          "ValueDetection": { "Text": "TREMBLAY", "Confidence": 99.0 }
+        },
+        {
+          "Type": { "Text": "DATE_OF_BIRTH" },
+          "ValueDetection": { "Text": "1990-04-12", "Confidence": 98.0 }
+        },
+        {
+          "Type": { "Text": "EXPIRATION_DATE" },
+          "ValueDetection": { "Text": "2028-06-01", "Confidence": 98.0 }
+        },
+        {
+          "Type": { "Text": "DOCUMENT_NUMBER" },
+          "ValueDetection": { "Text": "T1234-567890-12", "Confidence": 97.0 }
+        },
+        {
+          "Type": { "Text": "ID_TYPE" },
+          "ValueDetection": { "Text": "DRIVER LICENSE", "Confidence": 99.0 }
+        },
+        {
+          "Type": { "Text": "COUNTRY" },
+          "ValueDetection": { "Text": "CANADA", "Confidence": 95.0 }
+        },
+        {
+          "Type": { "Text": "STATE_NAME" },
+          "ValueDetection": { "Text": "QUEBEC", "Confidence": 96.0 }
+        }
+      ]
+    }
+  ]
+}

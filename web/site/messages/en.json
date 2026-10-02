@@ -474,22 +474,12 @@
     },
     "corridorRows": [
       {
-        "country": "France",
-        "document": "Passport",
-        "reading": "Fields and machine-readable band"
-      },
-      {
-        "country": "France",
-        "document": "National identity card",
-        "reading": "Fields"
-      },
-      {
         "country": "Canada",
-        "document": "Passport",
-        "reading": "Fields and machine-readable band"
+        "document": "Quebec driver's licence (front)",
+        "reading": "Name, birth date, number, expiry (AnalyzeID)"
       }
     ],
-    "corridorNote": "A document outside this list is rejected, with the matching reason. You will find no “and the rest of the world” under this table, and no count of supported documents.",
+    "corridorNote": "A document outside this list is rejected, with the matching reason. No MRZ is required on this corridor. The sandbox uses a stub fixture (fictional FR passport) that is not the published list.",
     "integrationEyebrow": "Integrate",
     "integrationTitle": "Two routes, only one to write",
     "integrationLead": "The hosted link is enough for most integrations. The API is there to drive and to read.",

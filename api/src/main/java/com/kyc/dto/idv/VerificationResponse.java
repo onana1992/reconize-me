@@ -19,6 +19,7 @@ public record VerificationResponse(
         Map<String, Object> metadata,
         String decision,
         @JsonProperty("decision_reasons") List<String> decisionReasons,
+        @JsonProperty("rules_version") String rulesVersion,
         List<Signal> signals,
         @JsonProperty("extracted_identity") Map<String, Object> extractedIdentity,
         @JsonProperty("created_at") Instant createdAt,

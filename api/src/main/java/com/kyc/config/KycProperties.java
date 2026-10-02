@@ -17,7 +17,8 @@ public record KycProperties(
         @DefaultValue("15") int authRateWindowMinutes,
         @DefaultValue Mail mail,
         @DefaultValue Billing billing,
-        @DefaultValue Stripe stripe) {
+        @DefaultValue Stripe stripe,
+        @DefaultValue Aws aws) {
 
     public record Mail(
             @DefaultValue("log") String mode,
@@ -53,6 +54,10 @@ public record KycProperties(
             return "stripe".equalsIgnoreCase(mode);
         }
     }
+
+    public record Aws(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("ca-central-1") String region) {}
 
     public String consoleUrl(String path) {
         return join(publicConsoleBaseUrl, path);

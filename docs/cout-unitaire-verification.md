@@ -7,6 +7,7 @@
 **Documents liés :**
 - [`cahier-des-charges.md`](./cahier-des-charges.md) — vision produit et stack AWS AI
 - [`specs/specification-fonctionnelle-idv.md`](./specs/specification-fonctionnelle-idv.md) — produit Identity & Document Verification
+- [`MVP/guide-aws-textract.md`](./MVP/guide-aws-textract.md) — palier D1 AnalyzeID (qualité avant l’appel, 0 AWS en sandbox)
 
 Hypothèse de ce document : décision 100 % automatique (`APPROVED` / `REJECTED`). Aucun analyste. Les montants sont en **USD**, tarifs publics AWS (Oregon / Virginie ; Irlande et Canada du même ordre).
 
@@ -127,7 +128,7 @@ AML / PEP / sanctions (Phase 3) : souvent **0,10 – 1,50 $** en plus via un bur
 - Liveness spam / bots : chaque `CreateFaceLivenessSession` est facturée, succès ou non.
 - SageMaker trop tôt, à bas volume.
 
-Garde-fous déjà prévus dans la roadmap et le tutoriel : filtre qualité **avant** Textract, plafond d’attempts, journalisation du coût AWS par tentative.
+Garde-fous déjà prévus dans la roadmap et le [guide Textract](./MVP/guide-aws-textract.md) : filtre qualité **avant** Textract, plafond d’attempts, journalisation du coût AWS par tentative (sans PII).
 
 ---
 
@@ -146,6 +147,7 @@ La roadmap identifie la revue comme **coût n°1** si elle est activée. Chiffre
 ## 10. Sources
 
 - [Amazon Textract pricing](https://aws.amazon.com/textract/pricing/) — AnalyzeID : 0,025 $/page (100k premières), 0,01 $ ensuite
+- [Guide D1 Textract](./MVP/guide-aws-textract.md) — runbook local AnalyzeID (permis QC)
 - [Amazon Rekognition pricing](https://aws.amazon.com/rekognition/pricing/) — Face Liveness : 0,015 $/session (500k premières) ; CompareFaces / DetectFaces : 0,001 $/image (1M premières)
 - [Rekognition FAQs](https://aws.amazon.com/rekognition/faqs/) — CompareFaces : seule l’image source est facturée ; liveness facturé succès **et** échec
 - Marché IDV 2026 (indicatif) : Veriff / Sumsub ~0,80 – 1,85 $ ; Onfido / Jumio ~2 – 5 $ ; Stripe Identity 1,50 $
