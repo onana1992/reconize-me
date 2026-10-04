@@ -15,6 +15,11 @@ import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.VerificationMedia;
 import com.kyc.entities.VerificationSignal;
+import com.kyc.enums.ConsentDecision;
+import com.kyc.enums.Enums;
+import com.kyc.enums.MediaKind;
+import com.kyc.enums.MediaStatus;
+import com.kyc.enums.VerificationStatus;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.DocumentAiPort;
 import com.kyc.ports.HostedTokenStore;
@@ -30,7 +35,9 @@ import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,9 +49,10 @@ public class HostedFlowService {
 
     private static final int MAX_ATTEMPTS = 3;
     private static final Duration UPLOAD_TTL = Duration.ofMinutes(5);
-    private static final Set<String> DOCUMENT_UPLOAD = Set.of(
-            Verification.PENDING_APPLICANT, Verification.DOCUMENT, Verification.RECAPTURE_REQUESTED);
-    private static final Set<String> SELFIE_UPLOAD = Set.of(Verification.SELFIE, Verification.RECAPTURE_REQUESTED);
+    private static final Set<VerificationStatus> DOCUMENT_UPLOAD = EnumSet.of(
+            VerificationStatus.PENDING_APPLICANT, VerificationStatus.DOCUMENT, VerificationStatus.RECAPTURE_REQUESTED);
+    private static final Set<VerificationStatus> SELFIE_UPLOAD =
+            EnumSet.of(VerificationStatus.SELFIE, VerificationStatus.RECAPTURE_REQUESTED);
 
     private final VerificationRepository verifications;
     private final ConsentRepository consents;
@@ -101,7 +109,7 @@ public class HostedFlowService {
     public FlowSessionResponse hydrate(String token) {
         Loaded loaded = load(token);
         Instant now = Instant.now();
-        if (Verification.CREATED.equals(loaded.verification().getStatus())) {
+        if (loaded.verification().getStatus() == VerificationStatus.CREATED) {
             loaded.verification().markOpened(now);
             audit(loaded, "hosted_link.opened", now);
         }
@@ -112,19 +120,25 @@ public class HostedFlowService {
     public ConsentResponse consent(String token, ConsentRequest request, String ip, String userAgent) {
         Loaded loaded = load(token);
         Verification verification = loaded.verification();
-        String decision = request == null ? null : request.decision();
-        if (!"accepted".equals(decision) && !"declined".equals(decision)) {
-            throw ApiException.validation("Invalid consent decision", List.of(new ErrorDetail("decision", "invalid")));
+        ConsentDecision decision;
+        try {
+            decision = ConsentDecision.valueOf(
+                    (request == null || request.decision() == null ? "" : request.decision())
+                            .trim()
+                            .toUpperCase(Locale.ROOT));
+        } catch (RuntimeException e) {
+            throw ApiException.validation(
+                    "Invalid consent decision", List.of(new ErrorDetail("decision", "invalid")));
         }
         if (consents.existsByVerificationId(verification.getId())) {
             throw ApiException.conflict("consent_already_recorded", "Consent already recorded");
         }
-        if (!Verification.PENDING_CONSENT.equals(verification.getStatus())
-                && !Verification.CREATED.equals(verification.getStatus())) {
+        if (verification.getStatus() != VerificationStatus.PENDING_CONSENT
+                && verification.getStatus() != VerificationStatus.CREATED) {
             throw ApiException.conflict("invalid_status", "Consent is not expected");
         }
         Instant now = Instant.now();
-        if (Verification.CREATED.equals(verification.getStatus())) {
+        if (verification.getStatus() == VerificationStatus.CREATED) {
             verification.markOpened(now);
         }
         String ua = userAgent == null ? null : userAgent.substring(0, Math.min(userAgent.length(), 512));
@@ -137,14 +151,14 @@ public class HostedFlowService {
                 now,
                 ipHash,
                 ua));
-        if ("accepted".equals(decision)) {
+        if (decision == ConsentDecision.ACCEPTED) {
             verification.markConsentAccepted(now);
             audit(loaded, "consent.accepted", now);
         } else {
             verification.markConsentDeclined(now);
             audit(loaded, "consent.declined", now);
         }
-        return new ConsentResponse(verification.getStatus(), nextOf(verification), now);
+        return new ConsentResponse(Enums.json(verification.getStatus()), nextOf(verification), now);
     }
 
     @Transactional
@@ -152,10 +166,10 @@ public class HostedFlowService {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
         if (!DOCUMENT_UPLOAD.contains(loaded.verification().getStatus())
-                || accepted(loaded.verification().getId(), "document").isPresent()) {
+                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isPresent()) {
             throw ApiException.conflict("invalid_status", "Document capture is not expected");
         }
-        return issueUpload(loaded, "document");
+        return issueUpload(loaded, MediaKind.DOCUMENT);
     }
 
     @Transactional
@@ -165,12 +179,15 @@ public class HostedFlowService {
         if (!DOCUMENT_UPLOAD.contains(loaded.verification().getStatus())) {
             throw ApiException.conflict("invalid_status", "Document capture is not expected");
         }
-        String kind = "back".equals(request == null ? null : request.side()) ? "document_back" : "document";
+        MediaKind kind = "back".equals(request == null ? null : request.side())
+                ? MediaKind.DOCUMENT_BACK
+                : MediaKind.DOCUMENT;
         CompleteCaptureResponse response = completeMedia(loaded, kind, request == null ? null : request.attempt(), MediaQuality::acceptableDocument);
-        if (Boolean.TRUE.equals(response.accepted()) && "document".equals(kind)) {
+        if (Boolean.TRUE.equals(response.accepted()) && kind == MediaKind.DOCUMENT) {
             Instant now = Instant.now();
             loaded.verification().markSelfie(now);
-            return new CompleteCaptureResponse(loaded.verification().getStatus(), nextOf(loaded.verification()), true, response.attempt(), null);
+            return new CompleteCaptureResponse(
+                    Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, response.attempt(), null);
         }
         return response;
     }
@@ -180,11 +197,11 @@ public class HostedFlowService {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
-                || accepted(loaded.verification().getId(), "document").isEmpty()
-                || accepted(loaded.verification().getId(), "selfie").isPresent()) {
+                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()
+                || accepted(loaded.verification().getId(), MediaKind.SELFIE).isPresent()) {
             throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
         }
-        return issueUpload(loaded, "selfie");
+        return issueUpload(loaded, MediaKind.SELFIE);
     }
 
     @Transactional
@@ -192,25 +209,26 @@ public class HostedFlowService {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
-                || accepted(loaded.verification().getId(), "document").isEmpty()) {
+                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()) {
             throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
         }
         CompleteCaptureResponse response = completeMedia(
-                loaded, "selfie", request == null ? null : request.attempt(), MediaQuality::acceptableSelfie);
+                loaded, MediaKind.SELFIE, request == null ? null : request.attempt(), MediaQuality::acceptableSelfie);
         if (!Boolean.TRUE.equals(response.accepted())) {
             return response;
         }
         Instant now = Instant.now();
         loaded.verification().markProcessing(now);
         decide(loaded, now);
-        return new CompleteCaptureResponse(loaded.verification().getStatus(), nextOf(loaded.verification()), true, response.attempt(), null);
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, response.attempt(), null);
     }
 
     private void decide(Loaded loaded, Instant now) {
         Verification verification = loaded.verification();
-        var document = accepted(verification.getId(), "document")
+        var document = accepted(verification.getId(), MediaKind.DOCUMENT)
                 .orElseThrow(() -> ApiException.conflict("invalid_status", "Document is required"));
-        var selfie = accepted(verification.getId(), "selfie")
+        var selfie = accepted(verification.getId(), MediaKind.SELFIE)
                 .orElseThrow(() -> ApiException.conflict("invalid_status", "Selfie is required"));
         byte[] documentBytes = objectStorage.read(document.getObjectKey());
         byte[] selfieBytes = objectStorage.read(selfie.getObjectKey());
@@ -245,9 +263,14 @@ public class HostedFlowService {
         verification.decide(result.decision(), reasons, rulesVersion, extracted, now);
         for (IdvDecisionEngine.Signal signal : result.signals()) {
             signals.save(new VerificationSignal(
-                    UUID.randomUUID(), verification.getId(), signal.code(), signal.outcome(), signal.score(), now));
+                    UUID.randomUUID(),
+                    verification.getId(),
+                    signal.code(),
+                    signal.outcome(),
+                    signal.score(),
+                    now));
         }
-        audit(loaded, "verification.completed", "{\"decision\":\"" + result.decision() + "\"}", now);
+        audit(loaded, "verification.completed", "{\"decision\":\"" + Enums.json(result.decision()) + "\"}", now);
         webhookService.enqueueCompleted(verification, now);
     }
 
@@ -265,14 +288,14 @@ public class HostedFlowService {
         }
     }
 
-    private UploadResponse issueUpload(Loaded loaded, String kind) {
+    private UploadResponse issueUpload(Loaded loaded, MediaKind kind) {
         long used = media.countByVerificationIdAndKind(loaded.verification().getId(), kind);
         if (used >= MAX_ATTEMPTS) {
             throw ApiException.conflict("invalid_status", "Capture attempts exceeded");
         }
         int attempt = (int) used + 1;
         Instant now = Instant.now();
-        if ("document".equals(kind) && Verification.PENDING_APPLICANT.equals(loaded.verification().getStatus())) {
+        if (kind == MediaKind.DOCUMENT && loaded.verification().getStatus() == VerificationStatus.PENDING_APPLICANT) {
             loaded.verification().markDocument(now);
         }
         String objectKey = "org/"
@@ -280,7 +303,7 @@ public class HostedFlowService {
                 + "/verifications/"
                 + loaded.verification().getId()
                 + "/"
-                + kind
+                + Enums.json(kind)
                 + "/"
                 + attempt;
         VerificationMedia item = new VerificationMedia(
@@ -296,13 +319,14 @@ public class HostedFlowService {
     }
 
     private CompleteCaptureResponse completeMedia(
-            Loaded loaded, String kind, Integer attempt, java.util.function.Predicate<byte[]> quality) {
+            Loaded loaded, MediaKind kind, Integer attempt, java.util.function.Predicate<byte[]> quality) {
         if (attempt == null || attempt < 1) {
             throw ApiException.validation("Invalid attempt", List.of(new ErrorDetail("attempt", "invalid")));
         }
-        VerificationMedia item = media.findByVerificationIdAndKindAndAttempt(loaded.verification().getId(), kind, attempt)
+        VerificationMedia item = media.findByVerificationIdAndKindAndAttempt(
+                        loaded.verification().getId(), kind, attempt)
                 .orElseThrow(() -> ApiException.validation("Unknown attempt", List.of(new ErrorDetail("attempt", "unknown"))));
-        if (!VerificationMedia.PENDING.equals(item.getStatus())) {
+        if (item.getStatus() != MediaStatus.PENDING) {
             throw ApiException.conflict("invalid_status", "Attempt already completed");
         }
         if (!objectStorage.exists(item.getObjectKey())) {
@@ -316,14 +340,15 @@ public class HostedFlowService {
                 loaded.verification().declineCaptureAttempts(now);
                 hostedTokens.revokeByVerificationId(loaded.verification().getId());
                 audit(loaded, "verification.declined", "{\"reason\":\"capture_attempts_exceeded\"}", now);
-                return new CompleteCaptureResponse(loaded.verification().getStatus(), "done", false, attempt, true);
+                return new CompleteCaptureResponse(Enums.json(loaded.verification().getStatus()), "done", false, attempt, true);
             }
             loaded.verification().markRecapture(now);
             return new CompleteCaptureResponse(
-                    loaded.verification().getStatus(), nextOf(loaded.verification()), false, attempt, true);
+                    Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), false, attempt, true);
         }
         item.accept(MediaQuality.sniff(body), body.length);
-        return new CompleteCaptureResponse(loaded.verification().getStatus(), nextOf(loaded.verification()), true, attempt, false);
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, false);
     }
 
     private Loaded load(String token) {
@@ -336,7 +361,7 @@ public class HostedFlowService {
             Verification verification = verifications
                     .findByIdAndOrganizationId(entry.get().verificationId(), entry.get().organizationId())
                     .orElseThrow(() -> ApiException.notFound("Verification not found"));
-            if (verification.expired(now) || Verification.CANCELLED.equals(verification.getStatus())) {
+            if (verification.expired(now) || verification.getStatus() == VerificationStatus.CANCELLED) {
                 expireIfNeeded(verification, now, entry.get().organizationId());
                 throw ApiException.gone("hosted_link_expired", "This link has expired");
             }
@@ -350,7 +375,7 @@ public class HostedFlowService {
     }
 
     private void expireIfNeeded(Verification verification, Instant now, UUID organizationId) {
-        if (terminal(verification)) {
+        if (verification.terminal()) {
             return;
         }
         verification.expire(now);
@@ -359,34 +384,24 @@ public class HostedFlowService {
                 organizationId, "applicant", null, "verification.expired", "verification", verification.getId(), "{}", now));
     }
 
-    private static boolean terminal(Verification verification) {
-        return Set.of(
-                        Verification.APPROVED,
-                        Verification.DECLINED,
-                        Verification.REVIEW,
-                        Verification.EXPIRED,
-                        Verification.CANCELLED)
-                .contains(verification.getStatus());
-    }
-
     private void requireConsent(Verification verification) {
         Consent consent = consents
                 .findByVerificationId(verification.getId())
                 .orElseThrow(() -> ApiException.conflict("invalid_status", "Consent is required"));
-        if (!"accepted".equals(consent.getDecision())) {
+        if (consent.getDecision() != ConsentDecision.ACCEPTED) {
             throw ApiException.conflict("invalid_status", "Consent was declined");
         }
     }
 
-    private java.util.Optional<VerificationMedia> accepted(UUID verificationId, String kind) {
+    private java.util.Optional<VerificationMedia> accepted(UUID verificationId, MediaKind kind) {
         return media.findFirstByVerificationIdAndKindAndStatusOrderByAttemptDesc(
-                verificationId, kind, VerificationMedia.ACCEPTED);
+                verificationId, kind, MediaStatus.ACCEPTED);
     }
 
     private FlowSessionResponse toFlow(Verification verification) {
         return new FlowSessionResponse(
                 verification.getId(),
-                verification.getStatus(),
+                Enums.json(verification.getStatus()),
                 properties.consentTextVersion(),
                 verification.getHostedExpiresAt(),
                 nextOf(verification));
@@ -394,19 +409,19 @@ public class HostedFlowService {
 
     private String nextOf(Verification verification) {
         return switch (verification.getStatus()) {
-            case Verification.CREATED, Verification.PENDING_CONSENT -> "consent";
-            case Verification.PENDING_APPLICANT, Verification.DOCUMENT, Verification.RECAPTURE_REQUESTED -> {
-                if (accepted(verification.getId(), "document").isPresent()
-                        && accepted(verification.getId(), "selfie").isEmpty()) {
+            case CREATED, PENDING_CONSENT -> "consent";
+            case PENDING_APPLICANT, DOCUMENT, RECAPTURE_REQUESTED -> {
+                if (accepted(verification.getId(), MediaKind.DOCUMENT).isPresent()
+                        && accepted(verification.getId(), MediaKind.SELFIE).isEmpty()) {
                     yield "capture_selfie";
                 }
-                if (accepted(verification.getId(), "document").isEmpty()) {
+                if (accepted(verification.getId(), MediaKind.DOCUMENT).isEmpty()) {
                     yield "capture_document";
                 }
                 yield "capture_selfie";
             }
-            case Verification.SELFIE -> "capture_selfie";
-            case Verification.PROCESSING -> "wait";
+            case SELFIE -> "capture_selfie";
+            case PROCESSING -> "wait";
             default -> "done";
         };
     }

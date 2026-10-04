@@ -1,7 +1,10 @@
 package com.kyc.entities;
 
+import com.kyc.enums.ConsentDecision;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -22,8 +25,9 @@ public class Consent {
     @Column(name = "verification_id", nullable = false)
     private UUID verificationId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private String decision;
+    private ConsentDecision decision;
 
     @Column(name = "text_version", nullable = false, length = 64)
     private String textVersion;
@@ -40,7 +44,7 @@ public class Consent {
     public Consent(
             UUID id,
             UUID verificationId,
-            String decision,
+            ConsentDecision decision,
             String textVersion,
             Instant acceptedAt,
             String ipHash,

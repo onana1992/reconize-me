@@ -13,7 +13,12 @@ import com.kyc.entities.IdempotencyKey;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.VerificationMedia;
-import com.kyc.entities.VerificationSignal;
+import com.kyc.enums.Enums;
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.MediaKind;
+import com.kyc.enums.MediaStatus;
+import com.kyc.enums.VerificationDecision;
+import com.kyc.enums.VerificationStatus;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.repositories.AuditEventRepository;
@@ -29,6 +34,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -165,12 +171,12 @@ public class VerificationService {
         int size = Math.min(Math.max(limit, 1), 100);
         List<Verification> page;
         if (cursor == null || cursor.isBlank()) {
-            page = verifications.pageFirst(organizationId, blankToNull(status), integrationId, PageRequest.of(0, size + 1));
+            page = verifications.pageFirst(organizationId, parseStatus(status), integrationId, PageRequest.of(0, size + 1));
         } else {
             Cursor decoded = Cursor.parse(cursor);
             page = verifications.pageAfter(
                     organizationId,
-                    blankToNull(status),
+                    parseStatus(status),
                     integrationId,
                     decoded.createdAt(),
                     decoded.id(),
@@ -207,18 +213,24 @@ public class VerificationService {
 
     @Transactional
     public VerificationResponse review(UUID organizationId, String actorType, UUID actorId, UUID id, String decision) {
-        if (!"approved".equals(decision) && !"declined".equals(decision)) {
+        VerificationDecision parsed;
+        try {
+            parsed = VerificationDecision.valueOf((decision == null ? "" : decision).trim().toUpperCase(Locale.ROOT));
+        } catch (RuntimeException e) {
+            throw ApiException.validation("Invalid review decision", List.of(new ErrorDetail("decision", "invalid")));
+        }
+        if (parsed != VerificationDecision.APPROVED && parsed != VerificationDecision.DECLINED) {
             throw ApiException.validation("Invalid review decision", List.of(new ErrorDetail("decision", "invalid")));
         }
         Verification verification = verifications
                 .findByIdAndOrganizationId(id, organizationId)
                 .orElseThrow(() -> ApiException.notFound("Verification not found"));
-        if (!Verification.REVIEW.equals(verification.getStatus())) {
+        if (verification.getStatus() != VerificationStatus.REVIEW) {
             throw ApiException.conflict("invalid_status", "Verification is not in review");
         }
         Instant now = Instant.now();
-        verification.applyReview(decision, now);
-        audit(organizationId, actorType, actorId, "verification.reviewed", "verification", id, "{\"decision\":\"" + decision + "\"}", now);
+        verification.applyReview(parsed, now);
+        audit(organizationId, actorType, actorId, "verification.reviewed", "verification", id, "{\"decision\":\"" + Enums.json(parsed) + "\"}", now);
         webhookService.enqueueCompleted(verification, now);
         return toResponse(verification, true);
     }
@@ -228,8 +240,14 @@ public class VerificationService {
         Verification verification = verifications
                 .findByIdAndOrganizationId(id, organizationId)
                 .orElseThrow(() -> ApiException.notFound("Verification not found"));
+        MediaKind parsedKind;
+        try {
+            parsedKind = MediaKind.valueOf((kind == null ? "" : kind).trim().toUpperCase(Locale.ROOT));
+        } catch (RuntimeException e) {
+            throw ApiException.notFound("Media not found");
+        }
         VerificationMedia item = media.findFirstByVerificationIdAndKindAndStatusOrderByAttemptDesc(
-                        verification.getId(), kind, VerificationMedia.ACCEPTED)
+                        verification.getId(), parsedKind, MediaStatus.ACCEPTED)
                 .orElseThrow(() -> ApiException.notFound("Media not found"));
         var signed = objectStorage.createSignedGetUrl(item.getObjectKey(), Duration.ofMinutes(5));
         return new MediaUrlResponse(signed.url(), signed.expiresAt());
@@ -253,21 +271,22 @@ public class VerificationService {
         String hostedUrl = null;
         if (rawToken != null
                 && !verification.expired(Instant.now())
-                && !Verification.CANCELLED.equals(verification.getStatus())
-                && !Verification.EXPIRED.equals(verification.getStatus())) {
+                && verification.getStatus() != VerificationStatus.CANCELLED
+                && verification.getStatus() != VerificationStatus.EXPIRED) {
             hostedUrl = properties.hostedUrl(rawToken);
         }
         List<VerificationResponse.Signal> signalItems = List.of();
         Map<String, Object> extracted = null;
         if (detail) {
             signalItems = signals.findByVerificationIdOrderByCreatedAtAsc(verification.getId()).stream()
-                    .map(item -> new VerificationResponse.Signal(item.getCode(), item.getOutcome(), item.getScore()))
+                    .map(item -> new VerificationResponse.Signal(
+                            item.getCode(), Enums.json(item.getOutcome()), item.getScore()))
                     .toList();
             extracted = parseMap(verification.getExtractedIdentity());
         }
         return new VerificationResponse(
                 verification.getId(),
-                verification.getStatus(),
+                Enums.json(verification.getStatus()),
                 verification.getIntegrationId(),
                 mode,
                 hostedUrl,
@@ -277,7 +296,7 @@ public class VerificationService {
                         verification.getApplicantLastName(),
                         verification.getApplicantEmail()),
                 parseMap(verification.getMetadata()),
-                verification.getDecision(),
+                Enums.json(verification.getDecision()),
                 parseStrings(verification.getDecisionReasons()),
                 verification.getRulesVersion(),
                 signalItems.isEmpty() ? null : signalItems,
@@ -297,14 +316,14 @@ public class VerificationService {
 
     private static String modeOf(Verification verification, Map<UUID, Integration> byId) {
         Integration row = byId.get(verification.getIntegrationId());
-        return row == null ? Integration.MODE_TEST : row.getMode();
+        return row == null ? Enums.json(IntegrationMode.TEST) : Enums.json(row.getMode());
     }
 
     private String modeFor(Verification verification) {
         return integrationRepository
                 .findById(verification.getIntegrationId())
-                .map(Integration::getMode)
-                .orElse(Integration.MODE_TEST);
+                .map(row -> Enums.json(row.getMode()))
+                .orElse(Enums.json(IntegrationMode.TEST));
     }
 
     private String validateMetadata(Map<String, Object> metadata) {
@@ -406,6 +425,18 @@ public class VerificationService {
             return objectMapper.readValue(json, STRINGS);
         } catch (JsonProcessingException e) {
             return null;
+        }
+    }
+
+    private static VerificationStatus parseStatus(String raw) {
+        String value = blankToNull(raw);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return VerificationStatus.valueOf(value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw ApiException.validation("Invalid status", List.of(new ErrorDetail("status", "invalid")));
         }
     }
 

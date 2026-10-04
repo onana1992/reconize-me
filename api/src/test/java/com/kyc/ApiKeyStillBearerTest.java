@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.ProductCode;
 import com.kyc.entities.ApiKey;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
@@ -79,8 +81,8 @@ class ApiKeyStillBearerTest {
         integrationRepository.save(new Integration(
                 integrationId,
                 orgId,
-                Integration.PRODUCT_IDENTITY,
-                Integration.MODE_TEST,
+                ProductCode.IDENTITY,
+                IntegrationMode.TEST,
                 "Test",
                 now));
         apiKeyRepository.save(new ApiKey(

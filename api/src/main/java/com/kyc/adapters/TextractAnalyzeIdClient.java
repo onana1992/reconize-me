@@ -8,7 +8,6 @@ import com.kyc.ports.AnalyzeIdClient;
 import com.kyc.ports.ProviderUnavailableException;
 import java.util.List;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.AnalyzeIdRequest;
 import software.amazon.awssdk.services.textract.model.AnalyzeIdResponse;
@@ -23,8 +22,11 @@ public class TextractAnalyzeIdClient implements AnalyzeIdClient {
 
     public TextractAnalyzeIdClient(KycProperties properties, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        KycProperties.Aws.Textract textractProps = properties.aws().textract();
         this.textract = TextractClient.builder()
-                .region(Region.of(properties.aws().region()))
+                .region(AwsClientCredentials.region(textractProps.region(), properties.aws().region()))
+                .credentialsProvider(AwsClientCredentials.require(
+                        textractProps.accessKeyId(), textractProps.secretAccessKey(), "kyc.aws.textract"))
                 .build();
     }
 

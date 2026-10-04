@@ -7,7 +7,11 @@ import com.kyc.dto.billing.UsageResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.CreditAccount;
 import com.kyc.entities.CreditLedgerEntry;
-import com.kyc.entities.Integration;
+import com.kyc.enums.Enums;
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.LedgerEntryType;
+import com.kyc.enums.LedgerResourceType;
+import com.kyc.enums.ProductCode;
 import com.kyc.entities.StripeCustomer;
 import com.kyc.ports.StripePort;
 import com.kyc.repositories.CreditAccountRepository;
@@ -34,8 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CreditService {
-
-    public static final String PRODUCT_IDENTITY = Integration.PRODUCT_IDENTITY;
 
     private static final Logger log = LoggerFactory.getLogger(CreditService.class);
     private static final int LEDGER_DEFAULT = 50;
@@ -182,7 +184,7 @@ public class CreditService {
             ledger.save(new CreditLedgerEntry(
                     entryId,
                     account.getOrganizationId(),
-                    CreditLedgerEntry.TOPUP,
+                    LedgerEntryType.TOPUP,
                     packMinor,
                     account.getBalanceMinor(),
                     null,
@@ -213,7 +215,7 @@ public class CreditService {
         if (account.getBalanceMinor() < unit) {
             throw ApiException.insufficientCredit();
         }
-        if (ledger.existsByResourceTypeAndResourceId(CreditLedgerEntry.RESOURCE_VERIFICATION, verificationId)) {
+        if (ledger.existsByResourceTypeAndResourceId(LedgerResourceType.VERIFICATION, verificationId)) {
             return;
         }
         Instant now = Instant.now();
@@ -222,11 +224,11 @@ public class CreditService {
         ledger.save(new CreditLedgerEntry(
                 entryId,
                 organizationId,
-                CreditLedgerEntry.DEBIT,
+                LedgerEntryType.DEBIT,
                 -unit,
                 account.getBalanceMinor(),
-                PRODUCT_IDENTITY,
-                CreditLedgerEntry.RESOURCE_VERIFICATION,
+                ProductCode.IDENTITY,
+                LedgerResourceType.VERIFICATION,
                 verificationId,
                 null,
                 null,
@@ -251,17 +253,16 @@ public class CreditService {
         long sandbox = 0;
         long live = 0;
         for (Object[] row : verifications.countByIntegrationMode(organizationId)) {
-            String mode = String.valueOf(row[0]);
             long count = ((Number) row[1]).longValue();
-            if (Integration.MODE_LIVE.equals(mode)) {
+            if (row[0] == IntegrationMode.LIVE || IntegrationMode.LIVE.name().equals(String.valueOf(row[0]))) {
                 live = count;
             } else {
                 sandbox += count;
             }
         }
-        long debit = ledger.sumDebits(organizationId, PRODUCT_IDENTITY);
+        long debit = ledger.sumDebits(organizationId, ProductCode.IDENTITY);
         List<BillingResponse.ProductUsage> usage = List.of(
-                new BillingResponse.ProductUsage(PRODUCT_IDENTITY, sandbox, live, debit));
+                new BillingResponse.ProductUsage(Enums.json(ProductCode.IDENTITY), sandbox, live, debit));
         BillingResponse.LedgerPage page = includeLedger
                 ? ledgerPage(organizationId, cursor, limit)
                 : new BillingResponse.LedgerPage(List.of(), null);
@@ -294,11 +295,11 @@ public class CreditService {
         List<BillingResponse.LedgerEntryResponse> entries = rows.stream()
                 .map(row -> new BillingResponse.LedgerEntryResponse(
                         row.getId(),
-                        row.getEntryType(),
+                        Enums.json(row.getEntryType()),
                         row.getAmountMinor(),
                         row.getBalanceAfterMinor(),
-                        row.getProduct(),
-                        row.getResourceType(),
+                        Enums.json(row.getProduct()),
+                        Enums.json(row.getResourceType()),
                         row.getResourceId(),
                         row.getCreatedAt()))
                 .toList();

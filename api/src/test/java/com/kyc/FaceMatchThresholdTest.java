@@ -3,6 +3,7 @@ package com.kyc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.kyc.enums.VerificationDecision;
 import com.kyc.ports.BiometricAiPort.BiometricSignals;
 import com.kyc.ports.DocumentAiPort.DocumentSignals;
 import com.kyc.services.IdvDecisionEngine;
@@ -17,11 +18,11 @@ class FaceMatchThresholdTest {
     @Test
     void thresholds() {
         DocumentSignals doc = supportedDoc();
-        assertEquals("declined", engine.decideLive(doc, bio(0.74)).decision());
+        assertEquals(VerificationDecision.DECLINED, engine.decideLive(doc, bio(0.74)).decision());
         assertEquals("face_match_fail", engine.decideLive(doc, bio(0.74)).reasons().get(0));
-        assertEquals("review", engine.decideLive(doc, bio(0.80)).decision());
+        assertEquals(VerificationDecision.REVIEW, engine.decideLive(doc, bio(0.80)).decision());
         assertEquals("face_match_borderline", engine.decideLive(doc, bio(0.80)).reasons().get(0));
-        assertEquals("approved", engine.decideLive(doc, bio(0.91)).decision());
+        assertEquals(VerificationDecision.APPROVED, engine.decideLive(doc, bio(0.91)).decision());
         assertTrue(engine.decideLive(doc, bio(0.91)).extractedIdentity().containsKey("document_type"));
     }
 
@@ -30,7 +31,7 @@ class FaceMatchThresholdTest {
         DocumentSignals unsupported =
                 new DocumentSignals("unknown", "ZZ", null, false, false, false, null, null, null, null, null, "textract_analyze_id");
         var result = engine.decideLive(unsupported, null);
-        assertEquals("declined", result.decision());
+        assertEquals(VerificationDecision.DECLINED, result.decision());
         assertEquals("unsupported_document", result.reasons().get(0));
         assertEquals(Map.of(), result.extractedIdentity());
     }

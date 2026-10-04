@@ -2,6 +2,9 @@
 
 Runbook local pour le palier **D1** de M5. Objectif : un JSON AnalyzeID sur un **recto permis QC**, freeze du mapping, région notée. **Pas** encore de `AwsDocumentAi` en prod.
 
+**Documents liés :**
+- [`guide-aws-iam-local.md`](./guide-aws-iam-local.md) — utilisateur IAM, **clés par service** dans `application-secrets.properties` (pas AWS CLI)
+
 Freeze écrit : [`mapping-analyzeid-qc.md`](./mapping-analyzeid-qc.md).
 
 ## Prérequis

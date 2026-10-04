@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { StatusBadge } from "@kyc/brand";
-import { useT } from "../../../../../i18n/client";
+import { useT } from "../../../../../../i18n/client";
 import {
   deleteWebhookAction,
   retryWebhookDeliveryAction,

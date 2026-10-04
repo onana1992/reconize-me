@@ -1,7 +1,10 @@
 package com.kyc.entities;
 
+import com.kyc.enums.WebhookEndpointStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -15,9 +18,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WebhookEndpoint {
-
-    public static final String ACTIVE = "active";
-    public static final String DISABLED = "disabled";
 
     @Id
     private UUID id;
@@ -37,8 +37,9 @@ public class WebhookEndpoint {
     @Column(name = "secret_prefix", nullable = false, length = 16)
     private String secretPrefix;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private String status;
+    private WebhookEndpointStatus status;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -60,7 +61,7 @@ public class WebhookEndpoint {
         this.url = url;
         this.secretCipher = secretCipher;
         this.secretPrefix = secretPrefix;
-        this.status = ACTIVE;
+        this.status = WebhookEndpointStatus.ACTIVE;
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -77,6 +78,6 @@ public class WebhookEndpoint {
     }
 
     public boolean isActive() {
-        return ACTIVE.equals(status);
+        return status == WebhookEndpointStatus.ACTIVE;
     }
 }

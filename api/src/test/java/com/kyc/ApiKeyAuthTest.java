@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.ProductCode;
 import com.kyc.entities.ApiKey;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
@@ -55,8 +57,8 @@ class ApiKeyAuthTest {
         integrationRepository.save(new Integration(
                 integrationId,
                 organizationId,
-                Integration.PRODUCT_IDENTITY,
-                Integration.MODE_TEST,
+                ProductCode.IDENTITY,
+                IntegrationMode.TEST,
                 "Test",
                 now));
         apiKeyRepository.save(new ApiKey(

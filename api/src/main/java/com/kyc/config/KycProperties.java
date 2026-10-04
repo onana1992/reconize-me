@@ -57,7 +57,29 @@ public record KycProperties(
 
     public record Aws(
             @DefaultValue("false") boolean enabled,
-            @DefaultValue("ca-central-1") String region) {}
+            @DefaultValue("ca-central-1") String region,
+            @DefaultValue S3 s3,
+            @DefaultValue Textract textract,
+            @DefaultValue Rekognition rekognition) {
+
+        public record S3(
+                @DefaultValue("false") boolean enabled,
+                @DefaultValue("") String bucket,
+                @DefaultValue("") String keyPrefix,
+                @DefaultValue("") String accessKeyId,
+                @DefaultValue("") String secretAccessKey,
+                @DefaultValue("") String region) {}
+
+        public record Textract(
+                @DefaultValue("") String accessKeyId,
+                @DefaultValue("") String secretAccessKey,
+                @DefaultValue("") String region) {}
+
+        public record Rekognition(
+                @DefaultValue("") String accessKeyId,
+                @DefaultValue("") String secretAccessKey,
+                @DefaultValue("") String region) {}
+    }
 
     public String consoleUrl(String path) {
         return join(publicConsoleBaseUrl, path);

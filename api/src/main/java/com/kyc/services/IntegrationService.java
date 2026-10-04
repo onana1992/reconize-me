@@ -6,6 +6,9 @@ import com.kyc.dto.console.IntegrationListItem;
 import com.kyc.dto.console.IntegrationResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Integration;
+import com.kyc.enums.Enums;
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.ProductCode;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IntegrationRepository;
@@ -16,6 +19,7 @@ import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +50,7 @@ public class IntegrationService {
     public IssuedApiKeyResponse issueTestKey(UUID organizationId, UUID userId) {
         Integration test = integrations
                 .findFirstByOrganizationIdAndProductAndModeOrderByCreatedAtAsc(
-                        organizationId, Integration.PRODUCT_IDENTITY, Integration.MODE_TEST)
+                        organizationId, ProductCode.IDENTITY, IntegrationMode.TEST)
                 .orElseThrow(() -> ApiException.conflict("no_integration", "Create an integration first"));
         requireNoKey(test.getId());
         return apiKeyIssuer.issue(test, userId);
@@ -56,7 +60,11 @@ public class IntegrationService {
     public List<IntegrationListItem> list(ConsolePrincipal principal) {
         return integrations.findByOrganizationIdOrderByCreatedAtAsc(principal.organizationId()).stream()
                 .map(row -> new IntegrationListItem(
-                        row.getId(), row.getProduct(), row.getMode(), row.getName(), row.getCreatedAt()))
+                        row.getId(),
+                        Enums.json(row.getProduct()),
+                        Enums.json(row.getMode()),
+                        row.getName(),
+                        row.getCreatedAt()))
                 .toList();
     }
 
@@ -71,8 +79,8 @@ public class IntegrationService {
     @Transactional
     public IntegrationResponse create(ConsolePrincipal principal, String name, String mode) {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
-        String normalized = normalizeMode(mode);
-        if (Integration.MODE_LIVE.equals(normalized)) {
+        IntegrationMode normalized = normalizeMode(mode);
+        if (normalized == IntegrationMode.LIVE) {
             if (!credits.coversUnit(principal.organizationId())) {
                 throw ApiException.forbidden("insufficient_credit", "Live integrations require a credit balance");
             }
@@ -122,16 +130,16 @@ public class IntegrationService {
             throw ApiException.validation("Invalid name", List.of(new ErrorDetail("name", "size")));
         }
         if (integrations.existsByOrganizationIdAndProductAndNameIgnoreCase(
-                organizationId, Integration.PRODUCT_IDENTITY, resolvedName)) {
+                organizationId, ProductCode.IDENTITY, resolvedName)) {
             throw ApiException.conflict("name_taken", "An integration with this name already exists");
         }
         return resolvedName;
     }
 
-    private Integration saveNew(UUID organizationId, String mode, String name, UUID actorId) {
+    private Integration saveNew(UUID organizationId, IntegrationMode mode, String name, UUID actorId) {
         Instant now = Instant.now();
         Integration saved = integrations.save(new Integration(
-                UUID.randomUUID(), organizationId, Integration.PRODUCT_IDENTITY, mode, name, now));
+                UUID.randomUUID(), organizationId, ProductCode.IDENTITY, mode, name, now));
         auditEvents.save(new AuditEvent(
                 organizationId,
                 actorId == null ? "system" : "user",
@@ -154,22 +162,22 @@ public class IntegrationService {
     private static IntegrationResponse toResponse(Integration integration, List<ApiKeyListItem> keys, String key) {
         return new IntegrationResponse(
                 integration.getId(),
-                integration.getProduct(),
-                integration.getMode(),
+                Enums.json(integration.getProduct()),
+                Enums.json(integration.getMode()),
                 integration.getName(),
                 integration.getCreatedAt(),
                 keys,
                 key);
     }
 
-    private static String normalizeMode(String mode) {
+    private static IntegrationMode normalizeMode(String mode) {
         if (mode == null || mode.isBlank()) {
-            return Integration.MODE_TEST;
+            return IntegrationMode.TEST;
         }
-        String value = mode.trim().toLowerCase();
-        if (Integration.MODE_TEST.equals(value) || Integration.MODE_LIVE.equals(value)) {
-            return value;
+        try {
+            return IntegrationMode.valueOf(mode.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw ApiException.validation("Invalid mode", List.of(new ErrorDetail("mode", "invalid")));
         }
-        throw ApiException.validation("Invalid mode", List.of(new ErrorDetail("mode", "invalid")));
     }
 }

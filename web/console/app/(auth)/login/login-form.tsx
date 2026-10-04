@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { PasswordInput } from "../../../components/password-input";
 import { RequiredMark } from "../../../components/required-mark";
@@ -9,7 +8,6 @@ import { loginAction } from "../actions";
 
 export function LoginForm({ next }: { next: string }) {
   const t = useT();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -37,10 +35,7 @@ export function LoginForm({ next }: { next: string }) {
           return;
         }
         setError(result.message);
-        return;
       }
-      router.push(next);
-      router.refresh();
     } finally {
       setPending(false);
     }

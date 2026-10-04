@@ -1,10 +1,15 @@
 package com.kyc.entities;
 
+import com.kyc.enums.VerificationDecision;
+import com.kyc.enums.VerificationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -17,21 +22,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Verification {
 
-    public static final String CREATED = "created";
-    public static final String PENDING_CONSENT = "pending_consent";
-    public static final String PENDING_APPLICANT = "pending_applicant";
-    public static final String DOCUMENT = "document";
-    public static final String RECAPTURE_REQUESTED = "recapture_requested";
-    public static final String SELFIE = "selfie";
-    public static final String PROCESSING = "processing";
-    public static final String REVIEW = "review";
-    public static final String APPROVED = "approved";
-    public static final String DECLINED = "declined";
-    public static final String EXPIRED = "expired";
-    public static final String CANCELLED = "cancelled";
+    private static final Set<VerificationStatus> CANCELABLE = EnumSet.of(
+            VerificationStatus.CREATED,
+            VerificationStatus.PENDING_CONSENT,
+            VerificationStatus.PENDING_APPLICANT,
+            VerificationStatus.DOCUMENT,
+            VerificationStatus.RECAPTURE_REQUESTED,
+            VerificationStatus.SELFIE);
 
-    private static final Set<String> CANCELABLE = Set.of(
-            CREATED, PENDING_CONSENT, PENDING_APPLICANT, DOCUMENT, RECAPTURE_REQUESTED, SELFIE);
+    private static final Set<VerificationStatus> TERMINAL = EnumSet.of(
+            VerificationStatus.REVIEW,
+            VerificationStatus.APPROVED,
+            VerificationStatus.DECLINED,
+            VerificationStatus.EXPIRED,
+            VerificationStatus.CANCELLED);
 
     @Id
     private UUID id;
@@ -45,8 +49,9 @@ public class Verification {
     @Column(name = "external_id")
     private String externalId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String status;
+    private VerificationStatus status;
 
     @Column(name = "applicant_first_name")
     private String applicantFirstName;
@@ -66,8 +71,9 @@ public class Verification {
     @Column(name = "hosted_expires_at", nullable = false)
     private Instant hostedExpiresAt;
 
-    @Column
-    private String decision;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private VerificationDecision decision;
 
     @Column(name = "decision_reasons")
     private String decisionReasons;
@@ -104,7 +110,7 @@ public class Verification {
         this.organizationId = organizationId;
         this.integrationId = integrationId;
         this.externalId = externalId;
-        this.status = CREATED;
+        this.status = VerificationStatus.CREATED;
         this.applicantFirstName = applicantFirstName;
         this.applicantLastName = applicantLastName;
         this.applicantEmail = applicantEmail;
@@ -120,77 +126,82 @@ public class Verification {
         return CANCELABLE.contains(status);
     }
 
+    public boolean terminal() {
+        return TERMINAL.contains(status);
+    }
+
     public boolean expired(Instant now) {
-        return now.isAfter(hostedExpiresAt) || EXPIRED.equals(status);
+        return now.isAfter(hostedExpiresAt) || status == VerificationStatus.EXPIRED;
     }
 
     public void markOpened(Instant now) {
-        if (CREATED.equals(status)) {
-            this.status = PENDING_CONSENT;
+        if (status == VerificationStatus.CREATED) {
+            this.status = VerificationStatus.PENDING_CONSENT;
             this.updatedAt = now;
         }
     }
 
     public void markConsentAccepted(Instant now) {
-        this.status = PENDING_APPLICANT;
+        this.status = VerificationStatus.PENDING_APPLICANT;
         this.updatedAt = now;
     }
 
     public void markConsentDeclined(Instant now) {
-        this.status = DECLINED;
-        this.decision = DECLINED;
+        this.status = VerificationStatus.DECLINED;
+        this.decision = VerificationDecision.DECLINED;
         this.decisionReasons = "[\"consent_declined\"]";
         this.updatedAt = now;
     }
 
     public void markDocument(Instant now) {
-        this.status = DOCUMENT;
+        this.status = VerificationStatus.DOCUMENT;
         this.updatedAt = now;
     }
 
     public void markRecapture(Instant now) {
-        this.status = RECAPTURE_REQUESTED;
+        this.status = VerificationStatus.RECAPTURE_REQUESTED;
         this.updatedAt = now;
     }
 
     public void markSelfie(Instant now) {
-        this.status = SELFIE;
+        this.status = VerificationStatus.SELFIE;
         this.updatedAt = now;
     }
 
     public void markProcessing(Instant now) {
-        this.status = PROCESSING;
+        this.status = VerificationStatus.PROCESSING;
         this.updatedAt = now;
     }
 
-    public void decide(String decision, String reasonsJson, String rulesVersion, String extractedIdentity, Instant now) {
+    public void decide(
+            VerificationDecision decision, String reasonsJson, String rulesVersion, String extractedIdentity, Instant now) {
         this.decision = decision;
         this.decisionReasons = reasonsJson;
         this.rulesVersion = rulesVersion;
         this.extractedIdentity = extractedIdentity;
-        this.status = decision;
+        this.status = VerificationStatus.valueOf(decision.name());
         this.updatedAt = now;
     }
 
-    public void applyReview(String decision, Instant now) {
+    public void applyReview(VerificationDecision decision, Instant now) {
         this.decision = decision;
-        this.status = decision;
+        this.status = VerificationStatus.valueOf(decision.name());
         this.updatedAt = now;
     }
 
     public void cancel(Instant now) {
-        this.status = CANCELLED;
+        this.status = VerificationStatus.CANCELLED;
         this.updatedAt = now;
     }
 
     public void expire(Instant now) {
-        this.status = EXPIRED;
+        this.status = VerificationStatus.EXPIRED;
         this.updatedAt = now;
     }
 
     public void declineCaptureAttempts(Instant now) {
-        this.status = DECLINED;
-        this.decision = DECLINED;
+        this.status = VerificationStatus.DECLINED;
+        this.decision = VerificationDecision.DECLINED;
         this.decisionReasons = "[\"capture_attempts_exceeded\"]";
         this.updatedAt = now;
     }

@@ -1,6 +1,7 @@
 package com.kyc.repositories;
 
 import com.kyc.entities.WebhookDelivery;
+import com.kyc.enums.WebhookEventType;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +22,11 @@ public interface WebhookDeliveryRepository extends JpaRepository<WebhookDelivery
     @Query(
             """
             select d from WebhookDelivery d
-            where d.status = 'pending' and d.nextAttemptAt <= :now
+            where d.status = com.kyc.enums.WebhookDeliveryStatus.PENDING and d.nextAttemptAt <= :now
             order by d.nextAttemptAt asc
             """)
     List<WebhookDelivery> findDue(@Param("now") Instant now, Pageable pageable);
 
     boolean existsByVerificationIdAndEventTypeAndDecisionFingerprint(
-            UUID verificationId, String eventType, String decisionFingerprint);
+            UUID verificationId, WebhookEventType eventType, String decisionFingerprint);
 }

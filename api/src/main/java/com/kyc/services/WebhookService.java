@@ -12,6 +12,9 @@ import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.WebhookDelivery;
 import com.kyc.entities.WebhookEndpoint;
+import com.kyc.enums.Enums;
+import com.kyc.enums.WebhookDeliveryStatus;
+import com.kyc.enums.WebhookEventType;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.WebhookDeliveryRepository;
@@ -129,7 +132,7 @@ public class WebhookService {
                 .map(d -> new WebhookDeliveryListResponse.Item(
                         d.getId(),
                         d.getVerificationId(),
-                        d.getStatus(),
+                        Enums.json(d.getStatus()),
                         d.getAttempt(),
                         d.getHttpStatus(),
                         d.getCreatedAt()))
@@ -150,7 +153,7 @@ public class WebhookService {
 
     @Transactional
     public void enqueueCompleted(Verification verification, Instant now) {
-        if (verification.getDecision() == null || verification.getDecision().isBlank()) {
+        if (verification.getDecision() == null) {
             return;
         }
         WebhookEndpoint endpoint = endpoints.findByIntegrationId(verification.getIntegrationId()).orElse(null);
@@ -160,7 +163,7 @@ public class WebhookService {
         String fingerprint = CryptoTokens.sha256Hex(
                 verification.getId() + ":" + verification.getDecision() + ":" + verification.getUpdatedAt());
         if (deliveries.existsByVerificationIdAndEventTypeAndDecisionFingerprint(
-                verification.getId(), WebhookDelivery.EVENT_COMPLETED, fingerprint)) {
+                verification.getId(), WebhookEventType.VERIFICATION_COMPLETED, fingerprint)) {
             return;
         }
         UUID eventId = UUID.randomUUID();
@@ -195,7 +198,7 @@ public class WebhookService {
             WebhookEndpoint endpoint = existing.get();
             endpoint.updateUrl(url, now);
             audit(organizationId, actorType, actorId, "webhook.upserted", endpoint.getId(), now);
-            return new WebhookEndpointResponse(endpoint.getUrl(), endpoint.getSecretPrefix(), null, endpoint.getStatus());
+            return new WebhookEndpointResponse(endpoint.getUrl(), endpoint.getSecretPrefix(), null, Enums.json(endpoint.getStatus()));
         }
         String secret = newSecret();
         WebhookEndpoint created = new WebhookEndpoint(
@@ -208,14 +211,15 @@ public class WebhookService {
                 now);
         endpoints.save(created);
         audit(organizationId, actorType, actorId, "webhook.upserted", created.getId(), now);
-        return new WebhookEndpointResponse(created.getUrl(), created.getSecretPrefix(), secret, created.getStatus());
+        return new WebhookEndpointResponse(created.getUrl(), created.getSecretPrefix(), secret, Enums.json(created.getStatus()));
     }
 
     private WebhookEndpointResponse get(UUID organizationId, UUID integrationId) {
         WebhookEndpoint endpoint = endpoints
                 .findByIntegrationIdAndOrganizationId(integrationId, organizationId)
                 .orElseThrow(() -> ApiException.notFound("Webhook endpoint not found"));
-        return new WebhookEndpointResponse(endpoint.getUrl(), endpoint.getSecretPrefix(), null, endpoint.getStatus());
+            return new WebhookEndpointResponse(
+                    endpoint.getUrl(), endpoint.getSecretPrefix(), null, Enums.json(endpoint.getStatus()));
     }
 
     private void delete(UUID organizationId, String actorType, UUID actorId, UUID integrationId) {
@@ -234,7 +238,8 @@ public class WebhookService {
         String secret = newSecret();
         endpoint.rotateSecret(encrypt(secret), secretPrefix(secret), now);
         audit(organizationId, actorType, actorId, "webhook.rotated", endpoint.getId(), now);
-        return new WebhookEndpointResponse(endpoint.getUrl(), endpoint.getSecretPrefix(), secret, endpoint.getStatus());
+        return new WebhookEndpointResponse(
+                endpoint.getUrl(), endpoint.getSecretPrefix(), secret, Enums.json(endpoint.getStatus()));
     }
 
     private void retry(UUID organizationId, UUID integrationId, UUID eventId) {
@@ -242,8 +247,8 @@ public class WebhookService {
                 .findByIdAndOrganizationId(eventId, organizationId)
                 .filter(d -> d.getIntegrationId().equals(integrationId))
                 .orElseThrow(() -> ApiException.notFound("Webhook delivery not found"));
-        if (!WebhookDelivery.FAILED.equals(delivery.getStatus())
-                && !WebhookDelivery.DELIVERED.equals(delivery.getStatus())) {
+        if (delivery.getStatus() != WebhookDeliveryStatus.FAILED
+                && delivery.getStatus() != WebhookDeliveryStatus.DELIVERED) {
             throw ApiException.conflict("invalid_status", "Delivery cannot be retried");
         }
         delivery.requeue(Instant.now());
@@ -274,8 +279,8 @@ public class WebhookService {
         data.put("id", verification.getId().toString());
         data.put("integration_id", verification.getIntegrationId().toString());
         data.put("external_id", verification.getExternalId());
-        data.put("status", verification.getStatus());
-        data.put("decision", verification.getDecision());
+        data.put("status", Enums.json(verification.getStatus()));
+        data.put("decision", Enums.json(verification.getDecision()));
         data.put("decision_reasons", parseReasons(verification.getDecisionReasons()));
         data.put("extracted_identity", parseExtracted(verification.getExtractedIdentity()));
         data.put("created_at", verification.getCreatedAt().toString());
@@ -283,7 +288,7 @@ public class WebhookService {
 
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("id", "evt_" + eventId.toString().replace("-", ""));
-        envelope.put("type", WebhookDelivery.EVENT_COMPLETED);
+        envelope.put("type", "verification.completed");
         envelope.put("created_at", now.toString());
         envelope.put("data", data);
         try {

@@ -1,5 +1,6 @@
 package com.kyc.services;
 
+import com.kyc.enums.WebhookDeliveryStatus;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Integration;
 import com.kyc.entities.WebhookDelivery;
@@ -77,7 +78,7 @@ public class WebhookDispatcher {
             int attempt = delivery.getAttempt() + 1;
             Instant next = WebhookService.nextAttemptAt(attempt + 1, now);
             delivery.markAttempt(attempt, null, "ssrf_denied", next, now);
-            if (WebhookDelivery.FAILED.equals(delivery.getStatus())) {
+            if (delivery.getStatus() == WebhookDeliveryStatus.FAILED) {
                 auditFailed(delivery, now);
             }
             return;
@@ -93,7 +94,7 @@ public class WebhookDispatcher {
                     .timeout(Duration.ofSeconds(10))
                     .header("Content-Type", "application/json")
                     .header("User-Agent", "RecognizMe-Webhook/1")
-                    .header("X-RecognizMe-Event", WebhookDelivery.EVENT_COMPLETED)
+                    .header("X-RecognizMe-Event", "verification.completed")
                     .header("X-RecognizMe-Signature", signature)
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
@@ -115,14 +116,14 @@ public class WebhookDispatcher {
             String error = status >= 500 ? "http_5xx" : "http_4xx";
             Instant next = WebhookService.nextAttemptAt(attempt + 1, now);
             delivery.markAttempt(attempt, status, error, next, now);
-            if (WebhookDelivery.FAILED.equals(delivery.getStatus())) {
+            if (delivery.getStatus() == WebhookDeliveryStatus.FAILED) {
                 auditFailed(delivery, now);
             }
         } catch (Exception e) {
             String error = e instanceof java.net.http.HttpTimeoutException ? "timeout" : "network";
             Instant next = WebhookService.nextAttemptAt(attempt + 1, now);
             delivery.markAttempt(attempt, null, error, next, now);
-            if (WebhookDelivery.FAILED.equals(delivery.getStatus())) {
+            if (delivery.getStatus() == WebhookDeliveryStatus.FAILED) {
                 auditFailed(delivery, now);
             }
         }

@@ -1,7 +1,7 @@
 "use server";
 
-import { consoleApi, type ApiResult } from "../../../../../lib/api";
-import { sessionCookieHeader } from "../../../../../lib/session";
+import { consoleApi, type ApiResult } from "../../../../../../lib/api";
+import { sessionCookieHeader } from "../../../../../../lib/session";
 
 export type WebhookEndpoint = {
   url: string;

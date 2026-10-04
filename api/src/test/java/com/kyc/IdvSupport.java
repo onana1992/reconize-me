@@ -8,10 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.ProductCode;
 import com.kyc.entities.ApiKey;
+import com.kyc.entities.CreditAccount;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
 import com.kyc.repositories.ApiKeyRepository;
+import com.kyc.repositories.CreditAccountRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.services.ApiKeyAuthenticator;
@@ -50,8 +54,8 @@ final class IdvSupport {
         integrations.save(new Integration(
                 integrationId,
                 organizationId,
-                Integration.PRODUCT_IDENTITY,
-                Integration.MODE_TEST,
+                ProductCode.IDENTITY,
+                IntegrationMode.TEST,
                 "Test",
                 now));
         keys.save(new ApiKey(
@@ -62,6 +66,32 @@ final class IdvSupport {
                 encoder.encode(rawKey),
                 now));
         return rawKey;
+    }
+
+    static UUID seedLive(
+            OrganizationRepository organizations,
+            IntegrationRepository integrations,
+            ApiKeyRepository keys,
+            CreditAccountRepository credits,
+            PasswordEncoder encoder,
+            String rawKey,
+            String orgName,
+            String slug) {
+        Instant now = Instant.parse("2026-09-10T12:00:00Z");
+        UUID organizationId = UUID.randomUUID();
+        UUID integrationId = UUID.randomUUID();
+        organizations.save(new Organization(organizationId, orgName, slug, now));
+        integrations.save(new Integration(
+                integrationId, organizationId, ProductCode.IDENTITY, IntegrationMode.LIVE, "Production", now));
+        keys.save(new ApiKey(
+                UUID.randomUUID(),
+                organizationId,
+                integrationId,
+                rawKey.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH),
+                encoder.encode(rawKey),
+                now));
+        credits.save(new CreditAccount(organizationId, "usd", 5000, now));
+        return organizationId;
     }
 
     static JsonNode create(MockMvc mockMvc, String rawKey, String body) throws Exception {

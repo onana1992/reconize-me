@@ -39,7 +39,6 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
     }
     closeDialog();
     router.push(`/${product}/integrations/${createdId}`);
-    router.refresh();
   }
 
   async function onSubmit(formData: FormData) {

@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { accountApi, accountApiWithCookies, type ApiResult, type IssuedApiKey } from "../../lib/api";
-import { SESSION_COOKIE } from "../../lib/session";
+import { SESSION_COOKIE, safeNextPath } from "../../lib/session";
 
 async function setSession(setCookie: string | null | undefined) {
   if (!setCookie) {
@@ -49,7 +49,7 @@ export async function loginAction(formData: FormData): Promise<ApiResult<void>> 
     return { ok: false, status: result.status, code: result.code, message: result.message };
   }
   await setSession(result.setCookie);
-  return { ok: true, data: undefined };
+  redirect(safeNextPath(String(formData.get("next") ?? "/")));
 }
 
 export async function logoutAction(): Promise<void> {

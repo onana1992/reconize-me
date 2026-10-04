@@ -1,7 +1,11 @@
 package com.kyc.entities;
 
+import com.kyc.enums.WebhookDeliveryStatus;
+import com.kyc.enums.WebhookEventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
@@ -16,11 +20,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WebhookDelivery {
-
-    public static final String PENDING = "pending";
-    public static final String DELIVERED = "delivered";
-    public static final String FAILED = "failed";
-    public static final String EVENT_COMPLETED = "verification.completed";
 
     @Id
     private UUID id;
@@ -37,8 +36,9 @@ public class WebhookDelivery {
     @Column(name = "verification_id", nullable = false)
     private UUID verificationId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 64)
-    private String eventType;
+    private WebhookEventType eventType;
 
     @Column(name = "decision_fingerprint", nullable = false, length = 64)
     private String decisionFingerprint;
@@ -53,8 +53,9 @@ public class WebhookDelivery {
     @Column(nullable = false)
     private int attempt;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    private String status;
+    private WebhookDeliveryStatus status;
 
     @Column(name = "http_status")
     private Integer httpStatus;
@@ -86,19 +87,19 @@ public class WebhookDelivery {
         this.integrationId = integrationId;
         this.endpointId = endpointId;
         this.verificationId = verificationId;
-        this.eventType = EVENT_COMPLETED;
+        this.eventType = WebhookEventType.VERIFICATION_COMPLETED;
         this.decisionFingerprint = decisionFingerprint;
         this.payloadJson = payloadJson;
         this.payloadHash = payloadHash;
         this.attempt = 0;
-        this.status = PENDING;
+        this.status = WebhookDeliveryStatus.PENDING;
         this.nextAttemptAt = now;
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     public void markDelivered(int httpStatus, Instant now) {
-        this.status = DELIVERED;
+        this.status = WebhookDeliveryStatus.DELIVERED;
         this.httpStatus = httpStatus;
         this.lastErrorCode = null;
         this.updatedAt = now;
@@ -111,14 +112,14 @@ public class WebhookDelivery {
         this.nextAttemptAt = nextAttemptAt;
         this.updatedAt = now;
         if (attempt >= 5) {
-            this.status = FAILED;
+            this.status = WebhookDeliveryStatus.FAILED;
         } else {
-            this.status = PENDING;
+            this.status = WebhookDeliveryStatus.PENDING;
         }
     }
 
     public void requeue(Instant now) {
-        this.status = PENDING;
+        this.status = WebhookDeliveryStatus.PENDING;
         this.attempt = 0;
         this.nextAttemptAt = now;
         this.lastErrorCode = null;

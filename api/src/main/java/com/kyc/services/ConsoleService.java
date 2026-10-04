@@ -14,6 +14,8 @@ import com.kyc.entities.Membership;
 import com.kyc.entities.MembershipId;
 import com.kyc.entities.Organization;
 import com.kyc.entities.User;
+import com.kyc.enums.Enums;
+import com.kyc.enums.MembershipStatus;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.MembershipInviteRepository;
@@ -159,7 +161,7 @@ public class ConsoleService {
                     user.getFirstName(),
                     user.getLastName(),
                     membership.getRole(),
-                    membership.getStatus(),
+                    Enums.json(membership.getStatus()),
                     membership.getCreatedAt()));
         }
         List<TeamResponse.InviteItem> invites = membershipInviteRepository
@@ -355,7 +357,7 @@ public class ConsoleService {
             return;
         }
         if (membershipRepository.countByOrganizationIdAndRoleAndStatus(
-                        membership.getOrganizationId(), Membership.ROLE_OWNER, Membership.STATUS_ACTIVE)
+                        membership.getOrganizationId(), ConsoleRole.OWNER.value(), MembershipStatus.ACTIVE)
                 <= 1) {
             throw ApiException.conflict("last_owner", "The organization must keep at least one owner");
         }

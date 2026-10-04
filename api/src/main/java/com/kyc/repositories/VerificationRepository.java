@@ -1,6 +1,7 @@
 package com.kyc.repositories;
 
 import com.kyc.entities.Verification;
+import com.kyc.enums.VerificationStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,7 @@ public interface VerificationRepository extends JpaRepository<Verification, UUID
             """)
     List<Verification> pageAfter(
             @Param("org") UUID organizationId,
-            @Param("status") String status,
+            @Param("status") VerificationStatus status,
             @Param("integrationId") UUID integrationId,
             @Param("created") Instant created,
             @Param("id") UUID id,
@@ -47,7 +48,7 @@ public interface VerificationRepository extends JpaRepository<Verification, UUID
             """)
     List<Verification> pageFirst(
             @Param("org") UUID organizationId,
-            @Param("status") String status,
+            @Param("status") VerificationStatus status,
             @Param("integrationId") UUID integrationId,
             Pageable pageable);
 

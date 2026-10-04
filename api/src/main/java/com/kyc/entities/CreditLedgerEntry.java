@@ -1,7 +1,12 @@
 package com.kyc.entities;
 
+import com.kyc.enums.LedgerEntryType;
+import com.kyc.enums.LedgerResourceType;
+import com.kyc.enums.ProductCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -16,18 +21,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CreditLedgerEntry {
 
-    public static final String TOPUP = "topup";
-    public static final String DEBIT = "debit";
-    public static final String RESOURCE_VERIFICATION = "verification";
-
     @Id
     private UUID id;
 
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 16)
-    private String entryType;
+    private LedgerEntryType entryType;
 
     @Column(name = "amount_minor", nullable = false)
     private long amountMinor;
@@ -35,11 +37,13 @@ public class CreditLedgerEntry {
     @Column(name = "balance_after_minor", nullable = false)
     private long balanceAfterMinor;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 32)
-    private String product;
+    private ProductCode product;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "resource_type", length = 32)
-    private String resourceType;
+    private LedgerResourceType resourceType;
 
     @Column(name = "resource_id")
     private UUID resourceId;
@@ -59,11 +63,11 @@ public class CreditLedgerEntry {
     public CreditLedgerEntry(
             UUID id,
             UUID organizationId,
-            String entryType,
+            LedgerEntryType entryType,
             long amountMinor,
             long balanceAfterMinor,
-            String product,
-            String resourceType,
+            ProductCode product,
+            LedgerResourceType resourceType,
             UUID resourceId,
             String stripeEventId,
             String stripeCheckoutSessionId,

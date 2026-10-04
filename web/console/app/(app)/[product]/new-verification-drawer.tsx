@@ -105,7 +105,6 @@ export function NewVerificationDrawer({
       }
       closeDrawer();
       router.push(`/${product}/verifications/${result.data.id}`);
-      router.refresh();
     } finally {
       setPending(false);
     }

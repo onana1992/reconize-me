@@ -2,12 +2,14 @@ package com.kyc.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.adapters.AwsBiometricAi;
+import com.kyc.adapters.AwsClientCredentials;
 import com.kyc.adapters.AwsDocumentAi;
 import com.kyc.adapters.FilesystemObjectStorage;
 import com.kyc.adapters.InMemoryHostedTokenStore;
 import com.kyc.adapters.QcAnalyzeIdMapper;
 import com.kyc.adapters.RedisHostedTokenStore;
 import com.kyc.adapters.RekognitionCompareFacesClient;
+import com.kyc.adapters.S3ObjectStorage;
 import com.kyc.adapters.StubBiometricAi;
 import com.kyc.adapters.StubDocumentAi;
 import com.kyc.adapters.TextractAnalyzeIdClient;
@@ -19,12 +21,14 @@ import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @Configuration
 public class IdvStoreConfig {
@@ -41,9 +45,27 @@ public class IdvStoreConfig {
         return new InMemoryHostedTokenStore();
     }
 
+    @Bean(destroyMethod = "close")
+    @ConditionalOnProperty(prefix = "kyc.aws.s3", name = "enabled", havingValue = "true")
+    public ObjectStoragePort s3ObjectStorage(
+            KycProperties properties, @Value("${kyc.public-api-base-url:http://localhost:8080}") String publicApiBase) {
+        KycProperties.Aws.S3 s3 = properties.aws().s3();
+        if (s3.bucket() == null || s3.bucket().isBlank()) {
+            throw new IllegalStateException("kyc.aws.s3.bucket is required when kyc.aws.s3.enabled=true");
+        }
+        S3Client client = S3Client.builder()
+                .region(AwsClientCredentials.region(s3.region(), properties.aws().region()))
+                .credentialsProvider(AwsClientCredentials.require(
+                        s3.accessKeyId(), s3.secretAccessKey(), "kyc.aws.s3"))
+                .build();
+        return new S3ObjectStorage(client, s3.bucket(), s3.keyPrefix(), publicApiBase, properties.ipHashPepper());
+    }
+
     @Bean
-    public ObjectStoragePort objectStoragePort(KycProperties properties) {
-        return new FilesystemObjectStorage(properties, "http://localhost:8080");
+    @ConditionalOnMissingBean(ObjectStoragePort.class)
+    public ObjectStoragePort filesystemObjectStorage(
+            KycProperties properties, @Value("${kyc.public-api-base-url:http://localhost:8080}") String publicApiBase) {
+        return new FilesystemObjectStorage(properties, publicApiBase);
     }
 
     @Bean

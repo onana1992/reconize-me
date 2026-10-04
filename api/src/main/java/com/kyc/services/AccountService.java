@@ -116,7 +116,7 @@ public class AccountService {
             String slug = OrganizationSlugs.unique(
                     OrganizationSlugs.fromName(organizationName), organizationRepository::existsBySlug);
             organizationRepository.save(new Organization(organizationId, organizationName.trim(), slug, now));
-            membershipRepository.save(new Membership(userId, organizationId, Membership.ROLE_OWNER, now));
+            membershipRepository.save(new Membership(userId, organizationId, ConsoleRole.OWNER.value(), now));
             creditService.ensureAccount(organizationId);
             auditEventRepository.save(new AuditEvent(
                     organizationId, "user", userId, "user.registered", "user", userId, "{}", now));

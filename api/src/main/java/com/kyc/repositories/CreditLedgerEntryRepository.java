@@ -1,6 +1,8 @@
 package com.kyc.repositories;
 
 import com.kyc.entities.CreditLedgerEntry;
+import com.kyc.enums.LedgerResourceType;
+import com.kyc.enums.ProductCode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -20,17 +22,17 @@ public interface CreditLedgerEntryRepository extends JpaRepository<CreditLedgerE
 
     Optional<CreditLedgerEntry> findByStripeCheckoutSessionId(String stripeCheckoutSessionId);
 
-    boolean existsByResourceTypeAndResourceId(String resourceType, UUID resourceId);
+    boolean existsByResourceTypeAndResourceId(LedgerResourceType resourceType, UUID resourceId);
 
     @Query(
             """
             select coalesce(sum(-e.amountMinor), 0)
             from CreditLedgerEntry e
             where e.organizationId = :org
-              and e.entryType = 'debit'
+              and e.entryType = com.kyc.enums.LedgerEntryType.DEBIT
               and e.product = :product
             """)
-    long sumDebits(@Param("org") UUID organizationId, @Param("product") String product);
+    long sumDebits(@Param("org") UUID organizationId, @Param("product") ProductCode product);
 
     List<CreditLedgerEntry> findByOrganizationIdOrderByCreatedAtDescIdDesc(UUID organizationId, Pageable pageable);
 

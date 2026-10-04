@@ -1,5 +1,7 @@
 package com.kyc.services;
 
+import com.kyc.enums.SignalOutcome;
+import com.kyc.enums.VerificationDecision;
 import com.kyc.ports.BiometricAiPort.BiometricSignals;
 import com.kyc.ports.DocumentAiPort.DocumentSignals;
 import java.time.LocalDate;
@@ -17,9 +19,12 @@ public class IdvDecisionEngine {
     public static final double FACE_MATCH_PASS = 0.90;
 
     public record Result(
-            String decision, List<String> reasons, List<Signal> signals, Map<String, Object> extractedIdentity) {}
+            VerificationDecision decision,
+            List<String> reasons,
+            List<Signal> signals,
+            Map<String, Object> extractedIdentity) {}
 
-    public record Signal(String code, String outcome, Double score) {}
+    public record Signal(String code, SignalOutcome outcome, Double score) {}
 
     public Result decide(String scenario) {
         String key = scenario == null || scenario.isBlank() ? "approved" : scenario.trim();
@@ -29,20 +34,20 @@ public class IdvDecisionEngine {
             case "liveness_fail" -> declined("liveness_fail");
             case "mismatch" -> declined("face_match_fail");
             case "review" -> new Result(
-                    "review",
+                    VerificationDecision.REVIEW,
                     List.of("mrz_unavailable"),
                     List.of(
-                            new Signal("mrz_unavailable", "unavailable", null),
-                            new Signal("liveness_pass", "pass", 0.92),
-                            new Signal("face_match_pass", "pass", 0.82)),
+                            new Signal("mrz_unavailable", SignalOutcome.UNAVAILABLE, null),
+                            new Signal("liveness_pass", SignalOutcome.PASS, 0.92),
+                            new Signal("face_match_pass", SignalOutcome.PASS, 0.82)),
                     identity());
             default -> new Result(
-                    "approved",
+                    VerificationDecision.APPROVED,
                     List.of("liveness_pass", "face_match_pass"),
                     List.of(
-                            new Signal("authenticity_stub_pass", "pass", null),
-                            new Signal("liveness_pass", "pass", 0.99),
-                            new Signal("face_match_pass", "pass", 0.96)),
+                            new Signal("authenticity_stub_pass", SignalOutcome.PASS, null),
+                            new Signal("liveness_pass", SignalOutcome.PASS, 0.99),
+                            new Signal("face_match_pass", SignalOutcome.PASS, 0.96)),
                     identity());
         };
     }
@@ -50,48 +55,56 @@ public class IdvDecisionEngine {
     public Result decideLive(DocumentSignals document, BiometricSignals biometric) {
         List<Signal> signals = new ArrayList<>();
         if ("textract_analyze_id".equals(document.provider())) {
-            signals.add(new Signal("ocr_analyze_id", "pass", null));
+            signals.add(new Signal("ocr_analyze_id", SignalOutcome.PASS, null));
         } else if ("textract_detect_text".equals(document.provider())) {
-            signals.add(new Signal("ocr_detect_text", "pass", null));
+            signals.add(new Signal("ocr_detect_text", SignalOutcome.PASS, null));
         }
-        signals.add(new Signal("mrz_unavailable", "unavailable", null));
+        signals.add(new Signal("mrz_unavailable", SignalOutcome.UNAVAILABLE, null));
 
         if (!document.supported()) {
-            signals.add(new Signal("unsupported_document", "fail", null));
-            return new Result("declined", List.of("unsupported_document"), List.copyOf(signals), Map.of());
+            signals.add(new Signal("unsupported_document", SignalOutcome.FAIL, null));
+            return new Result(
+                    VerificationDecision.DECLINED, List.of("unsupported_document"), List.copyOf(signals), Map.of());
         }
 
         Map<String, Object> extracted = extracted(document);
 
         if (document.expired()) {
-            signals.add(new Signal("document_expired", "fail", null));
-            return new Result("declined", List.of("document_expired"), List.copyOf(signals), extracted);
+            signals.add(new Signal("document_expired", SignalOutcome.FAIL, null));
+            return new Result(
+                    VerificationDecision.DECLINED, List.of("document_expired"), List.copyOf(signals), extracted);
         }
 
         if (missingRequired(document)) {
-            signals.add(new Signal("document_fields_incomplete", "fail", null));
+            signals.add(new Signal("document_fields_incomplete", SignalOutcome.FAIL, null));
             return new Result(
-                    "review", List.of("document_fields_incomplete"), List.copyOf(signals), extracted);
+                    VerificationDecision.REVIEW,
+                    List.of("document_fields_incomplete"),
+                    List.copyOf(signals),
+                    extracted);
         }
 
         if (biometric == null || !biometric.livenessPass()) {
-            signals.add(new Signal("liveness_fail", "fail", biometric == null ? null : biometric.livenessScore()));
-            return new Result("declined", List.of("liveness_fail"), List.copyOf(signals), extracted);
+            signals.add(new Signal("liveness_fail", SignalOutcome.FAIL, biometric == null ? null : biometric.livenessScore()));
+            return new Result(
+                    VerificationDecision.DECLINED, List.of("liveness_fail"), List.copyOf(signals), extracted);
         }
-        signals.add(new Signal("liveness_pass", "pass", biometric.livenessScore()));
+        signals.add(new Signal("liveness_pass", SignalOutcome.PASS, biometric.livenessScore()));
 
         double score = biometric.faceMatchScore() == null ? 0.0 : biometric.faceMatchScore();
         if (score < FACE_MATCH_FAIL) {
-            signals.add(new Signal("face_match_fail", "fail", score));
-            return new Result("declined", List.of("face_match_fail"), List.copyOf(signals), extracted);
+            signals.add(new Signal("face_match_fail", SignalOutcome.FAIL, score));
+            return new Result(
+                    VerificationDecision.DECLINED, List.of("face_match_fail"), List.copyOf(signals), extracted);
         }
         if (score < FACE_MATCH_PASS) {
-            signals.add(new Signal("face_match_borderline", "fail", score));
-            return new Result("review", List.of("face_match_borderline"), List.copyOf(signals), extracted);
+            signals.add(new Signal("face_match_borderline", SignalOutcome.FAIL, score));
+            return new Result(
+                    VerificationDecision.REVIEW, List.of("face_match_borderline"), List.copyOf(signals), extracted);
         }
-        signals.add(new Signal("face_match_pass", "pass", score));
+        signals.add(new Signal("face_match_pass", SignalOutcome.PASS, score));
         return new Result(
-                "approved",
+                VerificationDecision.APPROVED,
                 List.of("liveness_pass", "face_match_pass"),
                 List.copyOf(signals),
                 extracted);
@@ -99,9 +112,9 @@ public class IdvDecisionEngine {
 
     public Result providerUnavailable() {
         return new Result(
-                "review",
+                VerificationDecision.REVIEW,
                 List.of("provider_unavailable"),
-                List.of(new Signal("provider_unavailable", "fail", null)),
+                List.of(new Signal("provider_unavailable", SignalOutcome.FAIL, null)),
                 Map.of());
     }
 
@@ -142,9 +155,9 @@ public class IdvDecisionEngine {
 
     private static Result declined(String reason) {
         return new Result(
-                "declined",
+                VerificationDecision.DECLINED,
                 List.of(reason),
-                List.of(new Signal(reason, "fail", null)),
+                List.of(new Signal(reason, SignalOutcome.FAIL, null)),
                 Map.of());
     }
 

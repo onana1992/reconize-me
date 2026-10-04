@@ -2,6 +2,7 @@ package com.kyc.repositories;
 
 import com.kyc.entities.Membership;
 import com.kyc.entities.MembershipId;
+import com.kyc.enums.MembershipStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,5 +20,5 @@ public interface MembershipRepository extends JpaRepository<Membership, Membersh
 
     long countByOrganizationIdAndRole(UUID organizationId, String role);
 
-    long countByOrganizationIdAndRoleAndStatus(UUID organizationId, String role, String status);
+    long countByOrganizationIdAndRoleAndStatus(UUID organizationId, String role, MembershipStatus status);
 }

@@ -77,8 +77,8 @@ class LiveDecisionQcTest {
         integrations.save(new com.kyc.entities.Integration(
                 integrationId,
                 organizationId,
-                com.kyc.entities.Integration.PRODUCT_IDENTITY,
-                com.kyc.entities.Integration.MODE_LIVE,
+                com.kyc.enums.ProductCode.IDENTITY,
+                com.kyc.enums.IntegrationMode.LIVE,
                 "Production",
                 now));
         apiKeys.save(new com.kyc.entities.ApiKey(

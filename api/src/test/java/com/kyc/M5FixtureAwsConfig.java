@@ -12,18 +12,19 @@ import org.springframework.util.StreamUtils;
 @TestConfiguration
 public class M5FixtureAwsConfig {
 
+    static String fixtureJson() {
+        try {
+            return StreamUtils.copyToString(
+                    new ClassPathResource("fixtures/analyzeid-qc.json").getInputStream(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Bean
     @Primary
     AnalyzeIdClient fixtureAnalyzeIdClient() {
-        return image -> {
-            try {
-                return StreamUtils.copyToString(
-                        new ClassPathResource("fixtures/analyzeid-qc.json").getInputStream(),
-                        StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        };
+        return image -> fixtureJson();
     }
 
     @Bean

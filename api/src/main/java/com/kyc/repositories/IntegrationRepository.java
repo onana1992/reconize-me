@@ -1,6 +1,8 @@
 package com.kyc.repositories;
 
 import com.kyc.entities.Integration;
+import com.kyc.enums.IntegrationMode;
+import com.kyc.enums.ProductCode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,7 +15,7 @@ public interface IntegrationRepository extends JpaRepository<Integration, UUID> 
     Optional<Integration> findByIdAndOrganizationId(UUID id, UUID organizationId);
 
     Optional<Integration> findFirstByOrganizationIdAndProductAndModeOrderByCreatedAtAsc(
-            UUID organizationId, String product, String mode);
+            UUID organizationId, ProductCode product, IntegrationMode mode);
 
-    boolean existsByOrganizationIdAndProductAndNameIgnoreCase(UUID organizationId, String product, String name);
+    boolean existsByOrganizationIdAndProductAndNameIgnoreCase(UUID organizationId, ProductCode product, String name);
 }

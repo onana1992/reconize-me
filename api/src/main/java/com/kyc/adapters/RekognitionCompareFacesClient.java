@@ -4,7 +4,6 @@ import com.kyc.config.KycProperties;
 import com.kyc.ports.CompareFacesClient;
 import com.kyc.ports.ProviderUnavailableException;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.rekognition.RekognitionClient;
 import software.amazon.awssdk.services.rekognition.model.CompareFacesRequest;
 import software.amazon.awssdk.services.rekognition.model.CompareFacesResponse;
@@ -15,8 +14,13 @@ public class RekognitionCompareFacesClient implements CompareFacesClient {
     private final RekognitionClient rekognition;
 
     public RekognitionCompareFacesClient(KycProperties properties) {
+        KycProperties.Aws.Rekognition rekognitionProps = properties.aws().rekognition();
         this.rekognition = RekognitionClient.builder()
-                .region(Region.of(properties.aws().region()))
+                .region(AwsClientCredentials.region(rekognitionProps.region(), properties.aws().region()))
+                .credentialsProvider(AwsClientCredentials.require(
+                        rekognitionProps.accessKeyId(),
+                        rekognitionProps.secretAccessKey(),
+                        "kyc.aws.rekognition"))
                 .build();
     }
 

@@ -1,7 +1,10 @@
 package com.kyc.entities;
 
+import com.kyc.enums.SignalOutcome;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -25,8 +28,9 @@ public class VerificationSignal {
     @Column(nullable = false, length = 64)
     private String code;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private String outcome;
+    private SignalOutcome outcome;
 
     @Column
     private Double score;
@@ -34,7 +38,8 @@ public class VerificationSignal {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public VerificationSignal(UUID id, UUID verificationId, String code, String outcome, Double score, Instant createdAt) {
+    public VerificationSignal(
+            UUID id, UUID verificationId, String code, SignalOutcome outcome, Double score, Instant createdAt) {
         this.id = id;
         this.verificationId = verificationId;
         this.code = code;
