@@ -34,6 +34,17 @@ class ObjectStorageHmacTest {
     }
 
     @Test
+    void filesystemDeleteRemovesBytes() {
+        FilesystemObjectStorage storage = new FilesystemObjectStorage(properties(), "http://localhost:8080");
+        String key = "org/a/verifications/b/document/1";
+        storage.write(key, new byte[] {1, 2, 3}, "image/jpeg");
+        assertTrue(storage.exists(key));
+        storage.delete(key);
+        assertFalse(storage.exists(key));
+        storage.delete(key);
+    }
+
+    @Test
     void rejectsBlankKey() {
         FilesystemObjectStorage storage = new FilesystemObjectStorage(properties(), "http://localhost:8080");
         assertThrows(IllegalArgumentException.class, () -> storage.exists(""));

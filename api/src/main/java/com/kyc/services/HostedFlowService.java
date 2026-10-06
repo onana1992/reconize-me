@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class HostedFlowService {
 
+    private static final Logger log = LoggerFactory.getLogger(HostedFlowService.class);
     private static final int MAX_ATTEMPTS = 3;
     private static final Duration UPLOAD_TTL = Duration.ofMinutes(5);
     private static final Set<VerificationStatus> DOCUMENT_UPLOAD = EnumSet.of(
@@ -336,6 +339,7 @@ public class HostedFlowService {
         Instant now = Instant.now();
         if (!quality.test(body)) {
             item.rejectQuality();
+            discardRejectedObject(item.getObjectKey());
             if (media.countByVerificationIdAndKind(loaded.verification().getId(), kind) >= MAX_ATTEMPTS) {
                 loaded.verification().declineCaptureAttempts(now);
                 hostedTokens.revokeByVerificationId(loaded.verification().getId());
@@ -349,6 +353,14 @@ public class HostedFlowService {
         item.accept(MediaQuality.sniff(body), body.length);
         return new CompleteCaptureResponse(
                 Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, false);
+    }
+
+    private void discardRejectedObject(String objectKey) {
+        try {
+            objectStorage.delete(objectKey);
+        } catch (RuntimeException e) {
+            log.warn("Failed to delete rejected capture key={}", objectKey, e);
+        }
     }
 
     private Loaded load(String token) {

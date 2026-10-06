@@ -57,9 +57,18 @@ public class FilesystemObjectStorage implements ObjectStoragePort {
         Path path = resolve(objectKey);
         try {
             Files.createDirectories(path.getParent());
-            Files.write(path, body);
+        Files.write(path, body);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to write object", e);
+        }
+    }
+
+    @Override
+    public void delete(String objectKey) {
+        try {
+            Files.deleteIfExists(resolve(objectKey));
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to delete object", e);
         }
     }
 

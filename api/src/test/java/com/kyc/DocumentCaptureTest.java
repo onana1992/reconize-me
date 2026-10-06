@@ -4,9 +4,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.kyc.enums.MediaKind;
+import com.kyc.enums.MediaStatus;
+import com.kyc.ports.ObjectStoragePort;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
+import com.kyc.repositories.VerificationMediaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,6 +42,12 @@ class DocumentCaptureTest {
     @Autowired
     private ApiKeyRepository apiKeys;
 
+    @Autowired
+    private VerificationMediaRepository media;
+
+    @Autowired
+    private ObjectStoragePort objectStorage;
+
     @Test
     void uploadWithoutConsentIsConflict() throws Exception {
         IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
@@ -51,19 +61,23 @@ class DocumentCaptureTest {
     void acceptedDocumentThenQualityFailThenCap() throws Exception {
         IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
-        IdvSupport.flow(mockMvc, token);
+        var session = IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
 
         var ok = IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
         org.junit.jupiter.api.Assertions.assertTrue(ok.path("accepted").asBoolean());
         org.junit.jupiter.api.Assertions.assertEquals("capture_selfie", ok.path("next").asText());
+        java.util.UUID verificationId = java.util.UUID.fromString(session.path("verification_id").asText());
+        var accepted = media.findByVerificationIdAndKindAndAttempt(verificationId, MediaKind.DOCUMENT, 1).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(MediaStatus.ACCEPTED, accepted.getStatus());
+        org.junit.jupiter.api.Assertions.assertTrue(objectStorage.exists(accepted.getObjectKey()));
     }
 
     @Test
     void qualityRejectedThenThreeFailuresDecline() throws Exception {
         IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "Doc Co", "doc-co");
         String token = IdvSupport.token(IdvSupport.create(mockMvc, KEY, "{}"));
-        IdvSupport.flow(mockMvc, token);
+        var session = IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
 
         byte[] tiny = IdvSupport.tinyJpeg();
@@ -72,6 +86,11 @@ class DocumentCaptureTest {
         org.junit.jupiter.api.Assertions.assertEquals("recapture_requested", first.path("status").asText());
         org.junit.jupiter.api.Assertions.assertEquals("capture_document", first.path("next").asText());
 
+        java.util.UUID verificationId = java.util.UUID.fromString(session.path("verification_id").asText());
+        var rejected = media.findByVerificationIdAndKindAndAttempt(verificationId, MediaKind.DOCUMENT, 1).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(MediaStatus.REJECTED_QUALITY, rejected.getStatus());
+        org.junit.jupiter.api.Assertions.assertFalse(objectStorage.exists(rejected.getObjectKey()));
+
         var second = IdvSupport.captureDocument(mockMvc, token, tiny);
         org.junit.jupiter.api.Assertions.assertFalse(second.path("accepted").asBoolean());
 
@@ -79,6 +98,10 @@ class DocumentCaptureTest {
         org.junit.jupiter.api.Assertions.assertFalse(third.path("accepted").asBoolean());
         org.junit.jupiter.api.Assertions.assertEquals("declined", third.path("status").asText());
         org.junit.jupiter.api.Assertions.assertEquals("done", third.path("next").asText());
+        org.junit.jupiter.api.Assertions.assertFalse(
+                objectStorage.exists(media.findByVerificationIdAndKindAndAttempt(verificationId, MediaKind.DOCUMENT, 3)
+                        .orElseThrow()
+                        .getObjectKey()));
     }
 
     @Test

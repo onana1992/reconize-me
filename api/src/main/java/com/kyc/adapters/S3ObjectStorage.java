@@ -8,6 +8,7 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -109,6 +110,22 @@ public class S3ObjectStorage implements ObjectStoragePort, AutoCloseable {
                     RequestBody.fromBytes(body == null ? new byte[0] : body));
         } catch (SdkException e) {
             throw wrap("Unable to write object", e);
+        }
+    }
+
+    @Override
+    public void delete(String objectKey) {
+        try {
+            s3.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(s3Key(objectKey)).build());
+        } catch (NoSuchKeyException e) {
+            // already gone
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                return;
+            }
+            throw wrap("Unable to delete object", e);
+        } catch (SdkException e) {
+            throw wrap("Unable to delete object", e);
         }
     }
 

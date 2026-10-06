@@ -20,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -92,6 +93,21 @@ class S3ObjectStorageTest {
         when(s3.getObjectAsBytes(any(GetObjectRequest.class)))
                 .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), payload));
         assertArrayEquals(payload, storage.read(KEY));
+    }
+
+    @Test
+    void deleteRemovesObjectAndIsIdempotent() {
+        when(s3.deleteObject(any(DeleteObjectRequest.class)))
+                .thenReturn(software.amazon.awssdk.services.s3.model.DeleteObjectResponse.builder().build());
+        storage.delete(KEY);
+        ArgumentCaptor<DeleteObjectRequest> captor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
+        verify(s3).deleteObject(captor.capture());
+        assertEquals("recognizme-media", captor.getValue().bucket());
+        assertEquals("kyc/" + KEY, captor.getValue().key());
+
+        when(s3.deleteObject(any(DeleteObjectRequest.class)))
+                .thenThrow(NoSuchKeyException.builder().message("missing").build());
+        storage.delete(KEY);
     }
 
     @Test
