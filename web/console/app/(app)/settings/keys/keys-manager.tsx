@@ -3,17 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { StatusBadge } from "@kyc/brand";
+import { CopyButton } from "../../../../components/copy-button";
 import { useT } from "../../../../i18n/client";
 import { environmentFromPrefix, environmentTone, tEnvironment } from "../../../../lib/environment";
 import type { ApiKeyItem } from "../../../../lib/api";
 import { formatUtc } from "../../../../lib/status";
-import { revokeApiKeyAction } from "../actions";
+import { issueApiKeyAction, revokeApiKeyAction } from "../actions";
 
 export function KeysManager({
+  integrationId,
   keys,
   canWrite,
   mode,
 }: {
+  integrationId: string;
   keys: ApiKeyItem[];
   canWrite: boolean;
   mode: string;
@@ -21,6 +24,7 @@ export function KeysManager({
   const t = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const live = mode === "live";
 
   const visible = useMemo(
@@ -44,12 +48,41 @@ export function KeysManager({
     router.refresh();
   }
 
+  async function issue() {
+    setError(null);
+    setPending(true);
+    try {
+      const result = await issueApiKeyAction(integrationId);
+      if (!result.ok) {
+        setError(result.code === "forbidden" ? t("console.keys.issueForbidden") : result.message);
+        return;
+      }
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  const hasActive = visible.some((key) => !key.revoked);
+  const issueLabel = pending
+    ? t("console.keys.issuing")
+    : live
+      ? t("console.keys.issueLive")
+      : t("console.keys.issueSandbox");
+
   return (
     <>
       {error ? (
         <p role="alert" className="rm-alert">
           {error}
         </p>
+      ) : null}
+      {canWrite && !hasActive ? (
+        <div className="rm-actions">
+          <button type="button" disabled={pending} onClick={issue}>
+            {issueLabel}
+          </button>
+        </div>
       ) : null}
       {visible.length === 0 ? (
         <div className="rm-empty">
@@ -64,7 +97,7 @@ export function KeysManager({
                 <th>{t("console.keys.prefix")}</th>
                 <th>{t("console.keys.created")}</th>
                 <th>{t("console.keys.status")}</th>
-                {canWrite ? <th></th> : null}
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -85,15 +118,16 @@ export function KeysManager({
                         tone={key.revoked ? "neutral" : "success"}
                       />
                     </td>
-                    {canWrite ? (
-                      <td>
-                        {key.revoked ? null : (
+                    <td>
+                      <div className="rm-table-actions">
+                        {key.key ? <CopyButton value={key.key} label={t("common.copyKey")} /> : null}
+                        {canWrite && !key.revoked ? (
                           <button type="button" data-variant="danger" onClick={() => revoke(key.id)}>
                             {t("console.keys.revoke")}
                           </button>
-                        )}
-                      </td>
-                    ) : null}
+                        ) : null}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}

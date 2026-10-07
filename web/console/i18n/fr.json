@@ -177,7 +177,7 @@
       "roleLabel": "Rôle",
       "twoFactor": "L’authentification à deux facteurs sera exigée plus tard.",
       "orgTitle": "Organisation",
-      "keysLead": "Préfixes visibles. Le secret n’est montré qu’à l’émission. Sandbox et live sont des clés distinctes.",
+      "keysLead": "Le secret reste copiable depuis la page Clés. Sandbox et live sont des clés distinctes.",
       "teamLead": "Membres et invitations de l’organisation.",
       "billingLead": "Solde, recharges et consommation de l’organisation.",
       "platformTitle": "Services",
@@ -293,8 +293,8 @@
         "decisionTitle": "Lire la décision",
         "decisionBody": "Interrogez la session. Les webhooks signés arriveront plus tard, par intégration."
       },
-      "keysLeadTest": "Une seule clé ky_test_ par intégration, émise à la création. Le secret n’est montré qu’une fois.",
-      "keysLeadLive": "Clés ky_live_ de cette intégration. Chaque ressource débite le crédit d’organisation. Un solde suffisant est requis."
+      "keysLeadTest": "Une seule clé ky_test_ active. Après révocation, vous pouvez en émettre une nouvelle. Le secret reste copiable ici.",
+      "keysLeadLive": "Une seule clé ky_live_ active. Après révocation, vous pouvez en émettre une nouvelle. Chaque ressource débite le crédit d’organisation. Le secret reste copiable ici."
     },
     "verifications": {
       "lead": "Vérifications d’identité de l’organisation.",
@@ -459,7 +459,7 @@
       "issueLive": "Émettre une clé live",
       "issuing": "Émission…",
       "issuedTitle": "Nouvelle clé {env}",
-      "issuedBody": "Copiez-la maintenant. Elle ne sera plus montrée.",
+      "issuedBody": "Copiez-la maintenant. Elle reste disponible sur l’onglet Clés.",
       "liveLocked": "Les clés live exigent un solde de crédit. Rechargez depuis Facturation.",
       "issueForbidden": "Vous n’avez pas le droit d’émettre une clé.",
       "revokeForbidden": "Vous n’avez pas le droit de révoquer une clé."

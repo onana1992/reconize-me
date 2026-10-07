@@ -15,5 +15,5 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, UUID> {
 
     List<ApiKey> findByIntegrationIdOrderByCreatedAtDesc(UUID integrationId);
 
-    boolean existsByIntegrationId(UUID integrationId);
+    boolean existsByIntegrationIdAndRevokedFalse(UUID integrationId);
 }

@@ -54,7 +54,9 @@ class IntegrationLifecycleTest {
                 .andExpect(jsonPath("$.key").value(startsWith("ky_test_")))
                 .andExpect(jsonPath("$.keys", hasSize(1)))
                 .andReturn();
-        String integrationId = IdvSupport.JSON.readTree(created.getResponse().getContentAsString()).get("id").asText();
+        var createdJson = IdvSupport.JSON.readTree(created.getResponse().getContentAsString());
+        String integrationId = createdJson.get("id").asText();
+        String issuedKey = createdJson.get("key").asText();
 
         mockMvc.perform(post("/v1/console/integrations")
                         .cookie(owner)
@@ -67,6 +69,7 @@ class IntegrationLifecycleTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.keys", hasSize(1)))
                 .andExpect(jsonPath("$.keys[0].key_prefix").exists())
+                .andExpect(jsonPath("$.keys[0].key").value(issuedKey))
                 .andExpect(jsonPath("$.key").doesNotExist());
 
         mockMvc.perform(post("/v1/console/integrations")
@@ -94,6 +97,30 @@ class IntegrationLifecycleTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.integration_id").value(integrationId))
                 .andExpect(jsonPath("$.integration_mode").value("test"));
+    }
+
+    @Test
+    void revokedKeyCanBeReplaced() throws Exception {
+        Cookie owner = AccountSupport.signupVerified(mockMvc, mailPort, "int-replace@example.com", "Int Replace");
+        var created = AccountSupport.createIntegration(mockMvc, owner, "Replace");
+        String integrationId = created.get("id").asText();
+        String keyId = created.get("keys").get(0).get("id").asText();
+
+        mockMvc.perform(post("/v1/console/api-keys/" + keyId + "/revoke").cookie(owner))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/v1/console/integrations/" + integrationId + "/api-keys").cookie(owner))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.key").value(startsWith("ky_test_")));
+
+        mockMvc.perform(get("/v1/console/integrations/" + integrationId).cookie(owner))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.keys", hasSize(2)))
+                .andExpect(jsonPath("$.keys[?(@.revoked == false)]", hasSize(1)));
+
+        mockMvc.perform(post("/v1/console/integrations/" + integrationId + "/api-keys").cookie(owner))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("key_exists"));
     }
 
     @Test

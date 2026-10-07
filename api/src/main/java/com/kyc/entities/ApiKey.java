@@ -22,7 +22,7 @@ public class ApiKey {
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
 
-    @Column(name = "integration_id", nullable = false, unique = true)
+    @Column(name = "integration_id", nullable = false)
     private UUID integrationId;
 
     @Column(name = "key_prefix", nullable = false, length = 16)
@@ -30,6 +30,9 @@ public class ApiKey {
 
     @Column(name = "key_hash", nullable = false)
     private String keyHash;
+
+    @Column(name = "key_cipher", length = 512)
+    private String keyCipher;
 
     @Column(nullable = false)
     private boolean revoked;
@@ -66,6 +69,10 @@ public class ApiKey {
         this.revoked = false;
         this.createdAt = createdAt;
         this.createdByUserId = createdByUserId;
+    }
+
+    public void storeCipher(String keyCipher) {
+        this.keyCipher = keyCipher;
     }
 
     public void revoke() {

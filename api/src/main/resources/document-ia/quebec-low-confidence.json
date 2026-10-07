@@ -1,0 +1,11 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE",
+    "version": "2024",
+    "confidence": 0.5
+  },
+  "fields": [
+    { "field": "lastName", "value": "TREMBLAY", "source": "VISUAL_TEXT" }
+  ]
+}

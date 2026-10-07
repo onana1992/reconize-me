@@ -27,7 +27,7 @@ class ApiKeySecretNotRelistedTest {
     private MailPort mailPort;
 
     @Test
-    void listKeysOmitsSecret() throws Exception {
+    void listKeysReturnsStoredSecret() throws Exception {
         var signup = mockMvc.perform(post("/v1/account/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -45,13 +45,14 @@ class ApiKeySecretNotRelistedTest {
                 .andExpect(status().isNoContent())
                 .andReturn();
         Cookie session = AccountSupport.session(login);
-        AccountSupport.createIntegration(mockMvc, session, "Keys");
+        var created = AccountSupport.createIntegration(mockMvc, session, "Keys");
+        String issued = created.get("key").asText();
 
         mockMvc.perform(get("/v1/console/api-keys").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").exists())
                 .andExpect(jsonPath("$[0].key_prefix").exists())
-                .andExpect(jsonPath("$[0].key").doesNotExist())
+                .andExpect(jsonPath("$[0].key").value(issued))
                 .andExpect(jsonPath("$[0].key_hash").doesNotExist());
     }
 }

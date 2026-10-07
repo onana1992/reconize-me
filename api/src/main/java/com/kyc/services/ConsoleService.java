@@ -56,6 +56,7 @@ public class ConsoleService {
     private final AccountService accountService;
     private final SessionService sessionService;
     private final CreditService creditService;
+    private final ApiKeyIssuer apiKeyIssuer;
     private final ObjectMapper objectMapper;
 
     public ConsoleService(
@@ -69,6 +70,7 @@ public class ConsoleService {
             AccountService accountService,
             SessionService sessionService,
             CreditService creditService,
+            ApiKeyIssuer apiKeyIssuer,
             ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
@@ -80,6 +82,7 @@ public class ConsoleService {
         this.accountService = accountService;
         this.sessionService = sessionService;
         this.creditService = creditService;
+        this.apiKeyIssuer = apiKeyIssuer;
         this.objectMapper = objectMapper;
     }
 
@@ -111,8 +114,7 @@ public class ConsoleService {
     public List<ApiKeyListItem> listKeys(ConsolePrincipal principal) {
         ConsoleAuth.require(principal, Permission.API_KEY_READ);
         return apiKeyRepository.findByOrganizationIdOrderByCreatedAtDesc(principal.organizationId()).stream()
-                .map(key -> new ApiKeyListItem(
-                        key.getId(), key.getIntegrationId(), key.getKeyPrefix(), key.getCreatedAt(), key.isRevoked()))
+                .map(apiKeyIssuer::toListItem)
                 .toList();
     }
 

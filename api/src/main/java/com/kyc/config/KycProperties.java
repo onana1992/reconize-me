@@ -18,7 +18,8 @@ public record KycProperties(
         @DefaultValue Mail mail,
         @DefaultValue Billing billing,
         @DefaultValue Stripe stripe,
-        @DefaultValue Aws aws) {
+        @DefaultValue Aws aws,
+        @DefaultValue DocumentIa documentIa) {
 
     public record Mail(
             @DefaultValue("log") String mode,
@@ -80,6 +81,8 @@ public record KycProperties(
                 @DefaultValue("") String secretAccessKey,
                 @DefaultValue("") String region) {}
     }
+
+    public record DocumentIa(@DefaultValue("false") boolean labEnabled) {}
 
     public String consoleUrl(String path) {
         return join(publicConsoleBaseUrl, path);

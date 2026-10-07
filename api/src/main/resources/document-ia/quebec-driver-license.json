@@ -1,0 +1,59 @@
+{
+  "documentDetected": false,
+  "detection": "DOCUMENT_PRESENT",
+  "quality": {
+    "readable": false,
+    "blur": false,
+    "glare": false,
+    "cropped": false,
+    "partiallyVisible": false,
+    "multipleDocuments": false,
+    "tooSmall": false,
+    "lowLight": false,
+    "overexposed": false,
+    "tilted": true,
+    "unreadable": true
+  },
+  "qualityScore": 0.5,
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE",
+    "country": "FR",
+    "documentType": "PASSPORT",
+    "version": "2024",
+    "side": "BACK",
+    "confidence": 0.94,
+    "extra": "ignored"
+  },
+  "rawText": "PERMIS DE CONDUIRE\nQUEBEC\nTREMBLAY",
+  "zones": [
+    {
+      "id": "z1",
+      "text": "TREMBLAY",
+      "confidence": 0.97,
+      "boundingBox": { "x": 0.2, "y": 0.3, "width": 0.2, "height": 0.05 }
+    },
+    {
+      "id": "z2",
+      "text": "HORS",
+      "confidence": 0.4,
+      "boundingBox": { "x": 1.2, "y": 0.1, "width": 0.2, "height": 0.05 }
+    }
+  ],
+  "fields": [
+    {
+      "field": "lastName",
+      "value": "TREMBLAY",
+      "normalizedValue": "SHOULD_BE_IGNORED",
+      "confidence": 0.97,
+      "source": "VISUAL_TEXT",
+      "validationStatus": "VALID",
+      "checkDigit": "7"
+    },
+    {
+      "field": "notOnSchema",
+      "value": "DROP"
+    }
+  ],
+  "mrzCheckDigits": [1, 2, 3],
+  "notInContract": true
+}

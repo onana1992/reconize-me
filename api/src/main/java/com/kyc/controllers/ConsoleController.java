@@ -58,13 +58,13 @@ public class ConsoleController {
     }
 
     @GetMapping("/api-keys")
-    @Operation(summary = "Lister les clés API (jamais le secret)")
+    @Operation(summary = "Lister les clés API (secret déchiffré si émis après le chiffrement)")
     public List<ApiKeyListItem> listKeys() {
         return consoleService.listKeys(CurrentConsole.require());
     }
 
     @PostMapping("/api-keys")
-    @Operation(summary = "Émettre une clé ky_test_ (plaintext une fois)")
+    @Operation(summary = "Émettre une clé ky_test_ (secret relu depuis la liste)")
     public ResponseEntity<IssuedApiKeyResponse> createKey() {
         return ResponseEntity.status(HttpStatus.CREATED).body(consoleService.createKey(CurrentConsole.require()));
     }

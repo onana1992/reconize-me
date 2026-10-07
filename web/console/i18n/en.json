@@ -177,7 +177,7 @@
       "roleLabel": "Role",
       "twoFactor": "Two-factor authentication will be required later.",
       "orgTitle": "Organization",
-      "keysLead": "Prefixes are visible. The secret is shown only at issuance. Sandbox and live are distinct keys.",
+      "keysLead": "The secret stays available to copy from the Keys page. Sandbox and live are distinct keys.",
       "teamLead": "Organization members and pending invites.",
       "billingLead": "Balance, top-ups, and usage for this organization.",
       "platformTitle": "Services",
@@ -293,8 +293,8 @@
         "decisionTitle": "Read the decision",
         "decisionBody": "Fetch the session. Signed webhooks will come later, per integration."
       },
-      "keysLeadTest": "One ky_test_ key per integration, issued on create. The secret is shown only once.",
-      "keysLeadLive": "ky_live_ keys for this integration. Each resource debits organization credit. A sufficient balance is required."
+      "keysLeadTest": "One active ky_test_ key. After revocation, you can issue a new one. The secret stays available to copy here.",
+      "keysLeadLive": "One active ky_live_ key. After revocation, you can issue a new one. Each resource debits organization credit. The secret stays available to copy here."
     },
     "verifications": {
       "lead": "Identity verifications for this organization.",
@@ -459,7 +459,7 @@
       "issueLive": "Issue a live key",
       "issuing": "Issuing…",
       "issuedTitle": "New {env} key",
-      "issuedBody": "Copy it now. It will not be shown again.",
+      "issuedBody": "Copy it now. It stays available on the Keys tab.",
       "liveLocked": "Live keys require a credit balance. Top up from Billing.",
       "issueForbidden": "You don’t have permission to issue a key.",
       "revokeForbidden": "You don’t have permission to revoke a key."

@@ -34,7 +34,12 @@ export default async function IntegrationKeysPage({
           {t("console.keys.forbidden")}
         </p>
       ) : (
-        <KeysManager keys={integration.keys ?? []} canWrite={canWrite} mode={integration.mode} />
+        <KeysManager
+          integrationId={integration.id}
+          keys={integration.keys ?? []}
+          canWrite={canWrite}
+          mode={integration.mode}
+        />
       )}
     </section>
   );

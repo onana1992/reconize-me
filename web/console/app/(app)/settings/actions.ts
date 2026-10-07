@@ -6,6 +6,7 @@ import {
   type AuditList,
   type CheckoutSession,
   type IntegrationResponse,
+  type IssuedApiKey,
 } from "../../../lib/api";
 import { sessionCookieHeader } from "../../../lib/session";
 
@@ -19,6 +20,14 @@ export async function createIntegrationAction(formData: FormData): Promise<ApiRe
       mode,
     }),
   });
+}
+
+export async function issueApiKeyAction(integrationId: string): Promise<ApiResult<IssuedApiKey>> {
+  return consoleApi(
+    `/v1/console/integrations/${encodeURIComponent(integrationId)}/api-keys`,
+    await sessionCookieHeader(),
+    { method: "POST" },
+  );
 }
 
 export async function revokeApiKeyAction(id: string): Promise<ApiResult<void>> {

@@ -1,0 +1,15 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "MARS_PASSPORT",
+    "country": "XX",
+    "documentType": "PASSPORT",
+    "version": "2099",
+    "side": "BIOGRAPHIC",
+    "confidence": 0.99
+  },
+  "rawText": "HORS CATALOGUE",
+  "fields": [
+    { "field": "lastName", "value": "ONANA" }
+  ]
+}

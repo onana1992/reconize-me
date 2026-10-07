@@ -62,7 +62,7 @@ public class ConsoleIntegrationController {
     }
 
     @PostMapping("/{id}/api-keys")
-    @Operation(summary = "Émettre une clé sur cette intégration (plaintext une fois)")
+    @Operation(summary = "Émettre une clé sur cette intégration s’il n’y en a pas d’active")
     public ResponseEntity<IssuedApiKeyResponse> createKey(@PathVariable UUID id) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(integrations.issueKey(CurrentConsole.require(), id));

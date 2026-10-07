@@ -1,0 +1,6 @@
+{
+  "detection": "SELFIE",
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE"
+  }
+}

@@ -73,6 +73,7 @@ class AuthRateLimiterTest {
                         "ca-central-1",
                         new KycProperties.Aws.S3(false, "", "", "", "", ""),
                         new KycProperties.Aws.Textract("", "", ""),
-                        new KycProperties.Aws.Rekognition("", "", "")));
+                        new KycProperties.Aws.Rekognition("", "", "")),
+                new KycProperties.DocumentIa(false));
     }
 }

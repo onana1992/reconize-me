@@ -20,6 +20,7 @@ export type ApiKeyItem = {
   key_prefix: string;
   created_at: string;
   revoked: boolean;
+  key?: string | null;
 };
 
 export type IssuedApiKey = {

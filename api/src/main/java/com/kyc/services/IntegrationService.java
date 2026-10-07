@@ -52,7 +52,7 @@ public class IntegrationService {
                 .findFirstByOrganizationIdAndProductAndModeOrderByCreatedAtAsc(
                         organizationId, ProductCode.IDENTITY, IntegrationMode.TEST)
                 .orElseThrow(() -> ApiException.conflict("no_integration", "Create an integration first"));
-        requireNoKey(test.getId());
+        requireNoActiveKey(test.getId());
         return apiKeyIssuer.issue(test, userId);
     }
 
@@ -95,7 +95,7 @@ public class IntegrationService {
     public IssuedApiKeyResponse issueKey(ConsolePrincipal principal, UUID integrationId) {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
         Integration integration = requireInOrg(principal.organizationId(), integrationId);
-        requireNoKey(integration.getId());
+        requireNoActiveKey(integration.getId());
         return apiKeyIssuer.issue(integration, principal.userId());
     }
 
@@ -115,9 +115,9 @@ public class IntegrationService {
         return requireInOrg(organizationId, integrationId);
     }
 
-    private void requireNoKey(UUID integrationId) {
-        if (apiKeys.existsByIntegrationId(integrationId)) {
-            throw ApiException.conflict("key_exists", "This integration already has a key");
+    private void requireNoActiveKey(UUID integrationId) {
+        if (apiKeys.existsByIntegrationIdAndRevokedFalse(integrationId)) {
+            throw ApiException.conflict("key_exists", "This integration already has an active key");
         }
     }
 
@@ -154,8 +154,7 @@ public class IntegrationService {
 
     private List<ApiKeyListItem> keysOf(UUID integrationId) {
         return apiKeys.findByIntegrationIdOrderByCreatedAtDesc(integrationId).stream()
-                .map(key -> new ApiKeyListItem(
-                        key.getId(), key.getIntegrationId(), key.getKeyPrefix(), key.getCreatedAt(), key.isRevoked()))
+                .map(apiKeyIssuer::toListItem)
                 .toList();
     }
 
