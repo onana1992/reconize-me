@@ -2,6 +2,7 @@ package com.kyc.dto.documentia;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
+import java.util.Map;
 
 public record ParsedDocument(
         boolean documentDetected,
@@ -11,7 +12,21 @@ public record ParsedDocument(
         String rawText,
         List<Zone> zones,
         List<ExtractedField> fields,
-        List<String> indicators) {
+        List<String> indicators,
+        Map<String, Object> extractedIdentity) {
+
+    public ParsedDocument withIdentity(Map<String, Object> identity) {
+        return new ParsedDocument(
+                documentDetected,
+                detection,
+                quality,
+                classification,
+                rawText,
+                zones,
+                fields,
+                indicators,
+                identity);
+    }
 
     public record Quality(
             boolean readable,

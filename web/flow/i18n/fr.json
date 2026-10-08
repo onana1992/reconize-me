@@ -30,6 +30,11 @@
     "lead": "Placez le document dans le cadre, bien éclairé, sans reflet.",
     "frame": "Cadre pièce : alignez le document dans le rectangle."
   },
+  "documentBack": {
+    "title": "Photographiez le verso",
+    "lead": "Retournez la pièce. Le code-barres doit être lisible, sans reflet.",
+    "frame": "Cadre verso : alignez le dos de la pièce dans le rectangle."
+  },
   "selfie": {
     "title": "Photographiez votre visage",
     "lead": "Regardez l’appareil, visage dégagé, lumière uniforme.",

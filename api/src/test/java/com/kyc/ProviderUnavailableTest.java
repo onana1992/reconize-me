@@ -58,7 +58,7 @@ class ProviderUnavailableTest {
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
+        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
         var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
         assertEquals("review", done.path("status").asText());
 
@@ -72,16 +72,10 @@ class ProviderUnavailableTest {
     static class DownAwsConfig {
         @Bean
         @Primary
-        AnalyzeIdClient downAnalyzeIdClient() {
-            return image -> {
-                throw new ProviderUnavailableException("Textract 500");
+        com.kyc.ports.VisionDocumentPort downVision() {
+            return (image, mediaType, prompt) -> {
+                throw new ProviderUnavailableException("vision down");
             };
-        }
-
-        @Bean
-        @Primary
-        CompareFacesClient unusedCompareFacesClient() {
-            return (document, selfie) -> 0.96;
         }
     }
 }

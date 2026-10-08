@@ -163,6 +163,48 @@ class DocumentAnalysisParserTest {
     }
 
     @Test
+    void keepsOnlyClosedModelIndicators() {
+        ParsedDocument parsed = parser.parse("""
+                {
+                  "detection": "DOCUMENT_PRESENT",
+                  "classification": { "code": "QUEBEC_DRIVER_LICENSE", "version": "2024", "confidence": 0.94 },
+                  "indicators": ["possible_alteration", "FORGED", "document_expired"]
+                }
+                """).document();
+        assertEquals(List.of("possible_alteration"), parsed.indicators());
+    }
+
+    @Test
+    void explicitBackBindsTheBackEdition() {
+        UUID front = UUID.fromString("018f5a00-0000-7000-8000-0000000000a2");
+        UUID back = UUID.fromString("018f5a00-0000-7000-8000-0000000000c2");
+        DocumentAnalysisParser sided = new DocumentAnalysisParser(new ObjectMapper(), code -> {
+            if (!"QUEBEC_DRIVER_LICENSE".equals(code)) {
+                return List.of();
+            }
+            return List.of(
+                    new ActiveSchema(front, "QUEBEC_DRIVER_LICENSE", "CA", "DRIVING_LICENSE", "2024", List.of("FRONT"), "QC",
+                            Set.of("firstName", "lastName", "expirationDate")),
+                    new ActiveSchema(back, "QUEBEC_DRIVER_LICENSE", "CA", "DRIVING_LICENSE", "2024", List.of("BACK"), "QC",
+                            Set.of("barcode")));
+        });
+        DocumentParse parsed = sided.parse("""
+                {
+                  "detection": "DOCUMENT_PRESENT",
+                  "classification": { "code": "QUEBEC_DRIVER_LICENSE", "version": "2024", "side": "BACK", "confidence": 0.97 },
+                  "fields": [
+                    { "field": "barcode", "value": "PRESENT", "confidence": 0.96, "source": "VISUAL_TEXT" },
+                    { "field": "lastName", "value": "ONANA", "confidence": 0.9, "source": "VISUAL_TEXT" }
+                  ]
+                }
+                """);
+        assertEquals("BACK", parsed.document().classification().side());
+        assertEquals(back, parsed.schemaVersionId());
+        assertEquals(1, parsed.document().fields().size());
+        assertEquals("barcode", parsed.document().fields().get(0).field());
+    }
+
+    @Test
     void rejectsUnknownDetection() {
         assertThrows(InvalidModelJsonException.class, () -> parser.parse("{ \"detection\": \"SELFIE\" }"));
     }

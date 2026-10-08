@@ -1,6 +1,9 @@
 package com.kyc;
 
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -19,8 +22,11 @@ import com.kyc.repositories.OrganizationRepository;
 import com.kyc.repositories.VerificationRepository;
 import com.kyc.services.ApiKeyAuthenticator;
 import com.kyc.services.documentia.SchemaRegistry;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.UUID;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +83,7 @@ class DocumentIaLabTest {
         long before = verifications.count();
         mockMvc.perform(multipart("/v1/document-ia/analyze")
                         .file(jpeg())
+                        .param("until", "vision")
                         .header("Authorization", "Bearer " + TEST))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("sandbox_no_vision"));
@@ -84,28 +91,88 @@ class DocumentIaLabTest {
     }
 
     @Test
-    void liveKeyReturnsEmptyEnvelope() throws Exception {
+    void readableImageStopsAtQualityWithoutCallingVision() throws Exception {
         long before = verifications.count();
         mockMvc.perform(multipart("/v1/document-ia/analyze")
-                        .file(jpeg())
+                        .file(png("sharp.png", sampledChecker(640, 480, 0x000000, 0xFFFFFF)))
                         .param("until", "quality")
                         .header("Authorization", "Bearer " + LIVE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pipeline").value("vision-1"))
-                .andExpect(jsonPath("$.stoppedAt").value(nullValue()))
+                .andExpect(jsonPath("$.stoppedAt").value("quality"))
                 .andExpect(jsonPath("$.provider").value("vision_llm"))
                 .andExpect(jsonPath("$.providerCalled").value(false))
                 .andExpect(jsonPath("$.schemaVersionId").value(nullValue()))
-                .andExpect(jsonPath("$.quality").value(nullValue()))
+                .andExpect(jsonPath("$.quality.readable").value(true))
+                .andExpect(jsonPath("$.quality.blur").value(false))
+                .andExpect(jsonPath("$.quality.tooSmall").value(false))
+                .andExpect(jsonPath("$.quality.glare").value(false))
+                .andExpect(jsonPath("$.quality.reason").value(nullValue()))
                 .andExpect(jsonPath("$.rawModel").value(nullValue()))
                 .andExpect(jsonPath("$.parsed").value(nullValue()))
-                .andExpect(jsonPath("$.fields").value(nullValue()))
-                .andExpect(jsonPath("$.mrz").value(nullValue()))
-                .andExpect(jsonPath("$.validation").value(nullValue()))
-                .andExpect(jsonPath("$.indicators").value(nullValue()))
-                .andExpect(jsonPath("$.scores").value(nullValue()))
                 .andExpect(jsonPath("$.decision").value(nullValue()));
         org.junit.jupiter.api.Assertions.assertEquals(before, verifications.count());
+    }
+
+    @Test
+    void readableImageCallsVisionAndParsesTheFixture() throws Exception {
+        mockMvc.perform(multipart("/v1/document-ia/analyze")
+                        .file(png("sharp.png", sampledChecker(640, 480, 0x000000, 0xFFFFFF)))
+                        .param("until", "vision")
+                        .header("Authorization", "Bearer " + LIVE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("vision"))
+                .andExpect(jsonPath("$.provider").value("vision_llm"))
+                .andExpect(jsonPath("$.providerCalled").value(true))
+                .andExpect(jsonPath("$.quality.readable").value(true))
+                .andExpect(jsonPath("$.rawModel.classification.code").value("QUEBEC_DRIVER_LICENSE"))
+                .andExpect(jsonPath("$.rawModel.classification.country").value("FR"))
+                .andExpect(jsonPath("$.parsed.classification.code").value("QUEBEC_DRIVER_LICENSE"))
+                .andExpect(jsonPath("$.parsed.classification.country").value("CA"))
+                .andExpect(jsonPath("$.schemaVersionId").value(SchemaRegistry.QUEBEC_VERSION_ID.toString()))
+                .andExpect(jsonPath("$.decision").value(nullValue()))
+                .andExpect(jsonPath("$.indicators").value(nullValue()));
+    }
+
+    @Test
+    void unreadableImageDoesNotCallVision() throws Exception {
+        mockMvc.perform(multipart("/v1/document-ia/analyze")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "file", "tiny.jpg", MediaType.IMAGE_JPEG_VALUE, IdvSupport.tinyJpeg()))
+                        .param("until", "vision")
+                        .header("Authorization", "Bearer " + LIVE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("quality"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.rawModel").value(nullValue()))
+                .andExpect(jsonPath("$.quality.reason").value("TOO_SMALL"));
+    }
+
+    @Test
+    void tinyImageStopsForQuality() throws Exception {
+        mockMvc.perform(multipart("/v1/document-ia/analyze")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "file", "tiny.jpg", MediaType.IMAGE_JPEG_VALUE, IdvSupport.tinyJpeg()))
+                        .param("until", "quality")
+                        .header("Authorization", "Bearer " + LIVE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("quality"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.quality.readable").value(false))
+                .andExpect(jsonPath("$.quality.tooSmall").value(true))
+                .andExpect(jsonPath("$.quality.reason").value("TOO_SMALL"))
+                .andExpect(jsonPath("$.decision").value(nullValue()));
+    }
+
+    @Test
+    void unreadableBytesAreRejected() throws Exception {
+        mockMvc.perform(multipart("/v1/document-ia/analyze")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "file", "notes.txt", MediaType.TEXT_PLAIN_VALUE, new byte[] {1, 2, 3, 4}))
+                        .header("Authorization", "Bearer " + LIVE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("validation_error"))
+                .andExpect(jsonPath("$.error.details[0].field").value("file"));
     }
 
     @Test
@@ -123,13 +190,17 @@ class DocumentIaLabTest {
     void catalogIsEmptyAndListedInOpenApi() throws Exception {
         mockMvc.perform(get("/v1/document-ia/catalog").header("Authorization", "Bearer " + LIVE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schemas", hasSize(1)))
-                .andExpect(jsonPath("$.schemas[0].code").value("QUEBEC_DRIVER_LICENSE"))
-                .andExpect(jsonPath("$.schemas[0].country").value("CA"))
-                .andExpect(jsonPath("$.schemas[0].documentType").value("DRIVING_LICENSE"))
-                .andExpect(jsonPath("$.schemas[0].side").value("FRONT"))
-                .andExpect(jsonPath("$.schemas[0].version").value("2024"))
-                .andExpect(jsonPath("$.schemas[0].issuingJurisdiction").value("QC"));
+                .andExpect(jsonPath("$.schemas", hasSize(5)))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].side").value(hasItem("FRONT")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].side").value(hasItem("BACK")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].documentType").value(hasItem("RESIDENCE_PERMIT")))
+                .andExpect(jsonPath("$.schemas[?(@.side == 'BACK')].code").value(hasItem("QUEBEC_DRIVER_LICENSE")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].country").value(hasItem("CA")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].documentType").value(hasItem("DRIVING_LICENSE")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].side").value(hasItem("FRONT")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].version").value(hasItem("2024")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].issuingJurisdiction").value(hasItem("QC")))
+                .andExpect(jsonPath("$.schemas[?(@.code == 'PASSPORT_TD3')].documentType").value(hasItem("PASSPORT")));
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/v1/document-ia/analyze']").exists())
@@ -218,6 +289,168 @@ class DocumentIaLabTest {
                 .andExpect(jsonPath("$.error.code").value("not_found"));
     }
 
+    @Test
+    void quebecFixtureNormalizesEachReadField() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-driver-license")
+                        .param("until", "normalize")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("normalize"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.decision").value(nullValue()))
+                .andExpect(jsonPath("$.fields[?(@.field == 'lastName')].value").value(hasItem("TREMBLAY")))
+                .andExpect(jsonPath("$.fields[?(@.field == 'lastName')].normalizedValue").value(hasItem("TREMBLAY")))
+                .andExpect(jsonPath("$.parsed.extractedIdentity.last_name").value("TREMBLAY"))
+                .andExpect(jsonPath("$.parsed.extractedIdentity.document_code").value("QUEBEC_DRIVER_LICENSE"))
+                .andExpect(jsonPath("$.parsed.extractedIdentity.schema_version").value("2024"))
+                .andExpect(jsonPath("$.parsed.extractedIdentity.document_type").value("driving_license"));
+    }
+
+    @Test
+    void ambiguousDateKeepsTheRawReading() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-ambiguous-date")
+                        .param("until", "normalize")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fields[?(@.field == 'dateOfBirth')].value").value(hasItem("12/05/1990")))
+                .andExpect(jsonPath("$.fields[?(@.field == 'dateOfBirth')].normalizedValue").value(hasItem(nullValue())))
+                .andExpect(jsonPath("$.fields[?(@.field == 'dateOfBirth')].validationStatus").value(hasItem("AMBIGUOUS")));
+    }
+
+    @Test
+    void birthAfterIssueIsAnL3Finding() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-dob-after-issue")
+                        .param("until", "normalize")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validation[?(@.code == 'DOB_AFTER_ISSUE')].level").value(hasItem("L3")))
+                .andExpect(jsonPath("$.decision").value(nullValue()));
+    }
+
+    @Test
+    void quebecMrzIsNotApplicable() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-driver-license")
+                        .param("until", "mrz")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("mrz"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.mrz.format").value("NONE"))
+                .andExpect(jsonPath("$.mrz.status").value("NOT_APPLICABLE"))
+                .andExpect(jsonPath("$.mrz.mrzScore").value(nullValue()))
+                .andExpect(jsonPath("$.decision").value(nullValue()));
+    }
+
+    @Test
+    void passportTd3ShowsRecalculatedCheckDigits() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/passport-td3")
+                        .param("until", "mrz")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("mrz"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.mrz.format").value("TD3"))
+                .andExpect(jsonPath("$.mrz.status").value("VALID"))
+                .andExpect(jsonPath("$.mrz.mrzScore").value(1.0))
+                .andExpect(jsonPath("$.mrz.lines", hasSize(2)))
+                .andExpect(jsonPath("$.mrz.checkDigits[?(@.field == 'documentNumber')].calculated").value(hasItem("6")))
+                .andExpect(jsonPath("$.mrz.checkDigits[?(@.field == 'documentNumber')].valid").value(hasItem(true)))
+                .andExpect(jsonPath("$.fields[?(@.field == 'lastName')].source").value(hasItem("VISUAL_AND_MRZ")))
+                .andExpect(jsonPath("$.decision").value(nullValue()));
+    }
+
+    @Test
+    void cleanQuebecFixtureIsApproved() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-clean")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("decide"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.scores.documentTypeScore").value(0.94))
+                .andExpect(jsonPath("$.scores.mrzScore").value(nullValue()))
+                .andExpect(jsonPath("$.scores.overallScore", greaterThan(0.90)))
+                .andExpect(jsonPath("$.scores.band").value("HIGH_CONFIDENCE"))
+                .andExpect(jsonPath("$.decision.issue").value("PASS"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("APPROVED"))
+                .andExpect(jsonPath("$.decision.rulesVersion").value("vision-1"))
+                .andExpect(jsonPath("$.decision.reasons", hasSize(0)));
+    }
+
+    @Test
+    void canadaPermanentResidentBackIsApproved() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/canada-pr-back")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.parsed.classification.code").value("CANADA_PERMANENT_RESIDENT"))
+                .andExpect(jsonPath("$.parsed.classification.side").value("BACK"))
+                .andExpect(jsonPath("$.schemaVersionId").value(SchemaRegistry.CANADA_PR_BACK_VERSION_ID.toString()))
+                .andExpect(jsonPath("$.mrz.format").value("TD1"))
+                .andExpect(jsonPath("$.mrz.status").value("VALID"))
+                .andExpect(jsonPath("$.fields[?(@.field == 'expirationDate')].normalizedValue").value(hasItem("2030-10-21")))
+                .andExpect(jsonPath("$.fields[?(@.field == 'documentNumber')].source").value(hasItem("VISUAL_AND_MRZ")))
+                .andExpect(jsonPath("$.decision.issue").value("PASS"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("APPROVED"))
+                .andExpect(jsonPath("$.decision.rulesVersion").value("vision-1"));
+    }
+
+    @Test
+    void quebecBackFixtureIsApproved() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-back")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.parsed.classification.side").value("BACK"))
+                .andExpect(jsonPath("$.schemaVersionId").value(SchemaRegistry.QUEBEC_BACK_VERSION_ID.toString()))
+                .andExpect(jsonPath("$.fields[?(@.field == 'barcode')].validationStatus").value(hasItem("VALID")))
+                .andExpect(jsonPath("$.decision.issue").value("PASS"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("APPROVED"))
+                .andExpect(jsonPath("$.decision.rulesVersion").value("vision-1"));
+    }
+
+    @Test
+    void expiredQuebecFixtureIsDeclined() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-expired")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.decision.issue").value("REJECT"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("DECLINED"))
+                .andExpect(jsonPath("$.decision.rulesVersion").value("vision-1"))
+                .andExpect(jsonPath("$.decision.reasons[0]").value("document_expired"));
+    }
+
+    @Test
+    void unknownCodeIsReviewNotDeclined() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/unknown-code")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.decision.issue").value("REVIEW"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("REVIEW"))
+                .andExpect(jsonPath("$.decision.reasons[0]").value("DOCUMENT_UNKNOWN"))
+                .andExpect(jsonPath("$.scores.documentTypeScore").value(0.0));
+    }
+
+    @Test
+    void possibleAlterationIsReviewNotReject() throws Exception {
+        mockMvc.perform(post("/v1/document-ia/fixtures/quebec-alteration")
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + TEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.scores.band").value("HIGH_CONFIDENCE"))
+                .andExpect(jsonPath("$.decision.issue").value("REVIEW"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("REVIEW"))
+                .andExpect(jsonPath("$.decision.reasons[0]").value("SUSPICIOUS_INDICATOR"))
+                .andExpect(jsonPath("$.validation[?(@.code == 'possible_alteration')].level").value(hasItem("L6")))
+                .andExpect(jsonPath("$.indicators", hasItem("possible_alteration")))
+                .andExpect(jsonPath("$.indicators", not(hasItem("FORGED"))));
+    }
+
     private void seed(String rawKey, IntegrationMode mode, String orgName, String slug) {
         Instant now = Instant.parse("2026-10-06T12:00:00Z");
         UUID organizationId = UUID.randomUUID();
@@ -236,5 +469,27 @@ class DocumentIaLabTest {
 
     private static MockMultipartFile jpeg() throws Exception {
         return new MockMultipartFile("file", "doc.jpg", MediaType.IMAGE_JPEG_VALUE, IdvSupport.goodJpeg());
+    }
+
+    private static MockMultipartFile png(String name, BufferedImage image) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", out);
+        return new MockMultipartFile("file", name, MediaType.IMAGE_PNG_VALUE, out.toByteArray());
+    }
+
+    private static BufferedImage sampledChecker(int width, int height, int dark, int light) {
+        int step = Math.max(1, (int) Math.round(Math.min(width, height) / 320.0));
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        int sampleWidth = Math.max(1, width / step);
+        int sampleHeight = Math.max(1, height / step);
+        for (int gy = 0; gy < sampleHeight; gy++) {
+            for (int gx = 0; gx < sampleWidth; gx++) {
+                image.setRGB(
+                        Math.min(width - 1, gx * step),
+                        Math.min(height - 1, gy * step),
+                        ((gx + gy) % 2 == 0) ? dark : light);
+            }
+        }
+        return image;
     }
 }

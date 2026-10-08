@@ -3,6 +3,7 @@ package com.kyc.services.documentia;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.dto.documentia.DocumentIaCatalogResponse;
+import com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt;
 import com.kyc.dto.documentia.DocumentIaCatalogResponse.Schema;
 import com.kyc.entities.DocumentDefinition;
 import com.kyc.entities.DocumentDefinitionVersion;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -35,8 +37,92 @@ public class SchemaRegistry implements SchemaCatalog {
 
     public static final UUID QUEBEC_DEFINITION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000a1");
     public static final UUID QUEBEC_VERSION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000a2");
+    public static final UUID QUEBEC_BACK_DEFINITION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000c1");
+    public static final UUID QUEBEC_BACK_VERSION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000c2");
     public static final String QUEBEC_CODE = "QUEBEC_DRIVER_LICENSE";
     public static final String QUEBEC_VERSION = "2024";
+    public static final UUID PASSPORT_DEFINITION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000b1");
+    public static final UUID PASSPORT_VERSION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000b2");
+    public static final String CANADA_PR_CODE = "CANADA_PERMANENT_RESIDENT";
+    public static final String CANADA_PR_VERSION = "2015";
+    public static final UUID CANADA_PR_DEFINITION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000e1");
+    public static final UUID CANADA_PR_VERSION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000e2");
+    public static final UUID CANADA_PR_BACK_DEFINITION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000e3");
+    public static final UUID CANADA_PR_BACK_VERSION_ID = UUID.fromString("018f5a00-0000-7000-8000-0000000000e4");
+    public static final String PASSPORT_CODE = "PASSPORT_TD3";
+
+    static final String PASSPORT_SCHEMA_JSON =
+            """
+            {
+              "code": "PASSPORT_TD3",
+              "country": "UT",
+              "documentType": "PASSPORT",
+              "version": "2024",
+              "side": "FRONT",
+              "mrzFormat": "TD3",
+              "fields": [
+                {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME"},
+                {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME"},
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true},
+                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"]},
+                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"]},
+                {"name": "sex", "type": "SEX", "required": true},
+                {"name": "nationality", "type": "NATIONALITY", "required": false},
+                {"name": "mrz", "type": "MRZ", "required": true}
+              ],
+              "rules": []
+            }
+            """;
+
+    static final String CANADA_PR_SCHEMA_JSON =
+            """
+            {
+              "code": "CANADA_PERMANENT_RESIDENT",
+              "country": "CA",
+              "documentType": "RESIDENCE_PERMIT",
+              "version": "2015",
+              "side": "FRONT",
+              "mrzFormat": "NONE",
+              "fields": [
+                {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "surname on the Name/Nom line; it may contain two words"},
+                {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "given names on the line under the surname"},
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "labeled ID No; this is not the PD number on the back"},
+                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "labeled Date of birth; the card prints a bilingual date such as 09 APR /AVR 92; write yyyy-MM-dd, and a past year 92 is 1992"},
+                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "labeled Expiry; write yyyy-MM-dd, and a year 30 is 2030"},
+                {"name": "sex", "type": "SEX", "required": false, "hint": "labeled Sex"},
+                {"name": "nationality", "type": "NATIONALITY", "required": false, "hint": "labeled Nationality, alpha-3 such as CMR"}
+              ],
+              "rules": []
+            }
+            """;
+
+    static final String CANADA_PR_BACK_SCHEMA_JSON =
+            """
+            {
+              "code": "CANADA_PERMANENT_RESIDENT",
+              "country": "CA",
+              "documentType": "RESIDENCE_PERMIT",
+              "version": "2015",
+              "side": "BACK",
+              "mrzFormat": "TD1",
+              "fields": [
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "the PD number printed above the machine-readable zone, such as PD4077908; do not use the front ID No"},
+                {"name": "lastName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "surname from the third MRZ line, before the double filler"},
+                {"name": "firstName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "given names from the third MRZ line, after the double filler"},
+                {"name": "dateOfBirth", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "birth date from the MRZ; write yyyy-MM-dd"},
+                {"name": "expirationDate", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "expiry date from the MRZ; write yyyy-MM-dd, and a year 30 is 2030"},
+                {"name": "sex", "type": "SEX", "required": false, "hint": "sex letter from the MRZ"},
+                {"name": "nationality", "type": "NATIONALITY", "required": false, "hint": "nationality alpha-3 from the MRZ, such as CMR"},
+                {"name": "mrz", "type": "MRZ", "required": true, "hint": "the three lines of 30 characters at the bottom of the back"},
+                {"name": "placeOfLanding", "type": "STRING", "required": false, "hint": "labeled Place of landing"},
+                {"name": "residentSince", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "labeled PR Since; write yyyy-MM-dd"},
+                {"name": "eyeColor", "type": "STRING", "required": false, "hint": "labeled Eyes"},
+                {"name": "heightCm", "type": "STRING", "required": false, "hint": "labeled Height, digits only"},
+                {"name": "countryOfBirth", "type": "NATIONALITY", "required": false, "hint": "labeled COB, alpha-3 such as CMR"}
+              ],
+              "rules": []
+            }
+            """;
 
     static final String QUEBEC_SCHEMA_JSON =
             """
@@ -49,11 +135,41 @@ public class SchemaRegistry implements SchemaCatalog {
               "mrzFormat": "NONE",
               "issuingJurisdiction": "QC",
               "fields": [
-                {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME"},
-                {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME"},
-                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"]},
-                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"]},
-                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true}
+                {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "given names on the line under the surname"},
+                {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "surname on the line directly under the document number; it may contain two words"},
+                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Date de naissance"},
+                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Expire le"},
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "large number at the top of the card"},
+                {"name": "dateOfIssue", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Valide le"},
+                {"name": "sex", "type": "SEX", "required": false, "hint": "labeled Sexe"},
+                {"name": "address", "type": "ADDRESS", "required": false, "hint": "address lines under the date of birth"},
+                {"name": "licenseClass", "type": "STRING", "required": false, "hint": "labeled Classe(s)"},
+                {"name": "conditions", "type": "STRING", "required": false, "hint": "labeled Cond."},
+                {"name": "mentions", "type": "STRING", "required": false, "hint": "labeled Mention(s)"},
+                {"name": "referenceNumber", "type": "STRING", "required": false, "hint": "labeled Numero de reference"},
+                {"name": "heightCm", "type": "STRING", "required": false, "hint": "labeled Taille (cm)"},
+                {"name": "eyeColor", "type": "STRING", "required": false, "hint": "labeled Yeux"}
+              ],
+              "rules": [
+                {"level": "L3", "code": "DOB_AFTER_ISSUE", "expression": "dateOfBirth > dateOfIssue", "severity": "ERROR"}
+              ]
+            }
+            """;
+
+    static final String QUEBEC_BACK_SCHEMA_JSON =
+            """
+            {
+              "code": "QUEBEC_DRIVER_LICENSE",
+              "country": "CA",
+              "documentType": "DRIVING_LICENSE",
+              "version": "2024",
+              "side": "BACK",
+              "mrzFormat": "NONE",
+              "issuingJurisdiction": "QC",
+              "fields": [
+                {"name": "barcode", "type": "STRING", "required": true, "hint": "PDF417 barcode on the back; value PRESENT when that barcode is visible"},
+                {"name": "classDescription", "type": "STRING", "required": false, "hint": "sentence printed after CLASSE(S):"},
+                {"name": "cardEdition", "type": "STRING", "required": false, "hint": "edition in parentheses at the lower right, such as 2024-01"}
               ],
               "rules": []
             }
@@ -83,7 +199,7 @@ public class SchemaRegistry implements SchemaCatalog {
 
     @Transactional
     public void ensureQuebecLicense() {
-        if (definitions.findByCode(QUEBEC_CODE).isPresent()) {
+        if (definitions.findByCodeAndSide(QUEBEC_CODE, "FRONT").isPresent()) {
             return;
         }
         Instant now = Instant.parse("2026-10-06T16:00:00Z");
@@ -101,13 +217,129 @@ public class SchemaRegistry implements SchemaCatalog {
         activate(QUEBEC_VERSION_ID);
     }
 
+    @Transactional
+    public void ensureQuebecLicenseBack() {
+        if (definitions.findByCodeAndSide(QUEBEC_CODE, "BACK").isPresent()) {
+            return;
+        }
+        Instant now = Instant.parse("2026-10-07T20:00:00Z");
+        definitions.save(new DocumentDefinition(
+                QUEBEC_BACK_DEFINITION_ID,
+                QUEBEC_CODE,
+                "CA",
+                "DRIVING_LICENSE",
+                "BACK",
+                MrzFormat.NONE,
+                true,
+                now));
+        versions.save(new DocumentDefinitionVersion(
+                QUEBEC_BACK_VERSION_ID,
+                QUEBEC_BACK_DEFINITION_ID,
+                QUEBEC_VERSION,
+                SchemaStatus.DRAFT,
+                QUEBEC_BACK_SCHEMA_JSON));
+        activate(QUEBEC_BACK_VERSION_ID);
+    }
+
+    @Transactional
+    public void ensurePassportTd3() {
+        if (definitions.findByCodeAndSide(PASSPORT_CODE, "FRONT").isPresent()) {
+            return;
+        }
+        Instant now = Instant.parse("2026-10-07T16:00:00Z");
+        definitions.save(new DocumentDefinition(
+                PASSPORT_DEFINITION_ID,
+                PASSPORT_CODE,
+                "UT",
+                "PASSPORT",
+                "FRONT",
+                MrzFormat.TD3,
+                true,
+                now));
+        versions.save(new DocumentDefinitionVersion(
+                PASSPORT_VERSION_ID, PASSPORT_DEFINITION_ID, "2024", SchemaStatus.DRAFT, PASSPORT_SCHEMA_JSON));
+        activate(PASSPORT_VERSION_ID);
+    }
+
+    @Transactional
+    public void ensureCanadaPermanentResident() {
+        if (definitions.findByCodeAndSide(CANADA_PR_CODE, "FRONT").isPresent()) {
+            return;
+        }
+        Instant now = Instant.parse("2026-10-08T04:10:00Z");
+        definitions.save(new DocumentDefinition(
+                CANADA_PR_DEFINITION_ID,
+                CANADA_PR_CODE,
+                "CA",
+                "RESIDENCE_PERMIT",
+                "FRONT",
+                MrzFormat.NONE,
+                true,
+                now));
+        versions.save(new DocumentDefinitionVersion(
+                CANADA_PR_VERSION_ID,
+                CANADA_PR_DEFINITION_ID,
+                CANADA_PR_VERSION,
+                SchemaStatus.DRAFT,
+                CANADA_PR_SCHEMA_JSON));
+        activate(CANADA_PR_VERSION_ID);
+    }
+
+    @Transactional
+    public void ensureCanadaPermanentResidentBack() {
+        if (definitions.findByCodeAndSide(CANADA_PR_CODE, "BACK").isPresent()) {
+            return;
+        }
+        Instant now = Instant.parse("2026-10-08T04:10:00Z");
+        definitions.save(new DocumentDefinition(
+                CANADA_PR_BACK_DEFINITION_ID,
+                CANADA_PR_CODE,
+                "CA",
+                "RESIDENCE_PERMIT",
+                "BACK",
+                MrzFormat.TD1,
+                true,
+                now));
+        versions.save(new DocumentDefinitionVersion(
+                CANADA_PR_BACK_VERSION_ID,
+                CANADA_PR_BACK_DEFINITION_ID,
+                CANADA_PR_VERSION,
+                SchemaStatus.DRAFT,
+                CANADA_PR_BACK_SCHEMA_JSON));
+        activate(CANADA_PR_BACK_VERSION_ID);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<ActiveSchema> findActives(String code) {
         if (code == null || code.isBlank()) {
             return List.of();
         }
-        return definitions.findByCode(code).filter(DocumentDefinition::isEnabled).map(this::activesOf).orElse(List.of());
+        List<ActiveSchema> schemas = new ArrayList<>();
+        for (DocumentDefinition definition : definitions.findAllByCode(code)) {
+            if (definition.isEnabled()) {
+                schemas.addAll(activesOf(definition));
+            }
+        }
+        return List.copyOf(schemas);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasActiveSide(String code, String side) {
+        if (code == null || side == null) {
+            return false;
+        }
+        return findActives(code).stream().anyMatch(schema -> schema.sides().contains(side));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SchemaEdition> edition(UUID versionId) {
+        if (versionId == null) {
+            return Optional.empty();
+        }
+        return versions.findById(versionId).flatMap(version -> definitions
+                .findById(version.getDefinitionId())
+                .map(definition -> toEdition(definition, version)));
     }
 
     @Transactional(readOnly = true)
@@ -121,7 +353,11 @@ public class SchemaRegistry implements SchemaCatalog {
         }
         schemas.sort((left, right) -> {
             int byCode = left.code().compareTo(right.code());
-            return byCode != 0 ? byCode : left.version().compareTo(right.version());
+            if (byCode != 0) {
+                return byCode;
+            }
+            int bySide = left.side().compareTo(right.side());
+            return bySide != 0 ? bySide : left.version().compareTo(right.version());
         });
         return new DocumentIaCatalogResponse(List.copyOf(schemas));
     }
@@ -191,6 +427,34 @@ public class SchemaRegistry implements SchemaCatalog {
                 Set.copyOf(names));
     }
 
+    private SchemaEdition toEdition(DocumentDefinition definition, DocumentDefinitionVersion version) {
+        List<SchemaEdition.FieldDef> fieldDefs = new ArrayList<>();
+        for (DocumentField field : fields.findByVersionIdOrderByFieldOrderAsc(version.getId())) {
+            fieldDefs.add(new SchemaEdition.FieldDef(
+                    field.getName(),
+                    field.getValueType(),
+                    field.isRequired(),
+                    field.getNormalizer(),
+                    field.getFormats()));
+        }
+        List<SchemaEdition.RuleDef> ruleDefs = new ArrayList<>();
+        for (DocumentValidationRule rule : rules.findByVersionId(version.getId())) {
+            ruleDefs.add(new SchemaEdition.RuleDef(
+                    rule.getLevel(), rule.getCode(), rule.getExpression(), rule.getSeverity()));
+        }
+        return new SchemaEdition(
+                version.getId(),
+                definition.getCode(),
+                definition.getCountry(),
+                definition.getDocumentType(),
+                version.getVersion(),
+                definition.getSide(),
+                jurisdiction(version.getSchemaJson()),
+                List.copyOf(fieldDefs),
+                List.copyOf(ruleDefs),
+                definition.getMrzFormat());
+    }
+
     private Schema toCatalog(DocumentDefinition definition, DocumentDefinitionVersion version) {
         return new Schema(
                 version.getId(),
@@ -199,7 +463,24 @@ public class SchemaRegistry implements SchemaCatalog {
                 definition.getDocumentType(),
                 definition.getSide(),
                 version.getVersion(),
-                jurisdiction(version.getSchemaJson()));
+                jurisdiction(version.getSchemaJson()),
+                fieldPrompts(version.getSchemaJson()));
+    }
+
+    private List<FieldPrompt> fieldPrompts(String schemaJson) {
+        JsonNode nodes = readSchema(schemaJson).get("fields");
+        if (nodes == null || !nodes.isArray()) {
+            return List.of();
+        }
+        List<FieldPrompt> prompts = new ArrayList<>();
+        for (JsonNode field : nodes) {
+            String name = text(field, "name");
+            if (name == null) {
+                continue;
+            }
+            prompts.add(new FieldPrompt(name, field.path("required").asBoolean(false), text(field, "hint")));
+        }
+        return List.copyOf(prompts);
     }
 
     private String jurisdiction(String schemaJson) {

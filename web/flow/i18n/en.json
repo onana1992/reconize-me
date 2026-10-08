@@ -30,6 +30,11 @@
     "lead": "Place the document in the frame, well lit, without glare.",
     "frame": "Document frame: align the document in the rectangle."
   },
+  "documentBack": {
+    "title": "Photograph the back",
+    "lead": "Turn the document over. The barcode must be readable, without glare.",
+    "frame": "Back frame: align the back of the document in the rectangle."
+  },
   "selfie": {
     "title": "Photograph your face",
     "lead": "Look at the camera, face unobstructed, even lighting.",

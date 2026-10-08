@@ -60,13 +60,14 @@ class ExpiredLiveTest {
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
+        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
         var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
         assertEquals("declined", done.path("status").asText());
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("declined"))
+                .andExpect(jsonPath("$.rules_version").value("vision-1"))
                 .andExpect(jsonPath("$.decision_reasons[0]").value("document_expired"));
     }
 
@@ -74,23 +75,16 @@ class ExpiredLiveTest {
     static class ExpiredAwsConfig {
         @Bean
         @Primary
-        AnalyzeIdClient expiredAnalyzeIdClient() {
-            return image -> {
+        com.kyc.ports.VisionDocumentPort expiredVision() {
+            return (image, mediaType, prompt) -> {
                 try {
-                    String json = StreamUtils.copyToString(
-                            new ClassPathResource("fixtures/analyzeid-qc.json").getInputStream(),
+                    return StreamUtils.copyToString(
+                            new ClassPathResource("document-ia/quebec-expired.json").getInputStream(),
                             StandardCharsets.UTF_8);
-                    return json.replace("2028-06-01", "2020-01-01");
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             };
-        }
-
-        @Bean
-        @Primary
-        CompareFacesClient fixtureCompareFacesClient() {
-            return (document, selfie) -> 0.96;
         }
     }
 }

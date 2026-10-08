@@ -1,0 +1,16 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE",
+    "version": "2024",
+    "confidence": 0.94
+  },
+  "indicators": ["possible_alteration", "FORGED"],
+  "fields": [
+    { "field": "firstName", "value": "MARIE", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "lastName", "value": "TREMBLAY", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "dateOfBirth", "value": "1990-04-12", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "expirationDate", "value": "2032-04-09", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "documentNumber", "value": "T1234-567890-01", "confidence": 0.95, "source": "VISUAL_TEXT" }
+  ]
+}

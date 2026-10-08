@@ -40,7 +40,7 @@ public class DocumentIaController {
     @PostMapping(value = "/analyze", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Banc Document IA : enveloppe d’analyse, sans créer de vérification")
     public DocumentIaAnalysisResponse analyze(
-            @Parameter(description = "quality, parse, vision, normalize, mrz, validate ou decide. Ignoré tant que le bloc n’existe pas.")
+            @Parameter(description = "quality, parse, vision, normalize, mrz, validate ou decide.")
                     @RequestParam(required = false)
                     String until,
             @Parameter(description = "Image du document") @RequestPart(value = "file", required = false) MultipartFile file) {
@@ -49,8 +49,12 @@ public class DocumentIaController {
 
     @PostMapping("/fixtures/{name}")
     @Operation(summary = "Rejoue une fixture JSON, sans appel vision")
-    public DocumentIaAnalysisResponse fixture(@PathVariable String name) {
+    public DocumentIaAnalysisResponse fixture(
+            @PathVariable String name,
+            @Parameter(description = "parse, normalize, mrz, validate ou decide.")
+                    @RequestParam(required = false)
+                    String until) {
         CurrentApiKey.require();
-        return lab.fixture(name);
+        return lab.fixture(name, until);
     }
 }

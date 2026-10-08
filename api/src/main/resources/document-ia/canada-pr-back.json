@@ -1,0 +1,29 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "CANADA_PERMANENT_RESIDENT",
+    "version": "2015",
+    "side": "BACK",
+    "confidence": 0.96
+  },
+  "fields": [
+    { "field": "documentNumber", "value": "PD4077908", "confidence": 0.96, "source": "VISUAL_TEXT" },
+    { "field": "lastName", "value": "ONANA ONANA", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "firstName", "value": "JOSEPH JUNIOR", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "dateOfBirth", "value": "1992-04-09", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "expirationDate", "value": "2030-10-21", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "sex", "value": "M", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "nationality", "value": "CMR", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    {
+      "field": "mrz",
+      "value": "CACANPD40779087<1113098892<<<5\n9204096M3010219CMR<251021<01<3\nONANA<ONANA<<JOSEPH<JUNIOR<<<<",
+      "confidence": 0.96,
+      "source": "MRZ"
+    },
+    { "field": "placeOfLanding", "value": "MONTREAL", "confidence": 0.9, "source": "VISUAL_TEXT" },
+    { "field": "residentSince", "value": "2025-07-28", "confidence": 0.9, "source": "VISUAL_TEXT" },
+    { "field": "eyeColor", "value": "BROWN", "confidence": 0.9, "source": "VISUAL_TEXT" },
+    { "field": "heightCm", "value": "180", "confidence": 0.9, "source": "VISUAL_TEXT" },
+    { "field": "countryOfBirth", "value": "CMR", "confidence": 0.9, "source": "VISUAL_TEXT" }
+  ]
+}

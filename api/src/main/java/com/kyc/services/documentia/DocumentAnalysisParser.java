@@ -31,6 +31,13 @@ public class DocumentAnalysisParser {
 
     static final double LOW_CLASS_CONFIDENCE = 0.80;
 
+    static final Set<String> MODEL_INDICATORS = Set.of(
+            "suspicious_text",
+            "suspicious_layout",
+            "poor_image_quality",
+            "possible_alteration",
+            "unexpected_document_structure");
+
     private static final Set<String> SOURCES = Set.of("VISUAL_TEXT", "MRZ", "VISUAL_AND_MRZ");
 
     private final ObjectMapper objectMapper;
@@ -54,7 +61,8 @@ public class DocumentAnalysisParser {
                 textOrNull(root.get("rawText")),
                 zones(root.get("zones")),
                 fields(root.get("fields"), resolved.fieldNames()),
-                resolved.indicators());
+                mergeIndicators(resolved.indicators(), modelIndicators(root.get("indicators"))),
+                null);
         return new DocumentParse(document, resolved.schemaVersionId());
     }
 
@@ -131,16 +139,26 @@ public class DocumentAnalysisParser {
                     List.of());
         }
         ActiveSchema reference = schemas.get(0);
+        List<String> allowedSides = new ArrayList<>();
+        for (ActiveSchema schema : schemas) {
+            for (String candidate : schema.sides()) {
+                if (!allowedSides.contains(candidate)) {
+                    allowedSides.add(candidate);
+                }
+            }
+        }
         String side = textOrNull(node.get("side"));
-        if (!reference.allows(side)) {
-            String only = reference.onlySide();
-            if (only != null) {
-                side = only;
+        if (side == null || !allowedSides.contains(side)) {
+            if (allowedSides.size() == 1) {
+                side = allowedSides.get(0);
+            } else if (side == null && allowedSides.contains("FRONT")) {
+                side = "FRONT";
             }
         }
         String modelVersion = textOrNull(node.get("version"));
+        String chosenSide = side;
         ActiveSchema matched = schemas.stream()
-                .filter(schema -> schema.version().equals(modelVersion))
+                .filter(schema -> schema.version().equals(modelVersion) && schema.sides().contains(chosenSide))
                 .findFirst()
                 .orElse(null);
         List<String> indicators = new ArrayList<>();
@@ -285,6 +303,36 @@ public class DocumentAnalysisParser {
             return null;
         }
         return value;
+    }
+
+    private static List<String> modelIndicators(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return List.of();
+        }
+        if (!node.isArray()) {
+            throw new InvalidModelJsonException("indicators is not an array");
+        }
+        List<String> codes = new ArrayList<>();
+        for (JsonNode item : node) {
+            if (!item.isTextual()) {
+                continue;
+            }
+            String code = item.asText();
+            if (MODEL_INDICATORS.contains(code) && !codes.contains(code)) {
+                codes.add(code);
+            }
+        }
+        return codes;
+    }
+
+    private static List<String> mergeIndicators(List<String> structural, List<String> model) {
+        List<String> all = new ArrayList<>(structural);
+        for (String code : model) {
+            if (!all.contains(code)) {
+                all.add(code);
+            }
+        }
+        return List.copyOf(all);
     }
 
     private static String textOrNull(JsonNode node) {

@@ -1,0 +1,18 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "CANADA_PERMANENT_RESIDENT",
+    "version": "2015",
+    "side": "FRONT",
+    "confidence": 0.96
+  },
+  "fields": [
+    { "field": "lastName", "value": "ONANA ONANA", "confidence": 0.96, "source": "VISUAL_TEXT" },
+    { "field": "firstName", "value": "JOSEPH JUNIOR", "confidence": 0.96, "source": "VISUAL_TEXT" },
+    { "field": "documentNumber", "value": "11-1309-8892", "confidence": 0.96, "source": "VISUAL_TEXT" },
+    { "field": "dateOfBirth", "value": "1992-04-09", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "expirationDate", "value": "2030-10-21", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "sex", "value": "M", "confidence": 0.95, "source": "VISUAL_TEXT" },
+    { "field": "nationality", "value": "CMR", "confidence": 0.95, "source": "VISUAL_TEXT" }
+  ]
+}

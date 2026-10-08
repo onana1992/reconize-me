@@ -200,6 +200,18 @@ final class IdvSupport {
         return JSON.readTree(complete.getResponse().getContentAsString());
     }
 
+    static JsonNode captureDocumentBack(MockMvc mockMvc, String token, byte[] jpeg) throws Exception {
+        return captureDocument(mockMvc, token, jpeg);
+    }
+
+    static String fixture(String name) throws Exception {
+        return new String(
+                new org.springframework.core.io.ClassPathResource("document-ia/" + name + ".json")
+                        .getInputStream()
+                        .readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     static JsonNode captureSelfie(MockMvc mockMvc, String token, byte[] jpeg) throws Exception {
         MvcResult upload = mockMvc.perform(post("/v1/flow/" + token + "/selfie/uploads"))
                 .andExpect(status().isOk())
@@ -229,6 +241,26 @@ final class IdvSupport {
 
     static byte[] goodJpeg() throws Exception {
         return jpeg(800);
+    }
+
+    static byte[] sharpPng() throws Exception {
+        int width = 800;
+        int height = 800;
+        int step = Math.max(1, (int) Math.round(Math.min(width, height) / 320.0));
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        int sampleWidth = Math.max(1, width / step);
+        int sampleHeight = Math.max(1, height / step);
+        for (int gy = 0; gy < sampleHeight; gy++) {
+            for (int gx = 0; gx < sampleWidth; gx++) {
+                image.setRGB(
+                        Math.min(width - 1, gx * step),
+                        Math.min(height - 1, gy * step),
+                        ((gx + gy) % 2 == 0) ? 0x000000 : 0xFFFFFF);
+            }
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", out);
+        return out.toByteArray();
     }
 
     static byte[] tinyJpeg() throws Exception {

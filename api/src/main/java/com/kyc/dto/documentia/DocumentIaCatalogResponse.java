@@ -5,6 +5,8 @@ import java.util.UUID;
 
 public record DocumentIaCatalogResponse(List<Schema> schemas) {
 
+    public record FieldPrompt(String name, boolean required, String hint) {}
+
     public record Schema(
             UUID schemaVersionId,
             String code,
@@ -12,5 +14,6 @@ public record DocumentIaCatalogResponse(List<Schema> schemas) {
             String documentType,
             String side,
             String version,
-            String issuingJurisdiction) {}
+            String issuingJurisdiction,
+            List<FieldPrompt> fields) {}
 }

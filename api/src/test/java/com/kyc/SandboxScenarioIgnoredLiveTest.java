@@ -55,7 +55,8 @@ class SandboxScenarioIgnoredLiveTest {
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
+        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
+        IdvSupport.captureDocumentBack(mockMvc, token, IdvSupport.sharpPng());
         var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
         assertEquals("declined", done.path("status").asText());
 
@@ -63,15 +64,28 @@ class SandboxScenarioIgnoredLiveTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("declined"))
                 .andExpect(jsonPath("$.decision_reasons[0]").value("face_match_fail"))
-                .andExpect(jsonPath("$.rules_version").value("m5-1"));
+                .andExpect(jsonPath("$.rules_version").value("vision-1"));
     }
 
     @TestConfiguration
     static class MismatchAwsConfig {
         @Bean
         @Primary
-        com.kyc.ports.AnalyzeIdClient fixtureAnalyzeIdClient() {
-            return image -> M5FixtureAwsConfig.fixtureJson();
+        com.kyc.ports.VisionDocumentPort cleanVision() {
+            return (image, mediaType, prompt) -> {
+                try {
+                    String name = prompt != null && prompt.contains("Capture side: BACK")
+                            ? "quebec-back"
+                            : "quebec-clean";
+                    return new String(
+                            new org.springframework.core.io.ClassPathResource("document-ia/" + name + ".json")
+                                    .getInputStream()
+                                    .readAllBytes(),
+                            java.nio.charset.StandardCharsets.UTF_8);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            };
         }
 
         @Bean

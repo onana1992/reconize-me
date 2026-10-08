@@ -1,0 +1,16 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE",
+    "version": "2024",
+    "confidence": 0.95
+  },
+  "fields": [
+    {
+      "field": "dateOfBirth",
+      "value": "12/05/1990",
+      "normalizedValue": "1990-05-12",
+      "source": "VISUAL_TEXT"
+    }
+  ]
+}

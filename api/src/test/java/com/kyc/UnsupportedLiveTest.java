@@ -60,34 +60,26 @@ class UnsupportedLiveTest {
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
+        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
         var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
-        assertEquals("declined", done.path("status").asText());
+        assertEquals("review", done.path("status").asText());
         assertEquals(0, COMPARE_CALLS.get());
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.decision").value("declined"))
-                .andExpect(jsonPath("$.decision_reasons[0]").value("unsupported_document"));
+                .andExpect(jsonPath("$.decision").value("review"))
+                .andExpect(jsonPath("$.rules_version").value("vision-1"))
+                .andExpect(jsonPath("$.decision_reasons[0]").value("DOCUMENT_UNKNOWN"));
     }
 
     @TestConfiguration
     static class OntarioAwsConfig {
         @Bean
         @Primary
-        AnalyzeIdClient ontarioAnalyzeIdClient() {
-            return image ->
+        com.kyc.ports.VisionDocumentPort unknownVision() {
+            return (image, mediaType, prompt) ->
                     """
-                    {"IdentityDocuments":[{"IdentityDocumentFields":[
-                      {"Type":{"Text":"ID_TYPE"},"ValueDetection":{"Text":"DRIVER LICENSE"}},
-                      {"Type":{"Text":"STATE_NAME"},"ValueDetection":{"Text":"ONTARIO"}},
-                      {"Type":{"Text":"COUNTRY"},"ValueDetection":{"Text":"CANADA"}},
-                      {"Type":{"Text":"FIRST_NAME"},"ValueDetection":{"Text":"A"}},
-                      {"Type":{"Text":"LAST_NAME"},"ValueDetection":{"Text":"B"}},
-                      {"Type":{"Text":"DATE_OF_BIRTH"},"ValueDetection":{"Text":"1990-01-01"}},
-                      {"Type":{"Text":"EXPIRATION_DATE"},"ValueDetection":{"Text":"2030-01-01"}},
-                      {"Type":{"Text":"DOCUMENT_NUMBER"},"ValueDetection":{"Text":"X"}}
-                    ]}]}
+                    {"detection":"DOCUMENT_PRESENT","classification":{"code":"MARS_PASSPORT","confidence":0.99}}
                     """;
         }
 

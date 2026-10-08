@@ -55,7 +55,7 @@ export function FlowClient({ token }: { token: string }) {
 
   useEffect(() => {
     const next = session?.next;
-    if (next !== "capture_document" && next !== "capture_selfie") {
+    if (next !== "capture_document" && next !== "capture_document_back" && next !== "capture_selfie") {
       stopCamera();
       return;
     }
@@ -259,16 +259,34 @@ export function FlowClient({ token }: { token: string }) {
           </form>
         </>
       ) : null}
-      {!error && (session?.next === "capture_document" || session?.next === "capture_selfie") ? (
+      {!error && (session?.next === "capture_document" || session?.next === "capture_document_back" || session?.next === "capture_selfie") ? (
         <>
-          <h1>{session.next === "capture_selfie" ? t("selfie.title") : t("document.title")}</h1>
-          <p className="rm-lead">{session.next === "capture_selfie" ? t("selfie.lead") : t("document.lead")}</p>
+          <h1>
+            {session.next === "capture_selfie"
+              ? t("selfie.title")
+              : session.next === "capture_document_back"
+                ? t("documentBack.title")
+                : t("document.title")}
+          </h1>
+          <p className="rm-lead">
+            {session.next === "capture_selfie"
+              ? t("selfie.lead")
+              : session.next === "capture_document_back"
+                ? t("documentBack.lead")
+                : t("document.lead")}
+          </p>
           <div className="rm-flow-capture">
             <div
               className="rm-flow-stage"
               data-kind={session.next === "capture_selfie" ? "selfie" : "document"}
               role="img"
-              aria-label={session.next === "capture_selfie" ? t("selfie.frame") : t("document.frame")}
+              aria-label={
+                session.next === "capture_selfie"
+                  ? t("selfie.frame")
+                  : session.next === "capture_document_back"
+                    ? t("documentBack.frame")
+                    : t("document.frame")
+              }
             >
               {liveCamera ? <video ref={videoRef} autoPlay playsInline muted /> : <span className="rm-flow-guide" aria-hidden="true" />}
               <span className="rm-flow-frame" aria-hidden="true" />

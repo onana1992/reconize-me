@@ -19,12 +19,17 @@ import com.kyc.enums.ConsentDecision;
 import com.kyc.enums.Enums;
 import com.kyc.enums.MediaKind;
 import com.kyc.enums.MediaStatus;
+import com.kyc.enums.VerificationDecision;
 import com.kyc.enums.VerificationStatus;
+import com.kyc.adapters.VisionDocumentAi;
+import com.kyc.dto.documentia.ParsedDocument;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.DocumentAiPort;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
+import com.kyc.services.documentia.DocumentLiveView;
+import com.kyc.services.documentia.SchemaRegistry;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.ConsentRepository;
 import com.kyc.repositories.IntegrationRepository;
@@ -66,13 +71,16 @@ public class HostedFlowService {
     private final HostedTokenStore hostedTokens;
     private final ObjectStoragePort objectStorage;
     private final DocumentAiPort stubDocumentAi;
-    private final DocumentAiPort liveDocumentAi;
+    private final VisionDocumentAi liveDocumentAi;
+    private final SchemaRegistry schemas;
     private final BiometricAiPort stubBiometricAi;
     private final BiometricAiPort liveBiometricAi;
     private final IdvDecisionEngine engine;
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
     private final WebhookService webhookService;
+    private final DocumentAnalysisBuffer analysesBuffer;
+    private final DocumentAnalysisStore analyses;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -84,12 +92,15 @@ public class HostedFlowService {
             HostedTokenStore hostedTokens,
             ObjectStoragePort objectStorage,
             @Qualifier("stubDocumentAi") DocumentAiPort stubDocumentAi,
-            @Qualifier("liveDocumentAi") DocumentAiPort liveDocumentAi,
+            @Qualifier("liveDocumentAi") VisionDocumentAi liveDocumentAi,
+            SchemaRegistry schemas,
             @Qualifier("stubBiometricAi") BiometricAiPort stubBiometricAi,
             @Qualifier("liveBiometricAi") BiometricAiPort liveBiometricAi,
             KycProperties properties,
             ObjectMapper objectMapper,
-            WebhookService webhookService) {
+            WebhookService webhookService,
+            DocumentAnalysisBuffer analysesBuffer,
+            DocumentAnalysisStore analyses) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -100,12 +111,15 @@ public class HostedFlowService {
         this.objectStorage = objectStorage;
         this.stubDocumentAi = stubDocumentAi;
         this.liveDocumentAi = liveDocumentAi;
+        this.schemas = schemas;
         this.stubBiometricAi = stubBiometricAi;
         this.liveBiometricAi = liveBiometricAi;
         this.engine = new IdvDecisionEngine();
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.webhookService = webhookService;
+        this.analysesBuffer = analysesBuffer;
+        this.analyses = analyses;
     }
 
     @Transactional
@@ -168,8 +182,14 @@ public class HostedFlowService {
     public UploadResponse documentUpload(String token) {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
-        if (!DOCUMENT_UPLOAD.contains(loaded.verification().getStatus())
-                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isPresent()) {
+        Verification verification = loaded.verification();
+        if (!DOCUMENT_UPLOAD.contains(verification.getStatus())) {
+            throw ApiException.conflict("invalid_status", "Document capture is not expected");
+        }
+        if (backTurn(verification)) {
+            return issueUpload(loaded, MediaKind.DOCUMENT_BACK);
+        }
+        if (accepted(verification.getId(), MediaKind.DOCUMENT).isPresent()) {
             throw ApiException.conflict("invalid_status", "Document capture is not expected");
         }
         return issueUpload(loaded, MediaKind.DOCUMENT);
@@ -182,15 +202,37 @@ public class HostedFlowService {
         if (!DOCUMENT_UPLOAD.contains(loaded.verification().getStatus())) {
             throw ApiException.conflict("invalid_status", "Document capture is not expected");
         }
-        MediaKind kind = "back".equals(request == null ? null : request.side())
-                ? MediaKind.DOCUMENT_BACK
-                : MediaKind.DOCUMENT;
-        CompleteCaptureResponse response = completeMedia(loaded, kind, request == null ? null : request.attempt(), MediaQuality::acceptableDocument);
-        if (Boolean.TRUE.equals(response.accepted()) && kind == MediaKind.DOCUMENT) {
-            Instant now = Instant.now();
+        boolean explicitBack = "back".equals(request == null ? null : request.side());
+        MediaKind kind = explicitBack || backTurn(loaded.verification()) ? MediaKind.DOCUMENT_BACK : MediaKind.DOCUMENT;
+        CompleteCaptureResponse response = completeMedia(
+                loaded, kind, request == null ? null : request.attempt(), MediaQuality::acceptableDocument);
+        if (!Boolean.TRUE.equals(response.accepted())) {
+            return response;
+        }
+        Instant now = Instant.now();
+        if (kind == MediaKind.DOCUMENT && askForBack(loaded, now)) {
+            loaded.verification().requireDocumentBack(now);
+            return new CompleteCaptureResponse(
+                    Enums.json(loaded.verification().getStatus()),
+                    nextOf(loaded.verification()),
+                    true,
+                    response.attempt(),
+                    null);
+        }
+        if (kind == MediaKind.DOCUMENT_BACK && accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()) {
+            return response;
+        }
+        if (kind == MediaKind.DOCUMENT || kind == MediaKind.DOCUMENT_BACK) {
+            if (kind == MediaKind.DOCUMENT_BACK) {
+                storeBack(loaded, now);
+            }
             loaded.verification().markSelfie(now);
             return new CompleteCaptureResponse(
-                    Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, response.attempt(), null);
+                    Enums.json(loaded.verification().getStatus()),
+                    nextOf(loaded.verification()),
+                    true,
+                    response.attempt(),
+                    null);
         }
         return response;
     }
@@ -201,7 +243,8 @@ public class HostedFlowService {
         requireConsent(loaded.verification());
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
                 || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()
-                || accepted(loaded.verification().getId(), MediaKind.SELFIE).isPresent()) {
+                || accepted(loaded.verification().getId(), MediaKind.SELFIE).isPresent()
+                || backStillRequired(loaded.verification())) {
             throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
         }
         return issueUpload(loaded, MediaKind.SELFIE);
@@ -212,7 +255,8 @@ public class HostedFlowService {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
-                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()) {
+                || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()
+                || backStillRequired(loaded.verification())) {
             throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
         }
         CompleteCaptureResponse response = completeMedia(
@@ -242,8 +286,8 @@ public class HostedFlowService {
         IdvDecisionEngine.Result result;
         String rulesVersion;
         if (integration.isLive()) {
-            rulesVersion = IdvDecisionEngine.LIVE_RULES_VERSION;
-            result = decideLive(documentBytes, selfieBytes);
+            rulesVersion = IdvDecisionEngine.VISION_RULES_VERSION;
+            result = decideLive(verification.getId(), documentBytes, selfieBytes, now);
         } else {
             rulesVersion = IdvDecisionEngine.RULES_VERSION;
             String scenario = verification.getSandboxScenario() == null ? "approved" : verification.getSandboxScenario();
@@ -277,18 +321,109 @@ public class HostedFlowService {
         webhookService.enqueueCompleted(verification, now);
     }
 
-    private IdvDecisionEngine.Result decideLive(byte[] documentBytes, byte[] selfieBytes) {
+    private IdvDecisionEngine.Result decideLive(UUID verificationId, byte[] documentBytes, byte[] selfieBytes, Instant now) {
         try {
-            DocumentAiPort.DocumentSignals docSignals = liveDocumentAi.analyze(documentBytes, null);
-            if (!docSignals.supported()) {
-                return engine.decideLive(docSignals, null);
+            IdvDecisionEngine.Result document = replayOrAnalyze(verificationId, documentBytes, now);
+            if (document.decision() != VerificationDecision.APPROVED) {
+                return document;
+            }
+            Verification verification = verifications.findById(verificationId).orElse(null);
+            if (verification != null && verification.isDocumentBackRequired()) {
+                IdvDecisionEngine.Result back = analyses
+                        .find(verificationId, "BACK")
+                        .map(row -> analyses.replay(row, schemas, engine))
+                        .orElseGet(() -> engine.review("provider_unavailable"));
+                if (back.decision() != VerificationDecision.APPROVED) {
+                    VerificationDecision decision = back.decision() == null
+                            ? VerificationDecision.REVIEW
+                            : back.decision();
+                    return new IdvDecisionEngine.Result(
+                            decision, back.reasons(), back.signals(), document.extractedIdentity());
+                }
             }
             BiometricAiPort.BiometricSignals bioSignals =
                     liveBiometricAi.evaluate(documentBytes, selfieBytes, null);
-            return engine.decideLive(docSignals, bioSignals);
+            return engine.applyFace(document, bioSignals);
         } catch (ProviderUnavailableException e) {
+            analysesBuffer.take();
             return engine.providerUnavailable();
         }
+    }
+
+    private IdvDecisionEngine.Result replayOrAnalyze(UUID verificationId, byte[] documentBytes, Instant now) {
+        var stored = analyses.find(verificationId, "FRONT");
+        if (stored.isPresent()) {
+            return analyses.replay(stored.get(), schemas, engine);
+        }
+        liveDocumentAi.analyze(documentBytes, null);
+        DocumentLiveView view = analysesBuffer.take();
+        if (view == null) {
+            return engine.providerUnavailable();
+        }
+        analyses.saveAccepted(verificationId, view, "FRONT", now);
+        IdvDecisionEngine.Result result = view.result();
+        if (result.decision() == null) {
+            return new IdvDecisionEngine.Result(
+                    VerificationDecision.REVIEW, result.reasons(), result.signals(), result.extractedIdentity());
+        }
+        return result;
+    }
+
+    private boolean askForBack(Loaded loaded, Instant now) {
+        Integration integration = integrations
+                .findById(loaded.verification().getIntegrationId())
+                .orElse(null);
+        if (integration == null || !integration.isLive()) {
+            return false;
+        }
+        var front = accepted(loaded.verification().getId(), MediaKind.DOCUMENT).orElse(null);
+        if (front == null) {
+            return false;
+        }
+        try {
+            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(front.getObjectKey()), "FRONT");
+            analyses.saveAccepted(loaded.verification().getId(), view, "FRONT", now);
+            if (!view.accepted() || view.result().decision() != VerificationDecision.APPROVED) {
+                return false;
+            }
+            String code = view.response().parsed() instanceof ParsedDocument parsed && parsed.classification() != null
+                    ? parsed.classification().code()
+                    : null;
+            return schemas.hasActiveSide(code, "BACK");
+        } catch (ProviderUnavailableException e) {
+            log.info("document-ia capture side=FRONT code=provider_unavailable");
+            return false;
+        }
+    }
+
+    private void storeBack(Loaded loaded, Instant now) {
+        Integration integration = integrations
+                .findById(loaded.verification().getIntegrationId())
+                .orElse(null);
+        if (integration == null || !integration.isLive()) {
+            return;
+        }
+        var back = accepted(loaded.verification().getId(), MediaKind.DOCUMENT_BACK).orElse(null);
+        if (back == null) {
+            return;
+        }
+        try {
+            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(back.getObjectKey()), "BACK");
+            analyses.saveAccepted(loaded.verification().getId(), view, "BACK", now);
+        } catch (ProviderUnavailableException e) {
+            log.info("document-ia capture side=BACK code=provider_unavailable");
+        }
+    }
+
+    private boolean backTurn(Verification verification) {
+        return verification.isDocumentBackRequired()
+                && accepted(verification.getId(), MediaKind.DOCUMENT).isPresent()
+                && accepted(verification.getId(), MediaKind.DOCUMENT_BACK).isEmpty();
+    }
+
+    private boolean backStillRequired(Verification verification) {
+        return verification.isDocumentBackRequired()
+                && accepted(verification.getId(), MediaKind.DOCUMENT_BACK).isEmpty();
     }
 
     private UploadResponse issueUpload(Loaded loaded, MediaKind kind) {
@@ -423,12 +558,11 @@ public class HostedFlowService {
         return switch (verification.getStatus()) {
             case CREATED, PENDING_CONSENT -> "consent";
             case PENDING_APPLICANT, DOCUMENT, RECAPTURE_REQUESTED -> {
-                if (accepted(verification.getId(), MediaKind.DOCUMENT).isPresent()
-                        && accepted(verification.getId(), MediaKind.SELFIE).isEmpty()) {
-                    yield "capture_selfie";
-                }
                 if (accepted(verification.getId(), MediaKind.DOCUMENT).isEmpty()) {
                     yield "capture_document";
+                }
+                if (backTurn(verification)) {
+                    yield "capture_document_back";
                 }
                 yield "capture_selfie";
             }

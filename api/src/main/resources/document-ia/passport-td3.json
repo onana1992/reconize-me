@@ -1,0 +1,22 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "PASSPORT_TD3",
+    "version": "2024",
+    "confidence": 0.97
+  },
+  "rawText": "P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<\nL898902C36UTO7408122F1204159ZE184226B<<<<<10",
+  "fields": [
+    { "field": "lastName", "value": "ERIKSSON", "source": "VISUAL_TEXT", "checkDigit": "9" },
+    { "field": "firstName", "value": "ANNA MARIA", "source": "VISUAL_TEXT" },
+    { "field": "documentNumber", "value": "L898902C3", "source": "VISUAL_TEXT" },
+    { "field": "dateOfBirth", "value": "1974-08-12", "source": "VISUAL_TEXT" },
+    { "field": "expirationDate", "value": "2012-04-15", "source": "VISUAL_TEXT" },
+    { "field": "sex", "value": "F", "source": "VISUAL_TEXT" },
+    {
+      "field": "mrz",
+      "value": "P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<\nL898902C36UTO7408122F1204159ZE184226B<<<<<10",
+      "source": "MRZ"
+    }
+  ]
+}

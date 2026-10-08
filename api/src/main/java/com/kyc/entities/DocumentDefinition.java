@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -14,7 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "document_definitions")
+@Table(
+        name = "document_definitions",
+        uniqueConstraints =
+                @UniqueConstraint(name = "uq_document_definitions_code_side", columnNames = {"code", "side"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DocumentDefinition {
@@ -22,7 +26,7 @@ public class DocumentDefinition {
     @Id
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(nullable = false, length = 64)
     private String code;
 
     @Column(nullable = false, length = 2)

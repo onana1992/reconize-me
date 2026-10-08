@@ -3,7 +3,6 @@ package com.kyc.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.adapters.AwsBiometricAi;
 import com.kyc.adapters.AwsClientCredentials;
-import com.kyc.adapters.AwsDocumentAi;
 import com.kyc.adapters.FilesystemObjectStorage;
 import com.kyc.adapters.InMemoryHostedTokenStore;
 import com.kyc.adapters.QcAnalyzeIdMapper;
@@ -13,6 +12,7 @@ import com.kyc.adapters.S3ObjectStorage;
 import com.kyc.adapters.StubBiometricAi;
 import com.kyc.adapters.StubDocumentAi;
 import com.kyc.adapters.TextractAnalyzeIdClient;
+import com.kyc.adapters.VisionDocumentAi;
 import com.kyc.ports.AnalyzeIdClient;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.CompareFacesClient;
@@ -20,6 +20,9 @@ import com.kyc.ports.DocumentAiPort;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
+import com.kyc.services.DocumentAnalysisBuffer;
+import com.kyc.services.DocumentIaLabService;
+import com.kyc.services.documentia.SchemaRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -117,9 +120,14 @@ public class IdvStoreConfig {
 
     @Bean
     @Qualifier("liveDocumentAi")
-    public DocumentAiPort liveDocumentAi(
-            AnalyzeIdClient analyzeIdClient, QcAnalyzeIdMapper mapper, ObjectMapper objectMapper) {
-        return new AwsDocumentAi(analyzeIdClient, mapper, objectMapper);
+    public VisionDocumentAi liveDocumentAi(
+            DocumentIaLabService lab,
+            DocumentAnalysisBuffer buffer,
+            SchemaRegistry registry,
+            @Value("${kyc.document-ia.provider:fake}") String provider,
+            @Value("${kyc.document-ia.openai-model:gpt-4.1-mini}") String model) {
+        String modelId = "openai".equals(provider) ? model : provider;
+        return new VisionDocumentAi(lab, buffer, registry, modelId);
     }
 
     @Bean

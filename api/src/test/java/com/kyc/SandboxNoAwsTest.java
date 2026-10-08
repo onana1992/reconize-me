@@ -2,6 +2,9 @@ package com.kyc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kyc.adapters.StubBiometricAi;
 import com.kyc.adapters.StubDocumentAi;
@@ -33,6 +36,7 @@ class SandboxNoAwsTest {
     private static final String KEY = "ky_test_noaws01";
     private static final AtomicInteger ANALYZE_CALLS = new AtomicInteger();
     private static final AtomicInteger COMPARE_CALLS = new AtomicInteger();
+    private static final AtomicInteger VISION_CALLS = new AtomicInteger();
 
     @Autowired
     private MockMvc mockMvc;
@@ -61,12 +65,14 @@ class SandboxNoAwsTest {
     void sandboxUsesStubsAndNeverCallsAwsClients() throws Exception {
         ANALYZE_CALLS.set(0);
         COMPARE_CALLS.set(0);
+        VISION_CALLS.set(0);
         assertInstanceOf(StubDocumentAi.class, stubDocumentAi);
         assertInstanceOf(StubBiometricAi.class, stubBiometricAi);
 
         IdvSupport.seedBearer(organizations, integrations, apiKeys, passwordEncoder, KEY, "NoAws Co", "noaws-co");
         var created = IdvSupport.create(mockMvc, KEY, "{}");
         String token = IdvSupport.token(created);
+        String id = created.path("id").asText();
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
         IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
@@ -74,6 +80,10 @@ class SandboxNoAwsTest {
         assertEquals("approved", done.path("status").asText());
         assertEquals(0, ANALYZE_CALLS.get());
         assertEquals(0, COMPARE_CALLS.get());
+        assertEquals(0, VISION_CALLS.get());
+        mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rules_version").value("m4-1"));
     }
 
     @TestConfiguration
@@ -83,6 +93,15 @@ class SandboxNoAwsTest {
         com.kyc.ports.AnalyzeIdClient countingAnalyzeIdClient() {
             return image -> {
                 ANALYZE_CALLS.incrementAndGet();
+                throw new com.kyc.ports.ProviderUnavailableException("should not be called");
+            };
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.VisionDocumentPort countingVision() {
+            return (image, mediaType, prompt) -> {
+                VISION_CALLS.incrementAndGet();
                 throw new com.kyc.ports.ProviderUnavailableException("should not be called");
             };
         }

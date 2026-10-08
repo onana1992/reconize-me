@@ -84,8 +84,11 @@ public class Verification {
     @Column(name = "sandbox_scenario")
     private String sandboxScenario;
 
-    @Column(name = "extracted_identity")
+    @Column(name = "extracted_identity", columnDefinition = "TEXT")
     private String extractedIdentity;
+
+    @Column(name = "document_back_required", nullable = false)
+    private boolean documentBackRequired;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -160,6 +163,11 @@ public class Verification {
 
     public void markRecapture(Instant now) {
         this.status = VerificationStatus.RECAPTURE_REQUESTED;
+        this.updatedAt = now;
+    }
+
+    public void requireDocumentBack(Instant now) {
+        this.documentBackRequired = true;
         this.updatedAt = now;
     }
 

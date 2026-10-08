@@ -1,0 +1,14 @@
+{
+  "detection": "DOCUMENT_PRESENT",
+  "classification": {
+    "code": "QUEBEC_DRIVER_LICENSE",
+    "version": "2024",
+    "side": "BACK",
+    "confidence": 0.97
+  },
+  "fields": [
+    { "field": "barcode", "value": "PRESENT", "confidence": 0.96, "source": "VISUAL_TEXT" },
+    { "field": "classDescription", "value": "Vehicule automobile de moins de 4 500 kg et habitation motorisee", "confidence": 0.9, "source": "VISUAL_TEXT" },
+    { "field": "cardEdition", "value": "2024-01", "confidence": 0.9, "source": "VISUAL_TEXT" }
+  ]
+}
