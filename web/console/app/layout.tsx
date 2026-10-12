@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import "@/brand/tokens.css";
 import "@/brand/base.css";
 import "@/brand/density.css";
 import "@/brand/console.css";
 import "./globals.css";
 import { getLocale, I18nProvider } from "../i18n";
-
-const sans = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-  variable: "--rm-font-brand",
-});
 
 export const metadata: Metadata = {
   title: "Recogniz-Me Console",
@@ -23,7 +16,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={sans.variable} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <I18nProvider key={locale} locale={locale}>
           {children}
