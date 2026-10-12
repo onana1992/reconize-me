@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { useLocale, useT } from "../../../../i18n/client";
 import { formatUtc } from "../../../../lib/status";
 import { ALL_ROLES, ASSIGNABLE_ROLES, displayName, initials, tRole } from "../../../../lib/labels";

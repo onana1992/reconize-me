@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wordmark } from "@kyc/brand";
+import { Wordmark } from "@/brand";
 import { LanguageMenu } from "../../components/language-menu";
 import { getLocale, getT } from "../../i18n";
 import { siteContactUrl } from "../../lib/site";

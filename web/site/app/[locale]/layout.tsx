@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
-import "@kyc/brand/tokens.css";
-import "@kyc/brand/base.css";
-import "@kyc/brand/site.css";
+import "@/brand/tokens.css";
+import "@/brand/base.css";
+import "@/brand/site.css";
 import "../globals.css";
 import { SiteHeader, type HeaderProduct } from "../../components/site-header";
 import { PRODUCT_AVAILABLE, PRODUCT_ORDER, PRODUCT_ROUTE } from "../../lib/catalog";

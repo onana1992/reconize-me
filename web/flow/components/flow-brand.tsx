@@ -1,6 +1,6 @@
 "use client";
 
-import { Wordmark } from "@kyc/brand";
+import { Wordmark } from "@/brand";
 import { LanguageSwitch } from "./language-switch";
 
 export function FlowBrand() {

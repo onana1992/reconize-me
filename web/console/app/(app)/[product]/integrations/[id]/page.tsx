@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { getT } from "../../../../../i18n";
 import { API_BASE } from "../../../../../lib/api";
 import { parseProduct } from "../../../../../lib/parse-product";

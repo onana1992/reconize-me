@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { getLocale, getT } from "../../../../../../i18n";
 import { consoleApi, type Me } from "../../../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../../../lib/environment";

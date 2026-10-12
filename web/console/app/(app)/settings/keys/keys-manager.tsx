@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { CopyButton } from "../../../../components/copy-button";
 import { useT } from "../../../../i18n/client";
 import { environmentFromPrefix, environmentTone, tEnvironment } from "../../../../lib/environment";

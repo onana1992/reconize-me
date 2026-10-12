@@ -1,0 +1,201 @@
+/*
+ * Recogniz-Me — atmosphère Hosted flow (applicant).
+ * Même marque et même densité que la console (police, taille, boutons),
+ * sans chrome d'application. Dépend de tokens.css + base.css + density.css.
+ */
+
+body {
+  background: var(--rm-surface);
+}
+
+.rm-flow {
+  max-width: var(--rm-width-flow);
+  margin: 0 auto;
+  padding: var(--rm-space-6) var(--rm-space-5) var(--rm-space-8);
+}
+
+.rm-flow-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rm-space-3);
+  margin: 0 0 var(--rm-space-6);
+}
+
+.rm-flow-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rm-space-3);
+  color: var(--rm-text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-size: var(--rm-text-lg);
+}
+
+.rm-lang-menu {
+  position: relative;
+}
+
+.rm-lang-trigger {
+  padding: var(--rm-space-2) var(--rm-space-3);
+  font-size: var(--rm-text-sm);
+  font-weight: 550;
+}
+
+.rm-lang-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--rm-space-2));
+  z-index: 30;
+  min-width: 10.5rem;
+  padding: var(--rm-space-1);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+  box-shadow: var(--rm-shadow-md);
+}
+
+.rm-lang-panel button {
+  width: 100%;
+  justify-content: flex-start;
+  background: transparent;
+  color: var(--rm-text);
+  border: 0;
+  border-radius: var(--rm-radius-sm);
+  padding: var(--rm-space-2) var(--rm-space-3);
+  font-size: var(--rm-text-sm);
+  font-weight: 500;
+}
+
+.rm-lang-panel button:hover:not(:disabled) {
+  background: var(--rm-surface-sunken);
+}
+
+.rm-lang-panel button[aria-current="true"] {
+  font-weight: 650;
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow .rm-actions {
+  margin-top: var(--rm-space-6);
+}
+
+.rm-hint {
+  font-size: var(--rm-text-xs);
+  font-weight: 400;
+  color: var(--rm-text-muted);
+}
+
+.rm-flow button[type="submit"],
+.rm-flow .rm-actions > button:not([data-variant]),
+.rm-flow .rm-actions > .rm-button:not([data-variant]) {
+  font-weight: 650;
+}
+
+.rm-flow-capture {
+  display: grid;
+  gap: var(--rm-space-6);
+  margin-top: var(--rm-space-5);
+}
+
+.rm-flow-capture .rm-actions {
+  margin-top: 0;
+}
+
+.rm-flow-stage {
+  --rm-frame-arm: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-stage[data-kind="document"] {
+  aspect-ratio: 85 / 54;
+}
+
+.rm-flow-stage video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-stage[data-kind="selfie"] video {
+  transform: scaleX(-1);
+}
+
+.rm-flow-guide {
+  position: absolute;
+  inset: 14%;
+  border: 2px dashed var(--rm-border-strong);
+  border-radius: var(--rm-radius-md);
+}
+
+.rm-flow-stage[data-kind="selfie"] .rm-flow-guide {
+  inset: 16% 22%;
+  border-radius: 50%;
+}
+
+.rm-flow-frame {
+  position: absolute;
+  inset: var(--rm-space-3);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.rm-flow-frame::before {
+  --rm-frame-arm-image: linear-gradient(var(--rm-accent), var(--rm-accent)) no-repeat;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    var(--rm-frame-arm-image) 0 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 0 / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 0 / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 0 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 0 100% / 2px var(--rm-frame-arm),
+    var(--rm-frame-arm-image) 100% 100% / var(--rm-frame-arm) 2px,
+    var(--rm-frame-arm-image) 100% 100% / 2px var(--rm-frame-arm);
+}
+
+.rm-flow video {
+  display: block;
+  width: 100%;
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface-sunken);
+}
+
+.rm-flow-file {
+  position: relative;
+  overflow: hidden;
+}
+
+.rm-flow-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rm-flow button,
+.rm-flow .rm-button {
+  touch-action: manipulation;
+}
+
+@media (max-width: 30rem) {
+  .rm-flow .rm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

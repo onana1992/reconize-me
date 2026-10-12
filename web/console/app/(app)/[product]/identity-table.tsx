@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { useLocale, useT } from "../../../i18n/client";
 import type { Verification } from "../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../lib/environment";

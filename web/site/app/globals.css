@@ -1,6 +1,6 @@
 /*
  * Spécifique à la vitrine et à rien d'autre.
- * Couleurs, espacements et composants viennent de @kyc/brand (RG-BRAND-01).
+ * Couleurs, espacements et composants viennent de @/brand (RG-BRAND-01).
  *
  * Tailwind est importé sans Preflight : le reset vit déjà dans base.css, et
  * un second reset casserait les compositions `.rm-*` encore en place.

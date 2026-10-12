@@ -1,4 +1,4 @@
-import type { BadgeTone } from "@kyc/brand";
+import type { BadgeTone } from "@/brand";
 import type { Translate } from "../i18n";
 
 export function formatUtc(iso: string, locale = "fr"): string {

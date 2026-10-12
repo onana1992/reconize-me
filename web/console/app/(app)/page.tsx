@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { NavIcon } from "../../components/nav-icons";
 import { PageHeader } from "../../components/page-header";
 import { getLocale, getT } from "../../i18n";

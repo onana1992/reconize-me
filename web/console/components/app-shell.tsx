@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { Logo, Wordmark } from "@kyc/brand";
+import { Logo, Wordmark } from "@/brand";
 import { useT } from "../i18n/client";
 import { displayName, initials, tRole } from "../lib/labels";
 import { PRODUCTS, PRODUCT_IDS } from "../lib/products";

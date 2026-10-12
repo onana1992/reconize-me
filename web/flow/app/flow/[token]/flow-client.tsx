@@ -1,6 +1,6 @@
 "use client";
 
-import { assessDocumentFrame, assessSelfieFrame } from "@kyc/capture-sdk";
+import { assessDocumentFrame, assessSelfieFrame } from "@/capture";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { FlowBrand } from "../../../components/flow-brand";
 import { useT, type MessageKey } from "../../../i18n/client";

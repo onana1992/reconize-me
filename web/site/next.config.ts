@@ -1,4 +1,3 @@
-import path from "node:path";
 import type { NextConfig } from "next";
 
 const RETIRED_PATHS = [
@@ -17,8 +16,11 @@ const RETIRED_PATHS = [
 ];
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@kyc/brand"],
   allowedDevOrigins: ["10.0.0.133"],
+  outputFileTracingRoot: __dirname,
+  turbopack: {
+    root: __dirname,
+  },
   async redirects() {
     return RETIRED_PATHS.map((path) => ({
       source: `/:locale(fr|en)${path}`,
@@ -26,8 +28,6 @@ const nextConfig: NextConfig = {
       permanent: false,
     }));
   },
-  // Sans ça, Next remonte jusqu'au home de l'utilisateur (lockfile parasite) et trace tout le disque.
-  outputFileTracingRoot: path.join(__dirname, "../.."),
   images: {
     /* AVIF d'abord : sur les photographies du hero et des cartes d'enjeu, il
        tient le budget de la charte (§9.3) là où WebP le dépasse. WebP reste en

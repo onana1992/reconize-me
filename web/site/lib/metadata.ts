@@ -7,7 +7,7 @@
  */
 
 import type { Metadata } from "next";
-import ogImage from "@kyc/brand/assets/logo/og-1200x630.png";
+import ogImage from "@/brand/assets/logo/og-1200x630.png";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "./locales";
 import { getMessages } from "./messages";
 import { href, type RouteKey } from "./routes";

@@ -1,4 +1,4 @@
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { PageHeader } from "../../../../components/page-header";
 import { getLocale, getT } from "../../../../i18n";
 import { consoleApi, type Billing } from "../../../../lib/api";

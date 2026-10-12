@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wordmark } from "@kyc/brand";
+import { Wordmark } from "@/brand";
 import type { Locale } from "../lib/locales";
 import { getMessages } from "../lib/messages";
 import { FOOTER_NAV, href } from "../lib/routes";

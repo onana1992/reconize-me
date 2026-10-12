@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StatusBadge } from "@kyc/brand";
+import { StatusBadge } from "@/brand";
 import { getLocale, getT } from "../../../../../i18n";
 import type { IntegrationResponse } from "../../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../../lib/environment";
