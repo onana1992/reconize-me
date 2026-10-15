@@ -8,6 +8,7 @@ import com.kyc.dto.documentia.ValidationIssue;
 import com.kyc.enums.FieldValueType;
 import com.kyc.enums.MrzFormat;
 import com.kyc.services.documentia.SchemaEdition.FieldDef;
+import java.text.Normalizer;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -73,6 +74,17 @@ public final class MrzEngine {
                 String visual = "VALID".equals(field.validationStatus()) ? field.comparisonKey() : null;
                 if (mrzKey == null || visual == null) {
                     fields.add(field);
+                    continue;
+                }
+                if ("MRZ".equals(field.source()) && nameOrDate(field.field())) {
+                    fields.add(new NormalizedField(
+                            field.field(),
+                            mrzKey,
+                            mrzKey,
+                            mrzKey,
+                            field.confidence(),
+                            "MRZ",
+                            "VALID"));
                     continue;
                 }
                 if (visual.equals(mrzKey)) {
@@ -301,21 +313,33 @@ public final class MrzEngine {
                 return lines;
             }
         }
+        for (String source : sources) {
+            List<String> lines = oneFiller(source, width, count);
+            if (lines != null && parse(edition.mrzFormat(), lines).valid()) {
+                return lines;
+            }
+        }
         return null;
+    }
+
+    private static boolean nameOrDate(String field) {
+        return "lastName".equals(field)
+                || "firstName".equals(field)
+                || "dateOfBirth".equals(field)
+                || "expirationDate".equals(field);
     }
 
     private static List<String> block(String text, int width, int count) {
         List<String> exact = new ArrayList<>();
-        for (String line : text.toUpperCase(Locale.ROOT).split("\\R")) {
-            String compact = line.replace(" ", "");
-            if (compact.length() == width && alphabet(compact)) {
-                exact.add(compact);
+        for (String line : foldedLines(text)) {
+            if (line.length() == width && alphabet(line)) {
+                exact.add(line);
             }
         }
         if (exact.size() >= count) {
             return List.copyOf(exact.subList(0, count));
         }
-        String compact = text.toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+        String compact = fold(text.replaceAll("\\s+", ""));
         if (compact.length() == width * count && alphabet(compact)) {
             List<String> lines = new ArrayList<>();
             for (int i = 0; i < count; i++) {
@@ -324,6 +348,52 @@ public final class MrzEngine {
             return lines;
         }
         return null;
+    }
+
+    /** Une seule ligne courte d'un caractère, complétée par un < final. Les chiffres de contrôle décident ensuite. */
+    private static List<String> oneFiller(String text, int width, int count) {
+        List<String> kept = new ArrayList<>();
+        int shortLine = -1;
+        for (String line : foldedLines(text)) {
+            if (!alphabet(line) || (line.length() != width && line.length() != width - 1)) {
+                continue;
+            }
+            if (line.length() == width - 1) {
+                if (shortLine >= 0) {
+                    return null;
+                }
+                shortLine = kept.size();
+            }
+            kept.add(line);
+        }
+        if (shortLine < 0 || kept.size() != count) {
+            return null;
+        }
+        List<String> lines = new ArrayList<>(kept);
+        lines.set(shortLine, kept.get(shortLine) + "<");
+        return lines;
+    }
+
+    private static List<String> foldedLines(String text) {
+        List<String> lines = new ArrayList<>();
+        for (String line : text.split("\\R")) {
+            String folded = fold(line.replace(" ", ""));
+            if (!folded.isEmpty()) {
+                lines.add(folded);
+            }
+        }
+        return lines;
+    }
+
+    private static String fold(String value) {
+        String decomposed = Normalizer.normalize(value.toUpperCase(Locale.ROOT), Normalizer.Form.NFD);
+        StringBuilder letters = new StringBuilder(decomposed.length());
+        for (int i = 0; i < decomposed.length(); i++) {
+            if (Character.getType(decomposed.charAt(i)) != Character.NON_SPACING_MARK) {
+                letters.append(decomposed.charAt(i));
+            }
+        }
+        return letters.toString();
     }
 
     private static boolean alphabet(String value) {

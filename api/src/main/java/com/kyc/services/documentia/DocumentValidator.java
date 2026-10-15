@@ -50,6 +50,7 @@ public final class DocumentValidator {
             add(indicators, issue.code());
         }
         boolean expired = contains(issues, "document_expired");
+        boolean wrongSide = contains(issues, "document_side_mismatch");
         boolean missing = missing(fields);
         boolean mrzFailed = mrzFailed(mrz);
         boolean lowOcr = lowOcr(edition, fields);
@@ -64,6 +65,7 @@ public final class DocumentValidator {
                 captureReason,
                 expired,
                 unknown,
+                wrongSide,
                 missing,
                 mrzFailed,
                 lowOcr,

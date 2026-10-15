@@ -15,5 +15,6 @@ public record DocumentIaCatalogResponse(List<Schema> schemas) {
             String side,
             String version,
             String issuingJurisdiction,
+            String reading,
             List<FieldPrompt> fields) {}
 }

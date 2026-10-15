@@ -13,6 +13,7 @@ import com.kyc.dto.documentia.ParsedDocument.Zone;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -53,15 +54,34 @@ public class DocumentAnalysisParser {
         String detection = requiredDetection(root);
         Quality quality = quality(root.get("quality"), detection);
         Resolved resolved = classification(root.get("classification"));
+        List<ExtractedField> extracted = fields(root.get("fields"), resolved.fieldNames());
+        Classification classification = resolved.classification();
+        List<String> indicators = new ArrayList<>(resolved.indicators());
+        if (classification.confidence() == null && resolved.schemaVersionId() != null) {
+            Double filled = meanConfidence(extracted);
+            if (filled != null) {
+                classification = new Classification(
+                        classification.code(),
+                        classification.country(),
+                        classification.issuingJurisdiction(),
+                        classification.documentType(),
+                        classification.version(),
+                        classification.side(),
+                        filled);
+                if (filled < LOW_CLASS_CONFIDENCE && !indicators.contains("DOCUMENT_UNKNOWN")) {
+                    indicators.add("DOCUMENT_UNKNOWN");
+                }
+            }
+        }
         ParsedDocument document = new ParsedDocument(
                 !"NO_DOCUMENT".equals(detection),
                 detection,
                 quality,
-                resolved.classification(),
+                classification,
                 textOrNull(root.get("rawText")),
                 zones(root.get("zones")),
-                fields(root.get("fields"), resolved.fieldNames()),
-                mergeIndicators(resolved.indicators(), modelIndicators(root.get("indicators"))),
+                extracted,
+                mergeIndicators(indicators, modelIndicators(root.get("indicators"))),
                 null);
         return new DocumentParse(document, resolved.schemaVersionId());
     }
@@ -148,17 +168,17 @@ public class DocumentAnalysisParser {
             }
         }
         String side = textOrNull(node.get("side"));
-        if (side == null || !allowedSides.contains(side)) {
-            if (allowedSides.size() == 1) {
-                side = allowedSides.get(0);
-            } else if (side == null && allowedSides.contains("FRONT")) {
-                side = "FRONT";
-            }
+        if (side != null) {
+            side = side.trim().toUpperCase(Locale.ROOT);
+        } else if (allowedSides.size() == 1) {
+            side = allowedSides.get(0);
         }
         String modelVersion = textOrNull(node.get("version"));
         String chosenSide = side;
         ActiveSchema matched = schemas.stream()
-                .filter(schema -> schema.version().equals(modelVersion) && schema.sides().contains(chosenSide))
+                .filter(schema -> chosenSide != null
+                        && schema.version().equals(modelVersion)
+                        && schema.sides().contains(chosenSide))
                 .findFirst()
                 .orElse(null);
         List<String> indicators = new ArrayList<>();
@@ -168,6 +188,9 @@ public class DocumentAnalysisParser {
         String jurisdiction;
         if (matched == null) {
             indicators.add("unexpected_document_structure");
+            if (side == null || !allowedSides.contains(side)) {
+                indicators.add("document_side_unknown");
+            }
             schemaVersionId = null;
             version = modelVersion;
             jurisdiction = reference.issuingJurisdiction();
@@ -288,6 +311,19 @@ public class DocumentAnalysisParser {
         }
         JsonNode node = quality.get(name);
         return node != null && node.isBoolean() && node.booleanValue();
+    }
+
+    private static Double meanConfidence(List<ExtractedField> fields) {
+        double sum = 0;
+        int count = 0;
+        for (ExtractedField field : fields) {
+            if (field.confidence() == null) {
+                continue;
+            }
+            sum += field.confidence();
+            count++;
+        }
+        return count == 0 ? null : sum / count;
     }
 
     private static Double unitInterval(JsonNode node) {

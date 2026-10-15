@@ -15,10 +15,24 @@ public class IdvDecisionEngine {
     public static final String RULES_VERSION = "m4-1";
     public static final String LIVE_RULES_VERSION = "m5-1";
     public static final String VISION_RULES_VERSION = "vision-1";
+    public static final String BIO_RULES_VERSION = "bio-1";
     public static final double LOW_OCR_CONFIDENCE = 0.70;
 
     public static final double FACE_MATCH_FAIL = 0.75;
     public static final double FACE_MATCH_PASS = 0.90;
+    /** Face Liveness confidence, rules {@code bio-1}. The adapter does not decide this. */
+    public static final double LIVENESS_PASS = 0.80;
+
+    /**
+     * Status ok is {@code livenessPass} (the adapter sets it only when Rekognition status is SUCCEEDED).
+     * The threshold is applied here, so a forced pass with a low score still fails.
+     */
+    public static boolean livenessAccepted(BiometricSignals biometric) {
+        return biometric != null
+                && biometric.livenessPass()
+                && biometric.livenessScore() != null
+                && biometric.livenessScore() >= LIVENESS_PASS;
+    }
 
     public record Result(
             VerificationDecision decision,
@@ -86,7 +100,7 @@ public class IdvDecisionEngine {
                     extracted);
         }
 
-        if (biometric == null || !biometric.livenessPass()) {
+        if (!livenessAccepted(biometric)) {
             signals.add(new Signal("liveness_fail", SignalOutcome.FAIL, biometric == null ? null : biometric.livenessScore()));
             return new Result(
                     VerificationDecision.DECLINED, List.of("liveness_fail"), List.copyOf(signals), extracted);
@@ -115,7 +129,7 @@ public class IdvDecisionEngine {
     public Result applyFace(Result document, com.kyc.ports.BiometricAiPort.BiometricSignals biometric) {
         Map<String, Object> identity = document.extractedIdentity() == null ? Map.of() : document.extractedIdentity();
         List<Signal> signals = new ArrayList<>();
-        if (biometric == null || !biometric.livenessPass()) {
+        if (!livenessAccepted(biometric)) {
             signals.add(new Signal(
                     "liveness_fail", SignalOutcome.FAIL, biometric == null ? null : biometric.livenessScore()));
             return new Result(VerificationDecision.DECLINED, List.of("liveness_fail"), List.copyOf(signals), identity);
@@ -165,6 +179,10 @@ public class IdvDecisionEngine {
             reasons.add(facts.captureReason() == null || facts.captureReason().isBlank()
                     ? "IMAGE_TOO_BLURRY"
                     : facts.captureReason());
+        }
+        if (facts.wrongSide()) {
+            issue = issue == null ? "REVIEW" : issue;
+            reasons.add("DOCUMENT_SIDE_MISMATCH");
         }
         if (facts.expired()) {
             issue = issue == null ? "REJECT" : issue;
@@ -217,6 +235,7 @@ public class IdvDecisionEngine {
             String captureReason,
             boolean expired,
             boolean unknown,
+            boolean wrongSide,
             boolean missingRequired,
             boolean mrzFailed,
             boolean lowOcr,

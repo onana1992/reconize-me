@@ -3,7 +3,7 @@
 **Plateforme :** Recogniz-Me  
 **Objectif :** brancher l’API live sur AWS **sans AWS CLI**. Chaque service a ses propres clés dans l’application.  
 **Date :** 4 octobre 2026  
-**Région par défaut du projet :** `ca-central-1`
+**Région de tous les services AWS :** `us-east-1`
 
 Le mapping permis QC et la mesure AnalyzeID restent dans [`guide-aws-textract.md`](./guide-aws-textract.md) et [`mapping-analyzeid-qc.md`](./mapping-analyzeid-qc.md).
 
@@ -42,7 +42,7 @@ En local tu peux coller **la même paire de clés** dans les trois blocs (un seu
 - **Pas besoin d’AWS CLI.**
 - Budget : AnalyzeID ≈ **0,025 $** par page. Pose une alerte **AWS Budgets** (ex. 5–10 $/mois).
 
-Si AnalyzeID n’existe pas dans `ca-central-1`, mets `kyc.aws.region=us-east-1` (ou la région de repli notée au freeze), **et** la même région sur chaque service si tu la surcharges.
+Textract, Rekognition et S3 utilisent **`us-east-1`** (`kyc.aws.region`). Un `kyc.aws.<service>.region` vide reprend cette région. Le bucket S3 doit être créé dans `us-east-1`.
 
 ---
 
@@ -104,17 +104,17 @@ Ne colle **jamais** ces valeurs dans un fichier suivi par git (`application.prop
 
 ```properties
 kyc.aws.enabled=true
-kyc.aws.region=ca-central-1
+kyc.aws.region=us-east-1
 
 # Textract — AnalyzeID
 kyc.aws.textract.access-key-id=AKIA...
 kyc.aws.textract.secret-access-key=...
-# kyc.aws.textract.region=ca-central-1
+# kyc.aws.textract.region=us-east-1
 
 # Rekognition — CompareFaces
 kyc.aws.rekognition.access-key-id=AKIA...
 kyc.aws.rekognition.secret-access-key=...
-# kyc.aws.rekognition.region=ca-central-1
+# kyc.aws.rekognition.region=us-east-1
 
 # S3 — images
 kyc.aws.s3.enabled=true
@@ -122,7 +122,7 @@ kyc.aws.s3.bucket=recognizme-media-dev-<ton-compte>
 kyc.aws.s3.key-prefix=kyc/
 kyc.aws.s3.access-key-id=AKIA...
 kyc.aws.s3.secret-access-key=...
-# kyc.aws.s3.region=ca-central-1
+# kyc.aws.s3.region=us-east-1
 ```
 
 3. **Relance** `RecognizMeApplication` (un hot-reload ne charge pas toujours ce fichier).

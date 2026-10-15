@@ -105,15 +105,16 @@ public class SchemaRegistry implements SchemaCatalog {
               "version": "2015",
               "side": "BACK",
               "mrzFormat": "TD1",
+              "reading": "Canada permanent resident card back. The mrz value is three lines of exactly 30 characters, separated by newlines. Second line positions, counted from 1: 1-6 birth date, 7 its check digit, 8 the sex letter, 9-14 the expiry as YYMMDD, 15 its check digit, 16-18 nationality, then an optional date after a <. expirationDate uses only positions 9-14. Positions 9-10 are the year, 11-12 the month, 13-14 the day. A year 30 is 2030. The day is positions 13-14. Do not take the day from the later optional date. Third line: letters and < only, no digits. A round character is the letter O, never the digit 0, and it stays in the surname. Do not drop it when writing lastName. The line ends with < fillers. After writing it, count the characters. If the count is 29, add one final < so the count is 30. The < character belongs only in the mrz field. lastName and firstName use spaces: one < between surnames is a space, and << ends the surnames.",
               "fields": [
-                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "the PD number printed above the machine-readable zone, such as PD4077908; do not use the front ID No"},
-                {"name": "lastName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "surname from the third MRZ line, before the double filler"},
-                {"name": "firstName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "given names from the third MRZ line, after the double filler"},
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "the PD number printed above the machine-readable zone; do not use the front ID No"},
+                {"name": "lastName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "every surname letter before <<, including a leading O. Write spaces, no <, and do not drop a letter that looked like 0"},
+                {"name": "firstName", "type": "NAME", "required": false, "normalizer": "ICAO_NAME", "hint": "given names after <<, written with spaces and with no < character"},
                 {"name": "dateOfBirth", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "birth date from the MRZ; write yyyy-MM-dd"},
-                {"name": "expirationDate", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "expiry date from the MRZ; write yyyy-MM-dd, and a year 30 is 2030"},
+                {"name": "expirationDate", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "second MRZ line positions 9-14, counted from 1: year, month, day. Write yyyy-MM-dd. A year 30 is 2030. The day is positions 13-14, not the optional date later on the line"},
                 {"name": "sex", "type": "SEX", "required": false, "hint": "sex letter from the MRZ"},
                 {"name": "nationality", "type": "NATIONALITY", "required": false, "hint": "nationality alpha-3 from the MRZ, such as CMR"},
-                {"name": "mrz", "type": "MRZ", "required": true, "hint": "the three lines of 30 characters at the bottom of the back"},
+                {"name": "mrz", "type": "MRZ", "required": true, "hint": "three lines of 30 characters. The third line has letters and < only: write O, not 0. If that line counts 29, add one final <"},
                 {"name": "placeOfLanding", "type": "STRING", "required": false, "hint": "labeled Place of landing"},
                 {"name": "residentSince", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd"], "hint": "labeled PR Since; write yyyy-MM-dd"},
                 {"name": "eyeColor", "type": "STRING", "required": false, "hint": "labeled Eyes"},
@@ -134,20 +135,21 @@ public class SchemaRegistry implements SchemaCatalog {
               "side": "FRONT",
               "mrzFormat": "NONE",
               "issuingJurisdiction": "QC",
+              "reading": "Quebec driver license front. The title is Permis de conduire, the Quebec wordmark is at the upper left, the photo is on the left, and a fleur-de-lis is on the right. The large number under the title is documentNumber. The surname is the line directly under that number. The given names are the next line. The date labeled Date de naissance (A-M-J) is dateOfBirth. On the bottom line, read left to right: the date after Valide le is dateOfIssue, the date after Expire le is expirationDate. These two dates are different. expirationDate is never the Valide le date. The footer about the yearly payment on the birthday is not a date field.",
               "fields": [
                 {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "given names on the line under the surname"},
                 {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "surname on the line directly under the document number; it may contain two words"},
-                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Date de naissance"},
-                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Expire le"},
-                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "large number at the top of the card"},
-                {"name": "dateOfIssue", "type": "DATE", "required": false, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Valide le"},
+                {"name": "dateOfBirth", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "date labeled Date de naissance (A-M-J); write yyyy-MM-dd"},
+                {"name": "documentNumber", "type": "DOCUMENT_NUMBER", "required": true, "hint": "large number under the title Permis de conduire"},
+                {"name": "dateOfIssue", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "left date on the bottom line, the date after Valide le"},
+                {"name": "expirationDate", "type": "DATE", "required": true, "normalizer": "ISO_DATE", "formats": ["yyyy-MM-dd", "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy"], "hint": "right date on the bottom line, the date after Expire le"},
                 {"name": "sex", "type": "SEX", "required": false, "hint": "labeled Sexe"},
-                {"name": "address", "type": "ADDRESS", "required": false, "hint": "address lines under the date of birth"},
+                {"name": "address", "type": "ADDRESS", "required": false, "hint": "address lines under the date of birth, including the city and postal code"},
                 {"name": "licenseClass", "type": "STRING", "required": false, "hint": "labeled Classe(s)"},
                 {"name": "conditions", "type": "STRING", "required": false, "hint": "labeled Cond."},
                 {"name": "mentions", "type": "STRING", "required": false, "hint": "labeled Mention(s)"},
-                {"name": "referenceNumber", "type": "STRING", "required": false, "hint": "labeled Numero de reference"},
-                {"name": "heightCm", "type": "STRING", "required": false, "hint": "labeled Taille (cm)"},
+                {"name": "referenceNumber", "type": "STRING", "required": false, "hint": "labeled No de reference"},
+                {"name": "heightCm", "type": "STRING", "required": false, "hint": "labeled Taille (cm), digits only"},
                 {"name": "eyeColor", "type": "STRING", "required": false, "hint": "labeled Yeux"}
               ],
               "rules": [
@@ -166,10 +168,11 @@ public class SchemaRegistry implements SchemaCatalog {
               "side": "BACK",
               "mrzFormat": "NONE",
               "issuingJurisdiction": "QC",
+              "reading": "Quebec driver license back, issued by the SAAQ. No photo, no holder name, and no MRZ. A PDF417 barcode is at the upper left and a linear barcode is at the upper right. The sentence after CLASSE(S): is classDescription. The edition in parentheses at the lower right, such as (2024-01), is cardEdition. The card prints Quebec, saaq.gouv.qc.ca, and Renseignements 1 800 361-7620. Choose code QUEBEC_DRIVER_LICENSE and side BACK.",
               "fields": [
-                {"name": "barcode", "type": "STRING", "required": true, "hint": "PDF417 barcode on the back; value PRESENT when that barcode is visible"},
+                {"name": "barcode", "type": "STRING", "required": true, "hint": "PDF417 barcode at the upper left; value PRESENT when that barcode is visible. The linear barcode at the upper right is not this field"},
                 {"name": "classDescription", "type": "STRING", "required": false, "hint": "sentence printed after CLASSE(S):"},
-                {"name": "cardEdition", "type": "STRING", "required": false, "hint": "edition in parentheses at the lower right, such as 2024-01"}
+                {"name": "cardEdition", "type": "STRING", "required": false, "hint": "edition in parentheses at the lower right, next to saaq.gouv.qc.ca, such as 2024-01"}
               ],
               "rules": []
             }
@@ -464,7 +467,16 @@ public class SchemaRegistry implements SchemaCatalog {
                 definition.getSide(),
                 version.getVersion(),
                 jurisdiction(version.getSchemaJson()),
+                reading(version.getSchemaJson()),
                 fieldPrompts(version.getSchemaJson()));
+    }
+
+    private String reading(String schemaJson) {
+        JsonNode node = readSchema(schemaJson).get("reading");
+        if (node == null || !node.isTextual() || node.asText().isBlank()) {
+            return null;
+        }
+        return node.asText();
     }
 
     private List<FieldPrompt> fieldPrompts(String schemaJson) {

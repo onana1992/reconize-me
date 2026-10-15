@@ -20,7 +20,7 @@
     "country": "FR",
     "documentType": "PASSPORT",
     "version": "2024",
-    "side": "BACK",
+    "side": "FRONT",
     "confidence": 0.94,
     "extra": "ignored"
   },

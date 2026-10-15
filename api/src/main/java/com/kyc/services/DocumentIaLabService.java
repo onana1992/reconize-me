@@ -169,7 +169,7 @@ public class DocumentIaLabService {
         }
         try {
             Object rawModel = objectMapper.readTree(success.raw());
-            return staged(until, quality, rawModel, success.parsed(), true);
+            return staged(until, quality, rawModel, success.parsed(), true, captureSide);
         } catch (IOException e) {
             return visionFailure(quality, "provider_unavailable", until);
         }
@@ -181,18 +181,32 @@ public class DocumentIaLabService {
             Object rawModel,
             DocumentParse parsed,
             boolean providerCalled) {
+        return staged(until, quality, rawModel, parsed, providerCalled, null);
+    }
+
+    private DocumentIaAnalysisResponse staged(
+            String until,
+            DocumentImageQuality quality,
+            Object rawModel,
+            DocumentParse parsed,
+            boolean providerCalled,
+            String captureSide) {
         if (!wantsNormalize(until)) {
             return providerCalled
                     ? DocumentIaAnalysisResponse.vision(
                             quality, rawModel, parsed.document(), parsed.schemaVersionId())
                     : DocumentIaAnalysisResponse.parsed(parsed.document(), parsed.schemaVersionId());
         }
-        return normalized(until, quality, rawModel, parsed, providerCalled);
+        return normalized(until, quality, rawModel, parsed, providerCalled, captureSide);
     }
 
     private DocumentIaAnalysisResponse normalized(
             String until,
-            DocumentImageQuality quality, Object rawModel, DocumentParse parsed, boolean providerCalled) {
+            DocumentImageQuality quality,
+            Object rawModel,
+            DocumentParse parsed,
+            boolean providerCalled,
+            String captureSide) {
         SchemaEdition edition = registry.edition(parsed.schemaVersionId()).orElse(null);
         if (edition == null) {
             if (!wantsValidate(until)) {
@@ -205,7 +219,7 @@ public class DocumentIaLabService {
                         List.of(),
                         providerCalled);
             }
-            return judged(until, quality, rawModel, parsed, List.of(), List.of(), null, providerCalled);
+            return judged(until, quality, rawModel, parsed, List.of(), List.of(), null, providerCalled, captureSide);
         }
         FieldNormalizer.Result normalization =
                 FieldNormalizer.normalize(edition, parsed.document(), LocalDate.now(ZoneOffset.UTC));
@@ -252,7 +266,8 @@ public class DocumentIaLabService {
                 mrz.fields(),
                 mrz.validation(),
                 mrz.report(),
-                providerCalled);
+                providerCalled,
+                captureSide);
     }
 
     private DocumentIaAnalysisResponse judged(
@@ -263,7 +278,9 @@ public class DocumentIaLabService {
             List<com.kyc.dto.documentia.NormalizedField> fields,
             List<com.kyc.dto.documentia.ValidationIssue> validation,
             MrzReport mrz,
-            boolean providerCalled) {
+            boolean providerCalled,
+            String captureSide) {
+        validation = withCaptureSide(validation, parsed.document(), captureSide);
         SchemaEdition edition = registry.edition(parsed.schemaVersionId()).orElse(null);
         boolean readable = quality == null || quality.readable();
         String captureReason = quality == null ? null : quality.reason();
@@ -356,12 +373,34 @@ public class DocumentIaLabService {
                 result.reasons()));
     }
 
+    /** La face lue par le modèle doit être celle que le parcours a demandée. */
+    private static List<com.kyc.dto.documentia.ValidationIssue> withCaptureSide(
+            List<com.kyc.dto.documentia.ValidationIssue> validation,
+            com.kyc.dto.documentia.ParsedDocument document,
+            String captureSide) {
+        if (captureSide == null
+                || captureSide.isBlank()
+                || document == null
+                || document.classification() == null
+                || "UNKNOWN".equals(document.classification().code())) {
+            return validation;
+        }
+        String read = document.classification().side();
+        if (captureSide.trim().equalsIgnoreCase(read)) {
+            return validation;
+        }
+        List<com.kyc.dto.documentia.ValidationIssue> all = new java.util.ArrayList<>(validation);
+        all.add(new com.kyc.dto.documentia.ValidationIssue("L2", "document_side_mismatch", "ERROR", "side"));
+        return List.copyOf(all);
+    }
+
     private static IdvDecisionEngine.VisionFacts withBand(IdvDecisionEngine.VisionFacts facts, String band) {
         return new IdvDecisionEngine.VisionFacts(
                 facts.readable(),
                 facts.captureReason(),
                 facts.expired(),
                 facts.unknown(),
+                facts.wrongSide(),
                 facts.missingRequired(),
                 facts.mrzFailed(),
                 facts.lowOcr(),

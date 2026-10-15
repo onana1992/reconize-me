@@ -40,6 +40,12 @@
     "lead": "Look at the camera, face unobstructed, even lighting.",
     "frame": "Face frame: place your face in the oval."
   },
+  "liveness": {
+    "title": "Confirm you are present",
+    "lead": "Place your face in the oval and follow the instructions on screen.",
+    "error": "The face check failed. Try again.",
+    "retry": "Try again"
+  },
   "capture": {
     "action": "Take photo",
     "uploading": "Uploading…",

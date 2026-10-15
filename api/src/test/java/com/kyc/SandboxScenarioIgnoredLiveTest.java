@@ -56,15 +56,16 @@ class SandboxScenarioIgnoredLiveTest {
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
         IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
-        IdvSupport.captureDocumentBack(mockMvc, token, IdvSupport.sharpPng());
-        var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
+        var back = IdvSupport.captureDocumentBack(mockMvc, token, IdvSupport.sharpPng());
+        assertEquals("liveness", back.path("next").asText());
+        var done = IdvSupport.completeLiveness(mockMvc, token);
         assertEquals("declined", done.path("status").asText());
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("declined"))
                 .andExpect(jsonPath("$.decision_reasons[0]").value("face_match_fail"))
-                .andExpect(jsonPath("$.rules_version").value("vision-1"));
+                .andExpect(jsonPath("$.rules_version").value("bio-1"));
     }
 
     @TestConfiguration
@@ -92,6 +93,29 @@ class SandboxScenarioIgnoredLiveTest {
         @Primary
         com.kyc.ports.CompareFacesClient lowMatchClient() {
             return (document, selfie) -> 0.31;
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.FaceLivenessClient passingLiveness() {
+            return new com.kyc.ports.FaceLivenessClient() {
+                @Override
+                public String createSession(String clientRequestToken) {
+                    return "session";
+                }
+
+                @Override
+                public LivenessResult getResults(String sessionId) {
+                    return new LivenessResult(0.91, "SUCCEEDED", new byte[] {4, 5, 6});
+                }
+            };
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.LivenessCredentialPort testCredentials() {
+            return () -> new com.kyc.ports.LivenessCredentialPort.Issued(
+                    "AKIA", "secret", "token", java.time.Instant.parse("2026-10-13T00:00:00Z"));
         }
     }
 }

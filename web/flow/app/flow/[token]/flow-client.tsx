@@ -1,9 +1,12 @@
 "use client";
 
 import { assessDocumentFrame, assessSelfieFrame } from "@/capture";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { FlowBrand } from "../../../components/flow-brand";
 import { useT, type MessageKey } from "../../../i18n/client";
+
+const LivenessCheck = dynamic(() => import("./liveness-check"), { ssr: false });
 
 type Session = {
   verification_id: string;
@@ -316,6 +319,9 @@ export function FlowClient({ token }: { token: string }) {
             </div>
           </div>
         </>
+      ) : null}
+      {!error && session?.next === "liveness" ? (
+        <LivenessCheck token={token} onDone={() => void load()} />
       ) : null}
       {!error && session?.next === "wait" ? (
         <>

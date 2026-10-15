@@ -51,6 +51,24 @@ class DocumentAnalysisParserTest {
     }
 
     @Test
+    void missingClassConfidenceUsesTheFieldAverage() {
+        DocumentParse parsed = parser.parse("""
+                {
+                  "detection": "DOCUMENT_PRESENT",
+                  "classification": { "code": "QUEBEC_DRIVER_LICENSE", "version": "2024", "side": "FRONT" },
+                  "fields": [
+                    { "field": "lastName", "value": "TREMBLAY", "confidence": 0.96, "source": "VISUAL_TEXT" },
+                    { "field": "firstName", "value": "ALEX", "confidence": 0.90, "source": "VISUAL_TEXT" }
+                  ]
+                }
+                """);
+
+        assertEquals(0.93, parsed.document().classification().confidence(), 0.0000001);
+        assertEquals(VERSION, parsed.schemaVersionId());
+        assertTrue(parsed.document().indicators().isEmpty());
+    }
+
+    @Test
     void unknownVersionIsNotBoundToAnEdition() {
         DocumentParse parsed = parser.parse("""
                 {
@@ -202,6 +220,31 @@ class DocumentAnalysisParserTest {
         assertEquals(back, parsed.schemaVersionId());
         assertEquals(1, parsed.document().fields().size());
         assertEquals("barcode", parsed.document().fields().get(0).field());
+    }
+
+    @Test
+    void missingSideIsNotGuessedForATwoSidedDocument() {
+        UUID front = UUID.fromString("018f5a00-0000-7000-8000-0000000000a2");
+        UUID back = UUID.fromString("018f5a00-0000-7000-8000-0000000000c2");
+        DocumentAnalysisParser sided = new DocumentAnalysisParser(new ObjectMapper(), code -> {
+            if (!"QUEBEC_DRIVER_LICENSE".equals(code)) {
+                return List.of();
+            }
+            return List.of(
+                    new ActiveSchema(front, "QUEBEC_DRIVER_LICENSE", "CA", "DRIVING_LICENSE", "2024", List.of("FRONT"), "QC",
+                            Set.of("lastName")),
+                    new ActiveSchema(back, "QUEBEC_DRIVER_LICENSE", "CA", "DRIVING_LICENSE", "2024", List.of("BACK"), "QC",
+                            Set.of("barcode")));
+        });
+        DocumentParse parsed = sided.parse("""
+                {
+                  "detection": "DOCUMENT_PRESENT",
+                  "classification": { "code": "QUEBEC_DRIVER_LICENSE", "version": "2024", "confidence": 0.97 }
+                }
+                """);
+        assertNull(parsed.document().classification().side());
+        assertNull(parsed.schemaVersionId());
+        assertTrue(parsed.document().indicators().contains("document_side_unknown"));
     }
 
     @Test

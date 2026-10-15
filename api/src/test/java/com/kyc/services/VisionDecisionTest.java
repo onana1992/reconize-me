@@ -80,6 +80,17 @@ class VisionDecisionTest {
     }
 
     @Test
+    void wrongSideIsReviewEvenWhenTheReadDateIsExpired() {
+        var facts = new VisionFacts(
+                true, null, true, false, true, false, false, false, false, "HIGH_CONFIDENCE", true, false, Map.of());
+        var verdict = engine.decideVision(null, facts);
+
+        assertEquals("REVIEW", verdict.issue());
+        assertEquals(VerificationDecision.REVIEW, verdict.result().decision());
+        assertEquals("DOCUMENT_SIDE_MISMATCH", verdict.result().reasons().get(0));
+    }
+
+    @Test
     void providerFailureStaysReview() {
         var result = engine.review("invalid_model_json");
 
@@ -105,6 +116,6 @@ class VisionDecisionTest {
             boolean error,
             boolean warning) {
         return new VisionFacts(
-                readable, capture, expired, unknown, missing, mrzFailed, lowOcr, suspicious, band, error, warning, Map.of());
+                readable, capture, expired, unknown, false, missing, mrzFailed, lowOcr, suspicious, band, error, warning, Map.of());
     }
 }

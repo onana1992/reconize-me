@@ -212,6 +212,23 @@ final class IdvSupport {
                 java.nio.charset.StandardCharsets.UTF_8);
     }
 
+    static JsonNode openLiveness(MockMvc mockMvc, String token) throws Exception {
+        MvcResult opened = mockMvc.perform(post("/v1/flow/" + token + "/liveness/session"))
+                .andExpect(status().isOk())
+                .andReturn();
+        return JSON.readTree(opened.getResponse().getContentAsString());
+    }
+
+    static JsonNode completeLiveness(MockMvc mockMvc, String token) throws Exception {
+        String sessionId = openLiveness(mockMvc, token).path("session_id").asText();
+        MvcResult complete = mockMvc.perform(post("/v1/flow/" + token + "/liveness/complete")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"session_id\":\"" + sessionId + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        return JSON.readTree(complete.getResponse().getContentAsString());
+    }
+
     static JsonNode captureSelfie(MockMvc mockMvc, String token, byte[] jpeg) throws Exception {
         MvcResult upload = mockMvc.perform(post("/v1/flow/" + token + "/selfie/uploads"))
                 .andExpect(status().isOk())

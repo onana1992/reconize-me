@@ -58,9 +58,9 @@ class ProviderUnavailableTest {
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
-        var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
+        var done = IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
         assertEquals("review", done.path("status").asText());
+        assertEquals("done", done.path("next").asText());
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())

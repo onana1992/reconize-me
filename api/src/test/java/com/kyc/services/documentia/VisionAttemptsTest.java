@@ -44,6 +44,7 @@ class VisionAttemptsTest {
                         "FRONT",
                         "2024",
                         "QC",
+                        "The left date after Valide le is dateOfIssue. The right date after Expire le is expirationDate.",
                         List.of(new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
                                 "expirationDate", true, "Expire le"))),
                 new Schema(
@@ -54,12 +55,14 @@ class VisionAttemptsTest {
                         "FRONT",
                         "2016",
                         null,
+                        null,
                         List.of())));
         assertTrue(prompt.contains("QUEBEC_DRIVER_LICENSE"));
         assertTrue(prompt.contains("CAMEROON_NATIONAL_ID"));
         assertTrue(prompt.contains("2016"));
         assertTrue(prompt.contains("expirationDate"));
         assertTrue(prompt.contains("Expire le"));
+        assertTrue(prompt.contains("reading: The left date after Valide le is dateOfIssue."));
         assertTrue(VisionPrompt.fromCatalog(List.of(), "BACK").contains("Capture side: BACK"));
     }
 

@@ -111,6 +111,7 @@ public class DocumentAnalysisStore {
                             facts.captureReason(),
                             facts.expired(),
                             facts.unknown(),
+                            facts.wrongSide(),
                             facts.missingRequired(),
                             facts.mrzFailed(),
                             facts.lowOcr(),
@@ -129,6 +130,21 @@ public class DocumentAnalysisStore {
         } catch (RuntimeException e) {
             log.info("document-ia replay skipped verificationId={} side={}", row.getVerificationId(), row.getSide());
             return engine.review("provider_unavailable");
+        }
+    }
+
+    /** Le recto et le verso d'une vérification doivent avoir le même code de pièce. */
+    public boolean sameDocument(VerificationDocumentAnalysis front, VerificationDocumentAnalysis back) {
+        String frontCode = code(front);
+        return frontCode != null && frontCode.equals(code(back));
+    }
+
+    private String code(VerificationDocumentAnalysis row) {
+        try {
+            Classification classification = read(row.getClassificationJson(), Classification.class);
+            return classification == null ? null : classification.code();
+        } catch (RuntimeException e) {
+            return null;
         }
     }
 

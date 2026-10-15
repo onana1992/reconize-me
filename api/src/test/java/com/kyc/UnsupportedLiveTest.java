@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.kyc.ports.AnalyzeIdClient;
 import com.kyc.ports.CompareFacesClient;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.CreditAccountRepository;
@@ -32,6 +31,7 @@ class UnsupportedLiveTest {
 
     private static final String KEY = "ky_live_unsup01xx";
     static final AtomicInteger COMPARE_CALLS = new AtomicInteger();
+    static final AtomicInteger LIVENESS_CALLS = new AtomicInteger();
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,16 +54,18 @@ class UnsupportedLiveTest {
     @Test
     void ontarioSkipsCompareFaces() throws Exception {
         COMPARE_CALLS.set(0);
+        LIVENESS_CALLS.set(0);
         IdvSupport.seedLive(organizations, integrations, apiKeys, credits, passwordEncoder, KEY, "Unsup Co", "unsup-co");
         var created = IdvSupport.create(mockMvc, KEY, "{}");
         String id = created.path("id").asText();
         String token = IdvSupport.token(created);
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
-        IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
-        var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
+        var done = IdvSupport.captureDocument(mockMvc, token, IdvSupport.sharpPng());
         assertEquals("review", done.path("status").asText());
+        assertEquals("done", done.path("next").asText());
         assertEquals(0, COMPARE_CALLS.get());
+        assertEquals(0, LIVENESS_CALLS.get());
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
@@ -89,6 +91,24 @@ class UnsupportedLiveTest {
             return (document, selfie) -> {
                 COMPARE_CALLS.incrementAndGet();
                 return 0.96;
+            };
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.FaceLivenessClient countingLiveness() {
+            return new com.kyc.ports.FaceLivenessClient() {
+                @Override
+                public String createSession(String clientRequestToken) {
+                    LIVENESS_CALLS.incrementAndGet();
+                    return "session";
+                }
+
+                @Override
+                public LivenessResult getResults(String sessionId) {
+                    LIVENESS_CALLS.incrementAndGet();
+                    return new LivenessResult(0.99, "SUCCEEDED", new byte[] {1});
+                }
             };
         }
     }

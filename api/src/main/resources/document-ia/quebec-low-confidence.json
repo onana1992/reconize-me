@@ -2,6 +2,7 @@
   "detection": "DOCUMENT_PRESENT",
   "classification": {
     "code": "QUEBEC_DRIVER_LICENSE",
+    "side": "FRONT",
     "version": "2024",
     "confidence": 0.5
   },

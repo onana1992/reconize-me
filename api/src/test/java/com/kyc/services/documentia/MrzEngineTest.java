@@ -132,6 +132,42 @@ class MrzEngineTest {
     }
 
     @Test
+    void accentAndOneMissingFillerUseTheCheckedNameAndDate() {
+        String mrz = """
+                CACANPD40779087<1113098892<<<5
+                9204096M3010219CMR<251021<01<3
+                ONANA<ÓNANA<<JOSEPH<JUNIOR<<<""";
+        ParsedDocument document = text(mrz, List.of(
+                new ExtractedField("documentNumber", "PD4077908", null, "VISUAL_TEXT"),
+                new ExtractedField("lastName", "ONANA ÓNANA", null, "MRZ"),
+                new ExtractedField("firstName", "JOSEPH JUNIOR", null, "MRZ"),
+                new ExtractedField("dateOfBirth", "1992-04-09", null, "MRZ"),
+                new ExtractedField("expirationDate", "2030-10-25", null, "MRZ"),
+                new ExtractedField("mrz", mrz, null, "MRZ")));
+        MrzEngine.Outcome outcome = MrzEngine.read(prCard(), document, FieldNormalizer.normalize(prCard(), document, TODAY), TODAY);
+
+        assertEquals("VALID", outcome.report().status());
+        assertEquals("ONANA<ONANA<<JOSEPH<JUNIOR<<<<", outcome.report().lines().get(2));
+        assertEquals("ONANA ONANA", field(outcome, "lastName").value());
+        assertEquals("2030-10-21", field(outcome, "expirationDate").value());
+        assertEquals("1992-04-09", field(outcome, "dateOfBirth").value());
+        assertEquals("MRZ", field(outcome, "expirationDate").source());
+        assertEquals("VISUAL_AND_MRZ", field(outcome, "documentNumber").source());
+    }
+
+    @Test
+    void aFillerThatBreaksTheCheckDigitsStaysUnavailable() {
+        String mrz = """
+                CACANPD40779087<1113098892<<<5
+                204096M3010219CMR<251021<01<3
+                ONANA<ONANA<<JOSEPH<JUNIOR<<<<""";
+        ParsedDocument document = text(mrz, List.of(new ExtractedField("mrz", mrz, null, "MRZ")));
+        MrzEngine.Outcome outcome = MrzEngine.read(prCard(), document, FieldNormalizer.normalize(prCard(), document, TODAY), TODAY);
+
+        assertEquals("UNAVAILABLE", outcome.report().status());
+    }
+
+    @Test
     void td1AndTd2RoundTripTheirOwnCheckDigits() {
         assertTrue(roundTrip(MrzFormat.TD1, td1()).valid());
         assertTrue(roundTrip(MrzFormat.TD2, td2()).valid());
@@ -198,6 +234,26 @@ class MrzEngineTest {
         assertEquals(36, line1.length());
         assertEquals(36, line2.length());
         return List.of(line1, line2);
+    }
+
+    private static SchemaEdition prCard() {
+        return new SchemaEdition(
+                UUID.randomUUID(),
+                "CANADA_PERMANENT_RESIDENT",
+                "CA",
+                "RESIDENCE_PERMIT",
+                "2015",
+                "BACK",
+                null,
+                List.of(
+                        new FieldDef("documentNumber", FieldValueType.DOCUMENT_NUMBER, true, null, null),
+                        new FieldDef("lastName", FieldValueType.NAME, false, "ICAO_NAME", null),
+                        new FieldDef("firstName", FieldValueType.NAME, false, "ICAO_NAME", null),
+                        new FieldDef("dateOfBirth", FieldValueType.DATE, false, "ISO_DATE", "yyyy-MM-dd"),
+                        new FieldDef("expirationDate", FieldValueType.DATE, false, "ISO_DATE", "yyyy-MM-dd"),
+                        new FieldDef("mrz", FieldValueType.MRZ, true, null, null)),
+                List.of(),
+                MrzFormat.TD1);
     }
 
     private static SchemaEdition passport() {

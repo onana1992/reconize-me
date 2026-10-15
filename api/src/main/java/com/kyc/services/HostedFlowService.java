@@ -8,23 +8,32 @@ import com.kyc.dto.idv.CompleteUploadRequest;
 import com.kyc.dto.idv.ConsentRequest;
 import com.kyc.dto.idv.ConsentResponse;
 import com.kyc.dto.idv.FlowSessionResponse;
+import com.kyc.dto.idv.LivenessCompleteRequest;
+import com.kyc.dto.idv.LivenessSessionResponse;
 import com.kyc.dto.idv.UploadResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Consent;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
 import com.kyc.entities.VerificationMedia;
+import com.kyc.entities.VerificationLivenessCheck;
 import com.kyc.entities.VerificationSignal;
 import com.kyc.enums.ConsentDecision;
 import com.kyc.enums.Enums;
+import com.kyc.enums.LivenessCheckStatus;
 import com.kyc.enums.MediaKind;
 import com.kyc.enums.MediaStatus;
+import com.kyc.enums.SignalOutcome;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.enums.VerificationStatus;
+import com.kyc.adapters.AwsBiometricAi;
 import com.kyc.adapters.VisionDocumentAi;
 import com.kyc.dto.documentia.ParsedDocument;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.DocumentAiPort;
+import com.kyc.ports.FaceLivenessClient;
+import com.kyc.ports.FaceLivenessClient.LivenessResult;
+import com.kyc.ports.LivenessCredentialPort;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
@@ -35,6 +44,7 @@ import com.kyc.repositories.ConsentRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.VerificationMediaRepository;
 import com.kyc.repositories.VerificationRepository;
+import com.kyc.repositories.VerificationLivenessCheckRepository;
 import com.kyc.repositories.VerificationSignalRepository;
 import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
@@ -43,6 +53,7 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -57,6 +68,8 @@ public class HostedFlowService {
     private static final Logger log = LoggerFactory.getLogger(HostedFlowService.class);
     private static final int MAX_ATTEMPTS = 3;
     private static final Duration UPLOAD_TTL = Duration.ofMinutes(5);
+    private static final Duration LIVENESS_TTL = Duration.ofMinutes(3);
+    private static final int MAX_BILLED_LIVENESS = 3;
     private static final Set<VerificationStatus> DOCUMENT_UPLOAD = EnumSet.of(
             VerificationStatus.PENDING_APPLICANT, VerificationStatus.DOCUMENT, VerificationStatus.RECAPTURE_REQUESTED);
     private static final Set<VerificationStatus> SELFIE_UPLOAD =
@@ -74,7 +87,10 @@ public class HostedFlowService {
     private final VisionDocumentAi liveDocumentAi;
     private final SchemaRegistry schemas;
     private final BiometricAiPort stubBiometricAi;
-    private final BiometricAiPort liveBiometricAi;
+    private final AwsBiometricAi liveBiometricAi;
+    private final FaceLivenessClient faceLiveness;
+    private final LivenessCredentialPort livenessCredentials;
+    private final VerificationLivenessCheckRepository livenessChecks;
     private final IdvDecisionEngine engine;
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
@@ -95,7 +111,10 @@ public class HostedFlowService {
             @Qualifier("liveDocumentAi") VisionDocumentAi liveDocumentAi,
             SchemaRegistry schemas,
             @Qualifier("stubBiometricAi") BiometricAiPort stubBiometricAi,
-            @Qualifier("liveBiometricAi") BiometricAiPort liveBiometricAi,
+            @Qualifier("liveBiometricAi") AwsBiometricAi liveBiometricAi,
+            FaceLivenessClient faceLiveness,
+            LivenessCredentialPort livenessCredentials,
+            VerificationLivenessCheckRepository livenessChecks,
             KycProperties properties,
             ObjectMapper objectMapper,
             WebhookService webhookService,
@@ -114,6 +133,9 @@ public class HostedFlowService {
         this.schemas = schemas;
         this.stubBiometricAi = stubBiometricAi;
         this.liveBiometricAi = liveBiometricAi;
+        this.faceLiveness = faceLiveness;
+        this.livenessCredentials = livenessCredentials;
+        this.livenessChecks = livenessChecks;
         this.engine = new IdvDecisionEngine();
         this.properties = properties;
         this.objectMapper = objectMapper;
@@ -226,6 +248,14 @@ public class HostedFlowService {
             if (kind == MediaKind.DOCUMENT_BACK) {
                 storeBack(loaded, now);
             }
+            if (finishDocumentBeforeFace(loaded, now)) {
+                return new CompleteCaptureResponse(
+                        Enums.json(loaded.verification().getStatus()),
+                        nextOf(loaded.verification()),
+                        true,
+                        response.attempt(),
+                        null);
+            }
             loaded.verification().markSelfie(now);
             return new CompleteCaptureResponse(
                     Enums.json(loaded.verification().getStatus()),
@@ -241,6 +271,9 @@ public class HostedFlowService {
     public UploadResponse selfieUpload(String token) {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
+        if (liveIntegration(loaded.verification())) {
+            throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
+        }
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
                 || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()
                 || accepted(loaded.verification().getId(), MediaKind.SELFIE).isPresent()
@@ -254,6 +287,9 @@ public class HostedFlowService {
     public CompleteCaptureResponse selfieComplete(String token, CompleteUploadRequest request) {
         Loaded loaded = load(token);
         requireConsent(loaded.verification());
+        if (liveIntegration(loaded.verification())) {
+            throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
+        }
         if (!SELFIE_UPLOAD.contains(loaded.verification().getStatus())
                 || accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()
                 || backStillRequired(loaded.verification())) {
@@ -269,6 +305,108 @@ public class HostedFlowService {
         decide(loaded, now);
         return new CompleteCaptureResponse(
                 Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, response.attempt(), null);
+    }
+
+    @Transactional
+    public LivenessSessionResponse openLiveness(String token) {
+        Loaded loaded = load(token);
+        requireLive(loaded);
+        requireConsent(loaded.verification());
+        requireFaceStep(loaded);
+        if (billedLiveness(loaded) >= MAX_BILLED_LIVENESS) {
+            exhaustLiveness(loaded);
+            throw ApiException.conflict("liveness_attempts_exceeded", "Liveness attempts exceeded");
+        }
+        Instant now = Instant.now();
+        var open = livenessChecks.findFirstByVerificationIdAndStatusOrderByAttemptDesc(
+                loaded.verification().getId(), LivenessCheckStatus.OPEN);
+        if (open.isPresent()) {
+            VerificationLivenessCheck check = open.get();
+            if (check.getExpiresAt().isAfter(now)) {
+                return credentialsFor(check);
+            }
+            check.markExpired();
+        }
+        int attempt = (int) livenessChecks.countByVerificationId(loaded.verification().getId()) + 1;
+        String requestToken = loaded.verification().getId().toString().replace("-", "") + attempt;
+        String sessionId;
+        try {
+            sessionId = faceLiveness.createSession(requestToken);
+        } catch (ProviderUnavailableException e) {
+            throw ApiException.dependencyUnavailable("Face Liveness unavailable");
+        }
+        VerificationLivenessCheck created = new VerificationLivenessCheck(
+                UUID.randomUUID(),
+                loaded.verification().getId(),
+                attempt,
+                sessionId,
+                properties.aws().region(),
+                now.plus(LIVENESS_TTL),
+                now);
+        livenessChecks.save(created);
+        log.info("Face Liveness session opened verificationId={} attempt={}", loaded.verification().getId(), attempt);
+        return credentialsFor(created);
+    }
+
+    @Transactional
+    public CompleteCaptureResponse completeLiveness(String token, LivenessCompleteRequest request) {
+        Loaded loaded = load(token);
+        requireLive(loaded);
+        requireConsent(loaded.verification());
+        requireFaceStep(loaded);
+        if (billedLiveness(loaded) >= MAX_BILLED_LIVENESS) {
+            exhaustLiveness(loaded);
+            throw ApiException.conflict("liveness_attempts_exceeded", "Liveness attempts exceeded");
+        }
+        VerificationLivenessCheck check = livenessChecks
+                .findFirstByVerificationIdAndStatusOrderByAttemptDesc(
+                        loaded.verification().getId(), LivenessCheckStatus.OPEN)
+                .orElseThrow(() -> ApiException.conflict("invalid_status", "Liveness session is not open"));
+        String presented = request == null ? null : request.sessionId();
+        if (presented != null && !presented.isBlank() && !presented.equals(check.getSessionId())) {
+            throw ApiException.conflict("liveness_session_mismatch", "Liveness session does not match");
+        }
+        Instant now = Instant.now();
+        if (!check.getExpiresAt().isAfter(now)) {
+            check.markExpired();
+            throw ApiException.conflict("liveness_expired", "Liveness session expired");
+        }
+        long start = System.nanoTime();
+        LivenessResult result;
+        try {
+            result = faceLiveness.getResults(check.getSessionId());
+        } catch (ProviderUnavailableException e) {
+            commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
+            return finished(loaded, null);
+        }
+        long durationMs = (System.nanoTime() - start) / 1_000_000L;
+        String status = result == null ? "missing" : result.status();
+        Double confidence = result == null ? null : result.confidence();
+        log.info(
+                "Face Liveness completed verificationId={} durationMs={} status={} confidence={} attempt={}",
+                loaded.verification().getId(),
+                durationMs,
+                status,
+                confidence,
+                check.getAttempt());
+        if (result == null || "EXPIRED".equalsIgnoreCase(result.status())) {
+            check.markExpired();
+            throw ApiException.conflict("liveness_expired", "Liveness session expired");
+        }
+        check.complete(confidence);
+        byte[] reference = result.referenceImage() == null ? new byte[0] : result.referenceImage();
+        storeReference(loaded, reference, check.getAttempt(), now);
+        var document = accepted(loaded.verification().getId(), MediaKind.DOCUMENT)
+                .orElseThrow(() -> ApiException.conflict("invalid_status", "Document is required"));
+        try {
+            BiometricAiPort.BiometricSignals signals =
+                    liveBiometricAi.match(objectStorage.read(document.getObjectKey()), result);
+            IdvDecisionEngine.Result face = engine.applyFace(storedDocument(loaded.verification()), signals);
+            commit(loaded, face, IdvDecisionEngine.BIO_RULES_VERSION, now);
+        } catch (ProviderUnavailableException e) {
+            commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
+        }
+        return finished(loaded, null);
     }
 
     private void decide(Loaded loaded, Instant now) {
@@ -296,6 +434,70 @@ public class HostedFlowService {
             result = engine.decide(scenario);
         }
 
+        commit(loaded, result, rulesVersion, now);
+    }
+
+    /**
+     * Live only. A document that is not APPROVED ends the verification here.
+     * Face Liveness is not opened. Sandbox keeps the selfie step.
+     */
+    private boolean finishDocumentBeforeFace(Loaded loaded, Instant now) {
+        Integration integration = integrations
+                .findById(loaded.verification().getIntegrationId())
+                .orElse(null);
+        if (integration == null || !integration.isLive()) {
+            return false;
+        }
+        IdvDecisionEngine.Result document = storedDocument(loaded.verification());
+        if (faceStepAllowed(document)) {
+            return false;
+        }
+        commit(loaded, document, IdvDecisionEngine.VISION_RULES_VERSION, now);
+        return true;
+    }
+
+    /** B3 calls {@link FaceLivenessClient#createSession()} only after this returns true. */
+    private boolean faceStepAllowed(IdvDecisionEngine.Result document) {
+        if (faceLiveness == null || document == null || document.decision() != VerificationDecision.APPROVED) {
+            return false;
+        }
+        return true;
+    }
+
+    private IdvDecisionEngine.Result storedDocument(Verification verification) {
+        IdvDecisionEngine.Result front = storedOrUnavailable(verification.getId(), "FRONT");
+        if (front.decision() != VerificationDecision.APPROVED || !verification.isDocumentBackRequired()) {
+            return front;
+        }
+        IdvDecisionEngine.Result back = storedBack(verification.getId());
+        if (back.decision() == VerificationDecision.APPROVED) {
+            return front;
+        }
+        VerificationDecision decision = back.decision() == null ? VerificationDecision.REVIEW : back.decision();
+        return new IdvDecisionEngine.Result(decision, back.reasons(), back.signals(), front.extractedIdentity());
+    }
+
+    private IdvDecisionEngine.Result storedBack(UUID verificationId) {
+        var back = analyses.find(verificationId, "BACK");
+        if (back.isEmpty()) {
+            return engine.providerUnavailable();
+        }
+        var front = analyses.find(verificationId, "FRONT");
+        if (front.isPresent() && !analyses.sameDocument(front.get(), back.get())) {
+            return engine.review("DOCUMENT_MISMATCH");
+        }
+        return analyses.replay(back.get(), schemas, engine);
+    }
+
+    private IdvDecisionEngine.Result storedOrUnavailable(UUID verificationId, String side) {
+        return analyses
+                .find(verificationId, side)
+                .map(row -> analyses.replay(row, schemas, engine))
+                .orElseGet(engine::providerUnavailable);
+    }
+
+    private void commit(Loaded loaded, IdvDecisionEngine.Result result, String rulesVersion, Instant now) {
+        Verification verification = loaded.verification();
         String reasons;
         String extracted;
         try {
@@ -329,10 +531,7 @@ public class HostedFlowService {
             }
             Verification verification = verifications.findById(verificationId).orElse(null);
             if (verification != null && verification.isDocumentBackRequired()) {
-                IdvDecisionEngine.Result back = analyses
-                        .find(verificationId, "BACK")
-                        .map(row -> analyses.replay(row, schemas, engine))
-                        .orElseGet(() -> engine.review("provider_unavailable"));
+                IdvDecisionEngine.Result back = storedBack(verificationId);
                 if (back.decision() != VerificationDecision.APPROVED) {
                     VerificationDecision decision = back.decision() == null
                             ? VerificationDecision.REVIEW
@@ -554,6 +753,86 @@ public class HostedFlowService {
                 nextOf(verification));
     }
 
+    private void requireLive(Loaded loaded) {
+        if (!liveIntegration(loaded.verification())) {
+            throw ApiException.forbidden("sandbox_no_liveness", "Liveness is not available in sandbox");
+        }
+    }
+
+    private void requireFaceStep(Loaded loaded) {
+        if (loaded.verification().getStatus() != VerificationStatus.SELFIE
+                || backStillRequired(loaded.verification())
+                || !faceStepAllowed(storedDocument(loaded.verification()))) {
+            throw ApiException.conflict("invalid_status", "Liveness is not expected");
+        }
+    }
+
+    private long billedLiveness(Loaded loaded) {
+        return livenessChecks.countByVerificationIdAndBilledTrue(loaded.verification().getId());
+    }
+
+    private void exhaustLiveness(Loaded loaded) {
+        if (loaded.verification().terminal()) {
+            return;
+        }
+        commit(
+                loaded,
+                new IdvDecisionEngine.Result(
+                        VerificationDecision.DECLINED,
+                        List.of("liveness_fail"),
+                        List.of(new IdvDecisionEngine.Signal("liveness_fail", SignalOutcome.FAIL, null)),
+                        Map.of()),
+                IdvDecisionEngine.BIO_RULES_VERSION,
+                Instant.now());
+    }
+
+    private LivenessSessionResponse credentialsFor(VerificationLivenessCheck check) {
+        try {
+            LivenessCredentialPort.Issued issued = livenessCredentials.issue();
+            return new LivenessSessionResponse(
+                    check.getSessionId(),
+                    check.getRegion(),
+                    new LivenessSessionResponse.Credentials(
+                            issued.accessKeyId(), issued.secretAccessKey(), issued.sessionToken(), issued.expiration()));
+        } catch (ProviderUnavailableException e) {
+            throw ApiException.dependencyUnavailable("Face Liveness unavailable");
+        }
+    }
+
+    private void storeReference(Loaded loaded, byte[] reference, int attempt, Instant now) {
+        if (reference.length == 0) {
+            return;
+        }
+        String type = MediaQuality.sniff(reference);
+        if (type == null) {
+            type = "image/jpeg";
+        }
+        String objectKey = "org/"
+                + loaded.organizationId()
+                + "/verifications/"
+                + loaded.verification().getId()
+                + "/selfie/"
+                + attempt;
+        objectStorage.write(objectKey, reference, type);
+        VerificationMedia item = new VerificationMedia(
+                UUID.randomUUID(), loaded.verification().getId(), MediaKind.SELFIE, attempt, objectKey, now);
+        item.accept(type, reference.length);
+        media.save(item);
+    }
+
+    private CompleteCaptureResponse finished(Loaded loaded, Integer attempt) {
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, null);
+    }
+
+    private boolean liveIntegration(Verification verification) {
+        return integrations.findById(verification.getIntegrationId()).map(Integration::isLive).orElse(false);
+    }
+
+    private String faceNext(Verification verification) {
+        return liveIntegration(verification) ? "liveness" : "capture_selfie";
+    }
+
     private String nextOf(Verification verification) {
         return switch (verification.getStatus()) {
             case CREATED, PENDING_CONSENT -> "consent";
@@ -564,9 +843,9 @@ public class HostedFlowService {
                 if (backTurn(verification)) {
                     yield "capture_document_back";
                 }
-                yield "capture_selfie";
+                yield faceNext(verification);
             }
-            case SELFIE -> "capture_selfie";
+            case SELFIE -> faceNext(verification);
             case PROCESSING -> "wait";
             default -> "done";
         };

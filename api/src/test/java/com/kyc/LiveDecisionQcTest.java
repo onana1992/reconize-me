@@ -17,8 +17,11 @@ import com.kyc.repositories.OrganizationRepository;
 import com.kyc.repositories.VerificationDocumentAnalysisRepository;
 import com.kyc.services.documentia.SchemaRegistry;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,6 +46,9 @@ class LiveDecisionQcTest {
 
     private static final String KEY = "ky_live_livedec01";
     private static final AtomicInteger ANALYZE_CALLS = new AtomicInteger();
+    private static final AtomicInteger LIVENESS_CALLS = new AtomicInteger();
+    private static final byte[] REFERENCE = new byte[] {9, 8, 7, 6};
+    private static final AtomicReference<byte[]> COMPARE_SOURCE = new AtomicReference<>();
 
     @Autowired
     private MockMvc mockMvc;
@@ -68,6 +74,7 @@ class LiveDecisionQcTest {
     @Test
     void liveMatchesTheLabAndStoresTheAnalysis() throws Exception {
         ANALYZE_CALLS.set(0);
+        LIVENESS_CALLS.set(0);
         byte[] document = IdvSupport.sharpPng();
         IdvSupport.seedLive(organizations, integrations, apiKeys, credits, passwordEncoder, KEY, "Live QC Co", "live-qc-co");
 
@@ -86,15 +93,20 @@ class LiveDecisionQcTest {
         IdvSupport.acceptConsent(mockMvc, token);
         var front = IdvSupport.captureDocument(mockMvc, token, document);
         assertEquals("capture_document_back", front.path("next").asText());
-        IdvSupport.captureDocumentBack(mockMvc, token, document);
-        var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
+        var backStep = IdvSupport.captureDocumentBack(mockMvc, token, document);
+        assertEquals("liveness", backStep.path("next").asText());
+        var done = IdvSupport.completeLiveness(mockMvc, token);
         assertEquals("approved", done.path("status").asText());
         assertEquals(0, ANALYZE_CALLS.get());
+        assertEquals(2, LIVENESS_CALLS.get());
+        assertTrue(Arrays.equals(REFERENCE, COMPARE_SOURCE.get()));
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("approved"))
-                .andExpect(jsonPath("$.rules_version").value("vision-1"))
+                .andExpect(jsonPath("$.decision_reasons[0]").value("liveness_pass"))
+                .andExpect(jsonPath("$.rules_version").value("bio-1"))
+                .andExpect(jsonPath("$.signals[0].score").value(0.91))
                 .andExpect(jsonPath("$.extracted_identity.document_type").value("driving_license"))
                 .andExpect(jsonPath("$.extracted_identity.document_country").value("CA"))
                 .andExpect(jsonPath("$.extracted_identity.issuing_jurisdiction").value("QC"))
@@ -142,7 +154,34 @@ class LiveDecisionQcTest {
         @Bean
         @Primary
         CompareFacesClient passingFaces() {
-            return (document, selfie) -> 0.96;
+            return (document, selfie) -> {
+                COMPARE_SOURCE.set(selfie);
+                return 0.96;
+            };
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.FaceLivenessClient countingLiveness() {
+            return new com.kyc.ports.FaceLivenessClient() {
+                @Override
+                public String createSession(String clientRequestToken) {
+                    LIVENESS_CALLS.incrementAndGet();
+                    return "session";
+                }
+
+                @Override
+                public LivenessResult getResults(String sessionId) {
+                    LIVENESS_CALLS.incrementAndGet();
+                    return new LivenessResult(0.91, "SUCCEEDED", REFERENCE);
+                }
+            };
+        }
+
+        @Bean
+        @Primary
+        com.kyc.ports.LivenessCredentialPort testCredentials() {
+            return () -> new com.kyc.ports.LivenessCredentialPort.Issued("AKIA", "secret", "token", Instant.parse("2026-10-13T00:00:00Z"));
         }
     }
 }

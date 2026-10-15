@@ -66,8 +66,9 @@ class OpenAiVisionDocumentTest {
         assertTrue(system.contains("\"detection\":\"DOCUMENT_PRESENT\""));
         assertTrue(system.contains("\"fields\":["));
         assertEquals("catalog prompt", body.get("messages").get(1).get("content").get(0).get("text").asText());
-        assertTrue(body.get("messages").get(1).get("content").get(1).get("image_url").get("url").asText()
-                .startsWith("data:image/png;base64,"));
+        JsonNode image = body.get("messages").get(1).get("content").get(1).get("image_url");
+        assertTrue(image.get("url").asText().startsWith("data:image/png;base64,"));
+        assertEquals("high", image.get("detail").asText());
         assertFalse(requestBody.get().contains(API_KEY));
         assertEquals(1, calls.get());
     }

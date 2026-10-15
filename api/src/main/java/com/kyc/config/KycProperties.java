@@ -58,7 +58,7 @@ public record KycProperties(
 
     public record Aws(
             @DefaultValue("false") boolean enabled,
-            @DefaultValue("ca-central-1") String region,
+            @DefaultValue("us-east-1") String region,
             @DefaultValue S3 s3,
             @DefaultValue Textract textract,
             @DefaultValue Rekognition rekognition) {

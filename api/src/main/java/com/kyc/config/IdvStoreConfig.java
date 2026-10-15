@@ -8,6 +8,8 @@ import com.kyc.adapters.InMemoryHostedTokenStore;
 import com.kyc.adapters.QcAnalyzeIdMapper;
 import com.kyc.adapters.RedisHostedTokenStore;
 import com.kyc.adapters.RekognitionCompareFacesClient;
+import com.kyc.adapters.RekognitionFaceLivenessClient;
+import com.kyc.adapters.StsLivenessCredentials;
 import com.kyc.adapters.S3ObjectStorage;
 import com.kyc.adapters.StubBiometricAi;
 import com.kyc.adapters.StubDocumentAi;
@@ -17,6 +19,8 @@ import com.kyc.ports.AnalyzeIdClient;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.CompareFacesClient;
 import com.kyc.ports.DocumentAiPort;
+import com.kyc.ports.FaceLivenessClient;
+import com.kyc.ports.LivenessCredentialPort;
 import com.kyc.ports.HostedTokenStore;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
@@ -119,6 +123,45 @@ public class IdvStoreConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(prefix = "kyc.aws", name = "enabled", havingValue = "true")
+    @ConditionalOnMissingBean(FaceLivenessClient.class)
+    public FaceLivenessClient rekognitionFaceLivenessClient(KycProperties properties) {
+        return new RekognitionFaceLivenessClient(properties);
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "kyc.aws", name = "enabled", havingValue = "true")
+    @ConditionalOnMissingBean(LivenessCredentialPort.class)
+    public LivenessCredentialPort stsLivenessCredentials(
+            KycProperties properties, @Value("${kyc.aws.rekognition.liveness-role-arn:}") String roleArn) {
+        return new StsLivenessCredentials(properties, roleArn);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(FaceLivenessClient.class)
+    public FaceLivenessClient disabledFaceLivenessClient() {
+        return new FaceLivenessClient() {
+            @Override
+            public String createSession(String clientRequestToken) {
+                throw new ProviderUnavailableException("AWS Face Liveness disabled (kyc.aws.enabled=false)");
+            }
+
+            @Override
+            public LivenessResult getResults(String sessionId) {
+                throw new ProviderUnavailableException("AWS Face Liveness disabled (kyc.aws.enabled=false)");
+            }
+        };
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(LivenessCredentialPort.class)
+    public LivenessCredentialPort disabledLivenessCredentials() {
+        return () -> {
+            throw new ProviderUnavailableException("AWS Face Liveness credentials disabled (kyc.aws.enabled=false)");
+        };
+    }
+
+    @Bean
     @Qualifier("liveDocumentAi")
     public VisionDocumentAi liveDocumentAi(
             DocumentIaLabService lab,
@@ -132,7 +175,7 @@ public class IdvStoreConfig {
 
     @Bean
     @Qualifier("liveBiometricAi")
-    public BiometricAiPort liveBiometricAi(CompareFacesClient compareFacesClient) {
-        return new AwsBiometricAi(compareFacesClient);
+    public AwsBiometricAi liveBiometricAi(CompareFacesClient compareFacesClient, FaceLivenessClient faceLivenessClient) {
+        return new AwsBiometricAi(compareFacesClient, faceLivenessClient);
     }
 }

@@ -5,6 +5,8 @@ import com.kyc.dto.idv.CompleteUploadRequest;
 import com.kyc.dto.idv.ConsentRequest;
 import com.kyc.dto.idv.ConsentResponse;
 import com.kyc.dto.idv.FlowSessionResponse;
+import com.kyc.dto.idv.LivenessCompleteRequest;
+import com.kyc.dto.idv.LivenessSessionResponse;
 import com.kyc.dto.idv.UploadResponse;
 import com.kyc.services.HostedFlowService;
 import com.kyc.web.ClientIps;
@@ -74,6 +76,23 @@ public class FlowController {
     public UploadResponse selfieUploads(@PathVariable String token, HttpServletResponse response) {
         noStore(response);
         return flow.selfieUpload(token);
+    }
+
+    @PostMapping("/liveness/session")
+    @Operation(summary = "Ouvrir une session Face Liveness")
+    public LivenessSessionResponse livenessSession(@PathVariable String token, HttpServletResponse response) {
+        noStore(response);
+        return flow.openLiveness(token);
+    }
+
+    @PostMapping("/liveness/complete")
+    @Operation(summary = "Lire le résultat Face Liveness et décider")
+    public CompleteCaptureResponse livenessComplete(
+            @PathVariable String token,
+            @RequestBody(required = false) LivenessCompleteRequest body,
+            HttpServletResponse response) {
+        noStore(response);
+        return flow.completeLiveness(token, body);
     }
 
     @PostMapping("/selfie/complete")

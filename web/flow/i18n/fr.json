@@ -40,6 +40,12 @@
     "lead": "Regardez l’appareil, visage dégagé, lumière uniforme.",
     "frame": "Cadre visage : placez votre visage dans l’ovale."
   },
+  "liveness": {
+    "title": "Vérifiez que vous êtes bien présent",
+    "lead": "Placez votre visage dans l’ovale et suivez les instructions à l’écran.",
+    "error": "La vérification du visage a échoué. Réessayez.",
+    "retry": "Recommencer"
+  },
   "capture": {
     "action": "Prendre la photo",
     "uploading": "Envoi…",
