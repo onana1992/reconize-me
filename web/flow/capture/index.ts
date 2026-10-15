@@ -11,7 +11,7 @@ const MIN_CONTRAST = 8;
 const MIN_SHARPNESS_DOCUMENT = 4;
 /** Faces are mostly smooth skin; document-level 4 rejected every live selfie. */
 const MIN_SHARPNESS_SELFIE = 0.6;
-/** Match `.rm-flow-stage[data-kind="selfie"] .rm-flow-guide` insets. */
+/** Match `.rm-camera[data-kind="selfie"] .rm-camera-cutout` insets. */
 const SELFIE_INSET_X = 0.22;
 const SELFIE_INSET_Y = 0.16;
 /** Sample ~this many pixels on the short side so 12MP stills are not scored as blurry. */

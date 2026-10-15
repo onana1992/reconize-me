@@ -3,7 +3,21 @@
 import { assessDocumentFrame, assessSelfieFrame } from "@/capture";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
-import { FlowBrand } from "../../../components/flow-brand";
+import { FlowShell, Notice, StateScreen, type FlowStep } from "../../../components/flow-shell";
+import {
+  BarcodeIcon,
+  ClockIcon,
+  CornersIcon,
+  FaceIcon,
+  GlassesIcon,
+  IdCardIcon,
+  LinkOffIcon,
+  ShieldIcon,
+  SparkOffIcon,
+  SunIcon,
+  UploadIcon,
+  WifiOffIcon,
+} from "../../../components/icons";
 import { useT, type MessageKey } from "../../../i18n/client";
 
 const LivenessCheck = dynamic(() => import("./liveness-check"), { ssr: false });
@@ -16,6 +30,10 @@ type Session = {
   next: string;
 };
 
+type CaptureNext = "capture_document" | "capture_document_back" | "capture_selfie";
+
+const BUSY_HINTS: MessageKey[] = ["capture.uploading", "capture.analyzing"];
+
 export function FlowClient({ token }: { token: string }) {
   const t = useT();
   const [session, setSession] = useState<Session | null>(null);
@@ -23,6 +41,7 @@ export function FlowClient({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<MessageKey | null>(null);
   const [liveCamera, setLiveCamera] = useState(false);
+  const [refused, setRefused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -119,6 +138,7 @@ export function FlowClient({ token }: { token: string }) {
         return;
       }
       const body = (await response.json()) as { status: string; next: string };
+      setRefused(decision === "declined");
       setSession((current) => (current ? { ...current, status: body.status, next: body.next } : current));
     } catch {
       setError("network");
@@ -130,11 +150,10 @@ export function FlowClient({ token }: { token: string }) {
   async function submitFrame(kind: "selfie" | "document", image: ImageData, blob: Blob) {
     const assessment = kind === "selfie" ? assessSelfieFrame(image) : assessDocumentFrame(image);
     if (!assessment.usable) {
-      alert(assessment.reasons);
       setHint(hintForReasons(assessment.reasons));
       return;
     }
-   
+
     setBusy(true);
     setHint("capture.uploading");
     try {
@@ -156,6 +175,7 @@ export function FlowClient({ token }: { token: string }) {
         setHint("capture.uploadError");
         return;
       }
+      setHint("capture.analyzing");
       const complete = await fetch(`/v1/flow/${encodeURIComponent(token)}/${prefix}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -222,117 +242,278 @@ export function FlowClient({ token }: { token: string }) {
     }
   }
 
-  return (
-    <main className="rm-flow">
-      <FlowBrand />
-      {error === "invalid" ? <h1>{t("errors.invalid")}</h1> : null}
-      {error === "expired" ? <h1>{t("errors.expired")}</h1> : null}
-      {error === "network" ? (
-        <>
-          <h1>{t("errors.network")}</h1>
-          <div className="rm-actions">
-            <button type="button" onClick={() => void load()}>
-              {t("errors.retry")}
-            </button>
-          </div>
-        </>
-      ) : null}
-      {!error && session?.next === "consent" ? (
-        <>
-          <h1>{t("consent.title")}</h1>
-          <p className="rm-lead">{t("consent.body")}</p>
-          {hint ? (
-            <p role="alert" className="rm-alert">
-              {t(hint)}
-            </p>
-          ) : null}
-          <form
-            className="rm-actions"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void consent("accepted");
-            }}
-          >
-            <button type="submit" disabled={busy}>
-              {busy ? t("capture.uploading") : t("consent.accept")}
-            </button>
-            <button type="button" data-variant="secondary" disabled={busy} onClick={() => void consent("declined")}>
-              {t("consent.decline")}
-            </button>
-          </form>
-        </>
-      ) : null}
-      {!error && (session?.next === "capture_document" || session?.next === "capture_document_back" || session?.next === "capture_selfie") ? (
-        <>
-          <h1>
-            {session.next === "capture_selfie"
-              ? t("selfie.title")
-              : session.next === "capture_document_back"
-                ? t("documentBack.title")
-                : t("document.title")}
-          </h1>
-          <p className="rm-lead">
-            {session.next === "capture_selfie"
-              ? t("selfie.lead")
-              : session.next === "capture_document_back"
-                ? t("documentBack.lead")
-                : t("document.lead")}
-          </p>
-          <div className="rm-flow-capture">
-            <div
-              className="rm-flow-stage"
-              data-kind={session.next === "capture_selfie" ? "selfie" : "document"}
-              role="img"
-              aria-label={
-                session.next === "capture_selfie"
-                  ? t("selfie.frame")
-                  : session.next === "capture_document_back"
-                    ? t("documentBack.frame")
-                    : t("document.frame")
-              }
-            >
-              {liveCamera ? <video ref={videoRef} autoPlay playsInline muted /> : <span className="rm-flow-guide" aria-hidden="true" />}
-              <span className="rm-flow-frame" aria-hidden="true" />
-            </div>
-            {hint ? (
-              <p className={hint === "capture.uploading" ? "rm-hint" : "rm-alert"} role={hint === "capture.uploading" ? undefined : "alert"}>
-                {t(hint)}
-              </p>
-            ) : null}
-            <div className="rm-actions">
-              {liveCamera ? (
-                <button type="button" disabled={busy} onClick={() => void capture()}>
-                  {busy ? t("capture.uploading") : t("capture.action")}
-                </button>
-              ) : (
-                <label className="rm-button rm-flow-file">
-                  {busy ? t("capture.uploading") : t("capture.action")}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture={session.next === "capture_selfie" ? "user" : "environment"}
-                    disabled={busy}
-                    onChange={(event) => void onPick(event)}
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-        </>
-      ) : null}
-      {!error && session?.next === "liveness" ? (
+  if (error) {
+    return (
+      <FlowShell step={null}>
+        <ErrorScreen kind={error} onRetry={() => void load()} />
+      </FlowShell>
+    );
+  }
+
+  if (!session) {
+    return (
+      <FlowShell step={null}>
+        <StateScreen tone="progress" title={t("shell.loading")} />
+      </FlowShell>
+    );
+  }
+
+  const next = session.next;
+
+  if (next === "consent") {
+    return (
+      <FlowShell step="consent">
+        <ConsentScreen busy={busy} hint={hint} onDecide={(decision) => void consent(decision)} />
+      </FlowShell>
+    );
+  }
+
+  if (next === "capture_document" || next === "capture_document_back" || next === "capture_selfie") {
+    return (
+      <FlowShell step={stepFor(next)}>
+        <CaptureScreen
+          next={next}
+          busy={busy}
+          hint={hint}
+          liveCamera={liveCamera}
+          videoRef={videoRef}
+          onCapture={() => void capture()}
+          onPick={(event) => void onPick(event)}
+        />
+      </FlowShell>
+    );
+  }
+
+  if (next === "liveness") {
+    return (
+      <FlowShell step="face">
         <LivenessCheck token={token} onDone={() => void load()} />
-      ) : null}
-      {!error && session?.next === "wait" ? (
-        <>
-          <h1>{t("outcome.wait")}</h1>
-        </>
-      ) : null}
-      {!error && session?.next === "done" ? (
-        <h1>{session.status === "declined" ? t("outcome.declined") : t("outcome.done")}</h1>
-      ) : null}
-    </main>
+      </FlowShell>
+    );
+  }
+
+  if (next === "wait") {
+    return (
+      <FlowShell step="done">
+        <StateScreen tone="progress" title={t("outcome.wait")} lead={t("outcome.waitLead")} />
+      </FlowShell>
+    );
+  }
+
+  if (session.status === "declined" && refused) {
+    return (
+      <FlowShell step={null}>
+        <StateScreen tone="neutral" icon={<ShieldIcon size={30} />} title={t("outcome.declined")} lead={t("outcome.declinedLead")} />
+      </FlowShell>
+    );
+  }
+
+  if (session.status === "declined") {
+    return (
+      <FlowShell step="done">
+        <StateScreen tone="neutral" icon={<ShieldIcon size={30} />} title={t("outcome.closed")} lead={t("outcome.closedLead")} />
+      </FlowShell>
+    );
+  }
+
+  return (
+    <FlowShell step="done">
+      <StateScreen tone="success" title={t("outcome.done")} lead={t("outcome.doneLead")} />
+    </FlowShell>
   );
+}
+
+function stepFor(next: CaptureNext): FlowStep {
+  return next === "capture_selfie" ? "face" : "document";
+}
+
+function ErrorScreen({ kind, onRetry }: { kind: "invalid" | "expired" | "network"; onRetry: () => void }) {
+  const t = useT();
+  if (kind === "expired") {
+    return <StateScreen tone="danger" icon={<ClockIcon size={30} />} title={t("errors.expired")} lead={t("errors.expiredLead")} />;
+  }
+  if (kind === "invalid") {
+    return <StateScreen tone="danger" icon={<LinkOffIcon size={30} />} title={t("errors.invalid")} lead={t("errors.invalidLead")} />;
+  }
+  return (
+    <StateScreen tone="danger" icon={<WifiOffIcon size={30} />} title={t("errors.network")} lead={t("errors.networkLead")}>
+      <div className="rm-flow-cta">
+        <button type="button" className="rm-btn-primary" onClick={onRetry}>
+          {t("errors.retry")}
+        </button>
+      </div>
+    </StateScreen>
+  );
+}
+
+function ConsentScreen({
+  busy,
+  hint,
+  onDecide,
+}: {
+  busy: boolean;
+  hint: MessageKey | null;
+  onDecide: (decision: "accepted" | "declined") => void;
+}) {
+  const t = useT();
+  return (
+    <div className="rm-screen">
+      <div className="rm-hero-badge" aria-hidden="true">
+        <ShieldIcon size={30} />
+      </div>
+      <p className="rm-eyebrow">{t("consent.eyebrow")}</p>
+      <h1>{t("consent.title")}</h1>
+      <p className="rm-lead">{t("consent.lead")}</p>
+      <ol className="rm-plan">
+        <li>
+          <span className="rm-plan-icon" aria-hidden="true">
+            <IdCardIcon size={22} />
+          </span>
+          <span>
+            <strong>{t("consent.stepDocument")}</strong>
+            <span>{t("consent.stepDocumentLead")}</span>
+          </span>
+        </li>
+        <li>
+          <span className="rm-plan-icon" aria-hidden="true">
+            <FaceIcon size={22} />
+          </span>
+          <span>
+            <strong>{t("consent.stepFace")}</strong>
+            <span>{t("consent.stepFaceLead")}</span>
+          </span>
+        </li>
+      </ol>
+      <p className="rm-consent-text">{t("consent.body")}</p>
+      {hint ? <Notice tone="danger">{t(hint)}</Notice> : null}
+      <form
+        className="rm-flow-cta"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onDecide("accepted");
+        }}
+      >
+        <button type="submit" className="rm-btn-primary" disabled={busy}>
+          {busy ? <span className="rm-spinner" data-size="sm" aria-hidden="true" /> : null}
+          {t("consent.accept")}
+        </button>
+        <button type="button" className="rm-btn-ghost" disabled={busy} onClick={() => onDecide("declined")}>
+          {t("consent.decline")}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function CaptureScreen({
+  next,
+  busy,
+  hint,
+  liveCamera,
+  videoRef,
+  onCapture,
+  onPick,
+}: {
+  next: CaptureNext;
+  busy: boolean;
+  hint: MessageKey | null;
+  liveCamera: boolean;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  onCapture: () => void;
+  onPick: (event: ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const t = useT();
+  const selfie = next === "capture_selfie";
+  const copy = selfie ? "selfie" : next === "capture_document_back" ? "documentBack" : "document";
+  const tips = tipsFor(next);
+  const busyHint = busy && hint !== null && BUSY_HINTS.includes(hint) ? hint : null;
+  const working = busyHint !== null;
+
+  return (
+    <div className="rm-screen" key={next}>
+      <p className="rm-eyebrow">{t(`${copy}.eyebrow` as const)}</p>
+      <h1>{t(`${copy}.title` as const)}</h1>
+      <p className="rm-lead">{t(`${copy}.lead` as const)}</p>
+      <ul className="rm-tips">
+        {tips.map((tip) => (
+          <li key={tip.label}>
+            {tip.icon}
+            <span>{t(tip.label)}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="rm-camera" data-kind={selfie ? "selfie" : "document"}>
+        <div className="rm-camera-stage" role="img" aria-label={t(`${copy}.frame` as const)}>
+          {liveCamera ? (
+            <video ref={videoRef} autoPlay playsInline muted />
+          ) : (
+            <span className="rm-camera-placeholder" aria-hidden="true">
+              {selfie ? <FaceIcon size={44} /> : <IdCardIcon size={44} />}
+            </span>
+          )}
+          <span className="rm-camera-cutout" aria-hidden="true">
+            <span className="rm-camera-scan" />
+          </span>
+          {busyHint ? (
+            <span className="rm-camera-busy" role="status">
+              <span className="rm-spinner" data-tone="inverse" aria-hidden="true" />
+              <strong>{t(busyHint)}</strong>
+              {busyHint === "capture.analyzing" ? <span>{t("capture.analyzingLead")}</span> : null}
+            </span>
+          ) : null}
+        </div>
+        <div className="rm-camera-controls">
+          {liveCamera ? (
+            <button
+              type="button"
+              className="rm-shutter"
+              disabled={busy}
+              aria-label={t("capture.action")}
+              onClick={onCapture}
+            >
+              <span aria-hidden="true" />
+            </button>
+          ) : (
+            <label className="rm-btn-primary rm-file-pick">
+              <UploadIcon size={18} />
+              {t("capture.pick")}
+              <input
+                type="file"
+                accept="image/*"
+                capture={selfie ? "user" : "environment"}
+                disabled={busy}
+                onChange={onPick}
+              />
+            </label>
+          )}
+          {liveCamera ? <span className="rm-camera-caption">{t("capture.action")}</span> : null}
+        </div>
+      </div>
+      {hint && !working ? <Notice tone="danger">{t(hint)}</Notice> : null}
+    </div>
+  );
+}
+
+function tipsFor(next: CaptureNext): { icon: React.ReactNode; label: MessageKey }[] {
+  if (next === "capture_selfie") {
+    return [
+      { icon: <FaceIcon size={16} />, label: "selfie.tipFace" },
+      { icon: <SunIcon size={16} />, label: "selfie.tipLight" },
+      { icon: <GlassesIcon size={16} />, label: "selfie.tipGlasses" },
+    ];
+  }
+  if (next === "capture_document_back") {
+    return [
+      { icon: <BarcodeIcon size={16} />, label: "documentBack.tipBarcode" },
+      { icon: <SparkOffIcon size={16} />, label: "document.tipGlare" },
+      { icon: <CornersIcon size={16} />, label: "document.tipCorners" },
+    ];
+  }
+  return [
+    { icon: <SunIcon size={16} />, label: "document.tipLight" },
+    { icon: <SparkOffIcon size={16} />, label: "document.tipGlare" },
+    { icon: <CornersIcon size={16} />, label: "document.tipCorners" },
+  ];
 }
 
 function hintForReasons(reasons: string[]): MessageKey {

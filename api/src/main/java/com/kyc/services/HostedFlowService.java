@@ -59,6 +59,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -343,7 +344,11 @@ public class HostedFlowService {
                 properties.aws().region(),
                 now.plus(LIVENESS_TTL),
                 now);
-        livenessChecks.save(created);
+        try {
+            livenessChecks.saveAndFlush(created);
+        } catch (DataIntegrityViolationException e) {
+            throw ApiException.conflict("liveness_session_busy", "A liveness session is already being opened");
+        }
         log.info("Face Liveness session opened verificationId={} attempt={}", loaded.verification().getId(), attempt);
         return credentialsFor(created);
     }

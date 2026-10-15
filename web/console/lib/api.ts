@@ -227,6 +227,7 @@ export type Verification = {
   metadata?: Record<string, unknown> | null;
   decision?: string | null;
   decision_reasons?: string[] | null;
+  rules_version?: string | null;
   signals?: { code: string; outcome: string; score?: number | null }[] | null;
   extracted_identity?: {
     first_name?: string;
