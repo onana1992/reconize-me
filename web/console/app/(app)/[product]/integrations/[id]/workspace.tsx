@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/brand";
+import { BackLink } from "../../../../../components/back-link";
 import { getLocale, getT } from "../../../../../i18n";
 import type { IntegrationResponse } from "../../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../../lib/environment";
@@ -21,10 +22,7 @@ export async function IntegrationWorkspace({
   return (
     <div className="rm-int">
       <div className="rm-int-top">
-        <Link href={`${PRODUCTS[productId].href}/integrations`} className="rm-int-back">
-          <span className="rm-int-back-chevron" aria-hidden="true" />
-          {t("console.integrations.back")}
-        </Link>
+        <BackLink href={`${PRODUCTS[productId].href}/integrations`}>{t("console.integrations.back")}</BackLink>
         <header className="rm-int-head">
           <div className="rm-int-head-copy">
             <div className="rm-int-title-row">

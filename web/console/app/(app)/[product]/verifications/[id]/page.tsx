@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/brand";
+import { BackLink } from "../../../../../components/back-link";
 import { getLocale, getT } from "../../../../../i18n";
 import { consoleApi, type MediaUrl, type Verification } from "../../../../../lib/api";
 import { tIntegrationMode } from "../../../../../lib/environment";
@@ -117,9 +117,7 @@ export default async function VerificationDetailPage({
 
   return (
     <main className="rm-idv rm-vcase">
-      <p className="rm-back">
-        <Link href="/identity">{t("console.verifications.backToList")}</Link>
-      </p>
+      <BackLink href="/identity">{t("console.verifications.backToList")}</BackLink>
 
       <header className="rm-vcase-head">
         <div className="rm-vcase-title">
