@@ -29,7 +29,6 @@ import com.kyc.services.DocumentIaLabService;
 import com.kyc.services.documentia.SchemaRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +40,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class IdvStoreConfig {
 
     @Bean
-    @ConditionalOnBean(StringRedisTemplate.class)
+    @ConditionalOnProperty(prefix = "kyc.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
     public HostedTokenStore redisHostedTokenStore(StringRedisTemplate redis, ObjectMapper objectMapper) {
         return new RedisHostedTokenStore(redis, objectMapper);
     }
