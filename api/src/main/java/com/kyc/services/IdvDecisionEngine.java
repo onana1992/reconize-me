@@ -23,15 +23,32 @@ public class IdvDecisionEngine {
     /** Face Liveness confidence, rules {@code bio-1}. The adapter does not decide this. */
     public static final double LIVENESS_PASS = 0.80;
 
+    /** Bornes utilisées quand l'organisation n'a pas publié de politique. */
+    public record DecisionProfile(
+            VerificationDecision expiredOutcome,
+            double ocrReviewAt,
+            double livenessPassAt,
+            double faceMatchFailAt,
+            double faceMatchPassAt) {
+
+        public static DecisionProfile platform() {
+            return new DecisionProfile(VerificationDecision.DECLINED, LOW_OCR_CONFIDENCE, LIVENESS_PASS, FACE_MATCH_FAIL, FACE_MATCH_PASS);
+        }
+    }
+
     /**
      * Status ok is {@code livenessPass} (the adapter sets it only when Rekognition status is SUCCEEDED).
      * The threshold is applied here, so a forced pass with a low score still fails.
      */
     public static boolean livenessAccepted(BiometricSignals biometric) {
+        return livenessAccepted(biometric, LIVENESS_PASS);
+    }
+
+    public static boolean livenessAccepted(BiometricSignals biometric, double threshold) {
         return biometric != null
                 && biometric.livenessPass()
                 && biometric.livenessScore() != null
-                && biometric.livenessScore() >= LIVENESS_PASS;
+                && biometric.livenessScore() >= threshold;
     }
 
     public record Result(
@@ -127,20 +144,26 @@ public class IdvDecisionEngine {
     }
 
     public Result applyFace(Result document, com.kyc.ports.BiometricAiPort.BiometricSignals biometric) {
+        return applyFace(document, biometric, DecisionProfile.platform());
+    }
+
+    public Result applyFace(
+            Result document, com.kyc.ports.BiometricAiPort.BiometricSignals biometric, DecisionProfile profile) {
+        DecisionProfile bounds = profile == null ? DecisionProfile.platform() : profile;
         Map<String, Object> identity = document.extractedIdentity() == null ? Map.of() : document.extractedIdentity();
         List<Signal> signals = new ArrayList<>();
-        if (!livenessAccepted(biometric)) {
+        if (!livenessAccepted(biometric, bounds.livenessPassAt())) {
             signals.add(new Signal(
                     "liveness_fail", SignalOutcome.FAIL, biometric == null ? null : biometric.livenessScore()));
             return new Result(VerificationDecision.DECLINED, List.of("liveness_fail"), List.copyOf(signals), identity);
         }
         signals.add(new Signal("liveness_pass", SignalOutcome.PASS, biometric.livenessScore()));
         double score = biometric.faceMatchScore() == null ? 0.0 : biometric.faceMatchScore();
-        if (score < FACE_MATCH_FAIL) {
+        if (score < bounds.faceMatchFailAt()) {
             signals.add(new Signal("face_match_fail", SignalOutcome.FAIL, score));
             return new Result(VerificationDecision.DECLINED, List.of("face_match_fail"), List.copyOf(signals), identity);
         }
-        if (score < FACE_MATCH_PASS) {
+        if (score < bounds.faceMatchPassAt()) {
             signals.add(new Signal("face_match_borderline", SignalOutcome.FAIL, score));
             return new Result(VerificationDecision.REVIEW, List.of("face_match_borderline"), List.copyOf(signals), identity);
         }
@@ -169,6 +192,12 @@ public class IdvDecisionEngine {
      * Une image illisible n'a pas de décision de fraude.
      */
     public VisionVerdict decideVision(DocumentSignals document, VisionFacts facts) {
+        return decideVision(document, facts, DecisionProfile.platform(), false);
+    }
+
+    public VisionVerdict decideVision(
+            DocumentSignals document, VisionFacts facts, DecisionProfile profile, boolean outsideCorridor) {
+        DecisionProfile bounds = profile == null ? DecisionProfile.platform() : profile;
         Map<String, Object> identity = facts.extractedIdentity() == null || facts.extractedIdentity().isEmpty()
                 ? (document == null ? Map.of() : extracted(document))
                 : facts.extractedIdentity();
@@ -185,12 +214,17 @@ public class IdvDecisionEngine {
             reasons.add("DOCUMENT_SIDE_MISMATCH");
         }
         if (facts.expired()) {
-            issue = issue == null ? "REJECT" : issue;
+            String expiredIssue = bounds.expiredOutcome() == VerificationDecision.REVIEW ? "REVIEW" : "REJECT";
+            issue = issue == null ? expiredIssue : issue;
             reasons.add("document_expired");
         }
         if (facts.unknown()) {
             issue = issue == null ? "REVIEW" : issue;
             reasons.add("DOCUMENT_UNKNOWN");
+        }
+        if (outsideCorridor) {
+            issue = issue == null ? "REJECT" : issue;
+            reasons.add("unsupported_document");
         }
         if (facts.missingRequired()) {
             issue = issue == null ? "REVIEW" : issue;

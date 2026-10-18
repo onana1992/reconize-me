@@ -65,6 +65,7 @@ public class VerificationService {
     private final ObjectMapper objectMapper;
     private final CreditService creditService;
     private final WebhookService webhookService;
+    private final IdvPolicyService policies;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -78,7 +79,8 @@ public class VerificationService {
             KycProperties properties,
             ObjectMapper objectMapper,
             CreditService creditService,
-            WebhookService webhookService) {
+            WebhookService webhookService,
+            IdvPolicyService policies) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -91,6 +93,7 @@ public class VerificationService {
         this.objectMapper = objectMapper;
         this.creditService = creditService;
         this.webhookService = webhookService;
+        this.policies = policies;
     }
 
     @Transactional
@@ -129,7 +132,8 @@ public class VerificationService {
             creditService.debitForLiveVerification(organizationId, id, actorId, actorType);
         }
         String token = CryptoTokens.randomHostedToken();
-        Duration ttl = Duration.ofSeconds(properties.hostedUrlTtlSeconds());
+        IdvPolicyService.Creation policy = policies.creation(organizationId);
+        Duration ttl = Duration.ofSeconds(policy.linkTtlSeconds());
         Verification verification = new Verification(
                 id,
                 organizationId,
@@ -143,6 +147,9 @@ public class VerificationService {
                 now.plus(ttl),
                 scenario,
                 now);
+        if (policy.policyId() != null && policy.policyVersion() != null) {
+            verification.attachPolicy(policy.policyId(), policy.policyVersion());
+        }
         try {
             hostedTokens.put(token, organizationId, id, ttl);
         } catch (RuntimeException e) {
@@ -299,6 +306,7 @@ public class VerificationService {
                 Enums.json(verification.getDecision()),
                 parseStrings(verification.getDecisionReasons()),
                 verification.getRulesVersion(),
+                verification.getPolicyVersion(),
                 signalItems.isEmpty() ? null : signalItems,
                 extracted,
                 verification.getCreatedAt(),

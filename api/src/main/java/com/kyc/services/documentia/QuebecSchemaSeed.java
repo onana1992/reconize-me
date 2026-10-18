@@ -17,7 +17,6 @@ public class QuebecSchemaSeed implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         registry.ensureQuebecLicense();
         registry.ensureQuebecLicenseBack();
-        registry.ensurePassportTd3();
         registry.ensureCanadaPermanentResident();
         registry.ensureCanadaPermanentResidentBack();
     }

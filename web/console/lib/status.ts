@@ -156,6 +156,46 @@ export function tSignalCode(t: Translate, code: string): string {
       return t("console.verifications.signalCodes.documentExpired");
     case "mrz_unavailable":
       return t("console.verifications.signalCodes.mrzUnavailable");
+    case "provider_unavailable":
+      return t("console.verifications.signalCodes.providerUnavailable");
+    case "invalid_model_json":
+      return t("console.verifications.signalCodes.invalidModelJson");
+    case "IMAGE_TOO_BLURRY":
+      return t("console.verifications.signalCodes.imageTooBlurry");
+    case "TOO_SMALL":
+      return t("console.verifications.signalCodes.tooSmall");
+    case "TOO_LARGE":
+      return t("console.verifications.signalCodes.tooLarge");
+    case "LOW_LIGHT":
+      return t("console.verifications.signalCodes.lowLight");
+    case "OVEREXPOSED":
+      return t("console.verifications.signalCodes.overexposed");
+    case "INVALID_IMAGE":
+      return t("console.verifications.signalCodes.invalidImage");
+    case "DOCUMENT_SIDE_MISMATCH":
+      return t("console.verifications.signalCodes.documentSideMismatch");
+    case "DOCUMENT_UNKNOWN":
+      return t("console.verifications.signalCodes.documentUnknown");
+    case "MISSING_REQUIRED_FIELD":
+      return t("console.verifications.signalCodes.missingRequiredField");
+    case "MRZ_MISMATCH":
+      return t("console.verifications.signalCodes.mrzMismatch");
+    case "LOW_OCR_CONFIDENCE":
+      return t("console.verifications.signalCodes.lowOcrConfidence");
+    case "SUSPICIOUS_INDICATOR":
+      return t("console.verifications.signalCodes.suspiciousIndicator");
+    case "LOW_CONFIDENCE":
+      return t("console.verifications.signalCodes.lowConfidence");
+    case "DOCUMENT_MISMATCH":
+      return t("console.verifications.signalCodes.documentMismatch");
+    case "face_match_borderline":
+      return t("console.verifications.signalCodes.faceMatchBorderline");
+    case "capture_attempts_exceeded":
+      return t("console.verifications.signalCodes.captureAttemptsExceeded");
+    case "consent_declined":
+      return t("console.verifications.signalCodes.consentDeclined");
+    case "document_fields_incomplete":
+      return t("console.verifications.signalCodes.documentFieldsIncomplete");
     default:
       return code;
   }

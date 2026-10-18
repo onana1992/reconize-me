@@ -5,6 +5,7 @@
     "dev:console": "npm --prefix web/console run dev",
     "dev:site": "npm --prefix web/site run dev",
     "dev:flow": "npm --prefix web/flow run dev",
+    "dev:test-app": "npm --prefix test-app run dev",
     "dev:flow:tunnel": "npm --prefix web/flow run dev:tunnel"
   }
 }

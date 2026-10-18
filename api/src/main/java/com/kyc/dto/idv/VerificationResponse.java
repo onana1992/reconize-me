@@ -20,6 +20,7 @@ public record VerificationResponse(
         String decision,
         @JsonProperty("decision_reasons") List<String> decisionReasons,
         @JsonProperty("rules_version") String rulesVersion,
+        @JsonProperty("policy_version") Integer policyVersion,
         List<Signal> signals,
         @JsonProperty("extracted_identity") Map<String, Object> extractedIdentity,
         @JsonProperty("created_at") Instant createdAt,

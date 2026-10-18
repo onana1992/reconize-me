@@ -9,4 +9,5 @@ public record CompleteCaptureResponse(
         String next,
         boolean accepted,
         Integer attempt,
-        @JsonProperty("quality_rejected") Boolean qualityRejected) {}
+        @JsonProperty("quality_rejected") Boolean qualityRejected,
+        String reason) {}

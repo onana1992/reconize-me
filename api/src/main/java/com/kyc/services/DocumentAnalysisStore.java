@@ -13,6 +13,7 @@ import com.kyc.entities.VerificationDocumentAnalysis;
 import com.kyc.entities.VerificationDocumentAnalysisKey;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.repositories.VerificationDocumentAnalysisRepository;
+import com.kyc.services.IdvDecisionEngine.DecisionProfile;
 import com.kyc.services.documentia.DocumentLiveView;
 import com.kyc.services.documentia.DocumentValidator;
 import com.kyc.services.documentia.SchemaEdition;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,13 @@ public class DocumentAnalysisStore {
 
     public Optional<VerificationDocumentAnalysis> find(UUID verificationId, String side) {
         return analyses.findByVerificationIdAndSide(verificationId, side);
+    }
+
+    public void delete(UUID verificationId, String side) {
+        if (verificationId == null || side == null || side.isBlank()) {
+            return;
+        }
+        analyses.deleteById(new VerificationDocumentAnalysisKey(verificationId, side));
     }
 
     public void saveAccepted(UUID verificationId, DocumentLiveView view, String side, Instant now) {
@@ -80,6 +89,15 @@ public class DocumentAnalysisStore {
     }
 
     public IdvDecisionEngine.Result replay(VerificationDocumentAnalysis row, SchemaRegistry registry, IdvDecisionEngine engine) {
+        return replay(row, registry, engine, DecisionProfile.platform(), null);
+    }
+
+    public IdvDecisionEngine.Result replay(
+            VerificationDocumentAnalysis row,
+            SchemaRegistry registry,
+            IdvDecisionEngine engine,
+            DecisionProfile profile,
+            Set<String> acceptedCodes) {
         try {
             Classification classification = read(row.getClassificationJson(), Classification.class);
             List<NormalizedField> fields = readList(row.getFieldsJson(), new TypeReference<>() {});
@@ -99,8 +117,16 @@ public class DocumentAnalysisStore {
                     List.of(),
                     indicators,
                     identity);
+            DecisionProfile bounds = profile == null ? DecisionProfile.platform() : profile;
             DocumentValidator.Prepared prepared = DocumentValidator.prepare(
-                    edition, document, fields, validation, mrz, true, null);
+                    edition,
+                    document,
+                    fields,
+                    validation,
+                    mrz,
+                    true,
+                    null,
+                    bounds.ocrReviewAt());
             String band = scores == null ? null : scores.band();
             IdvDecisionEngine.VisionFacts facts = prepared.facts();
             prepared = new DocumentValidator.Prepared(
@@ -121,7 +147,9 @@ public class DocumentAnalysisStore {
                             facts.hasWarning(),
                             facts.extractedIdentity()),
                     prepared.signals());
-            IdvDecisionEngine.Result result = engine.decideVision(prepared.signals(), prepared.facts()).result();
+            boolean outside = outsideCorridor(classification, acceptedCodes, registry);
+            IdvDecisionEngine.Result result =
+                    engine.decideVision(prepared.signals(), prepared.facts(), bounds, outside).result();
             if (result.decision() == null) {
                 return new IdvDecisionEngine.Result(
                         VerificationDecision.REVIEW, result.reasons(), result.signals(), result.extractedIdentity());
@@ -131,6 +159,18 @@ public class DocumentAnalysisStore {
             log.info("document-ia replay skipped verificationId={} side={}", row.getVerificationId(), row.getSide());
             return engine.review("provider_unavailable");
         }
+    }
+
+    private static boolean outsideCorridor(
+            Classification classification, Set<String> acceptedCodes, SchemaRegistry registry) {
+        if (acceptedCodes == null || classification == null || classification.code() == null) {
+            return false;
+        }
+        String code = classification.code();
+        if (code.isBlank() || "UNKNOWN".equals(code) || acceptedCodes.contains(code)) {
+            return false;
+        }
+        return !registry.findActives(code).isEmpty();
     }
 
     /** Le recto et le verso d'une vérification doivent avoir le même code de pièce. */

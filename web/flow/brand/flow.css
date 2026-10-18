@@ -925,7 +925,8 @@ body {
   text-align: center;
 }
 
-.rm-flow-footer p {
+.rm-flow-footer .rm-flow-privacy,
+.rm-flow-footer .rm-flow-powered {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;

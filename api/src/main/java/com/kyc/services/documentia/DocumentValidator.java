@@ -32,6 +32,26 @@ public final class DocumentValidator {
             MrzReport mrz,
             boolean readable,
             String captureReason) {
+        return prepare(
+                edition,
+                document,
+                fields,
+                validation,
+                mrz,
+                readable,
+                captureReason,
+                IdvDecisionEngine.LOW_OCR_CONFIDENCE);
+    }
+
+    public static Prepared prepare(
+            SchemaEdition edition,
+            ParsedDocument document,
+            List<NormalizedField> fields,
+            List<ValidationIssue> validation,
+            MrzReport mrz,
+            boolean readable,
+            String captureReason,
+            double ocrReviewAt) {
         List<ValidationIssue> issues = new ArrayList<>(validation == null ? List.of() : validation);
         List<String> indicators = new ArrayList<>();
         if (document != null && document.indicators() != null) {
@@ -53,7 +73,7 @@ public final class DocumentValidator {
         boolean wrongSide = contains(issues, "document_side_mismatch");
         boolean missing = missing(fields);
         boolean mrzFailed = mrzFailed(mrz);
-        boolean lowOcr = lowOcr(edition, fields);
+        boolean lowOcr = lowOcr(edition, fields, ocrReviewAt);
         boolean suspicious = suspicious(issues);
         boolean hasError = issues.stream().anyMatch(issue -> "ERROR".equals(issue.severity()));
         boolean hasWarning = issues.stream().anyMatch(issue -> "WARNING".equals(issue.severity()));
@@ -144,7 +164,7 @@ public final class DocumentValidator {
         };
     }
 
-    private static boolean lowOcr(SchemaEdition edition, List<NormalizedField> fields) {
+    private static boolean lowOcr(SchemaEdition edition, List<NormalizedField> fields, double ocrReviewAt) {
         if (edition == null || fields == null) {
             return false;
         }
@@ -155,7 +175,7 @@ public final class DocumentValidator {
             for (NormalizedField field : fields) {
                 if (definition.name().equals(field.field())
                         && field.confidence() != null
-                        && field.confidence() < IdvDecisionEngine.LOW_OCR_CONFIDENCE) {
+                        && field.confidence() < ocrReviewAt) {
                     return true;
                 }
             }

@@ -190,7 +190,7 @@ class DocumentIaLabTest {
     void catalogIsEmptyAndListedInOpenApi() throws Exception {
         mockMvc.perform(get("/v1/document-ia/catalog").header("Authorization", "Bearer " + LIVE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.schemas", hasSize(5)))
+                .andExpect(jsonPath("$.schemas", hasSize(4)))
                 .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].side").value(hasItem("FRONT")))
                 .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].side").value(hasItem("BACK")))
                 .andExpect(jsonPath("$.schemas[?(@.code == 'CANADA_PERMANENT_RESIDENT')].documentType").value(hasItem("RESIDENCE_PERMIT")))
@@ -200,7 +200,7 @@ class DocumentIaLabTest {
                 .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].side").value(hasItem("FRONT")))
                 .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].version").value(hasItem("2024")))
                 .andExpect(jsonPath("$.schemas[?(@.code == 'QUEBEC_DRIVER_LICENSE')].issuingJurisdiction").value(hasItem("QC")))
-                .andExpect(jsonPath("$.schemas[?(@.code == 'PASSPORT_TD3')].documentType").value(hasItem("PASSPORT")));
+                .andExpect(jsonPath("$.schemas[?(@.code == 'PASSPORT_TD3')]").isEmpty());
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/v1/document-ia/analyze']").exists())
@@ -342,21 +342,13 @@ class DocumentIaLabTest {
     }
 
     @Test
-    void passportTd3ShowsRecalculatedCheckDigits() throws Exception {
+    void passportTd3IsOutsideTheCatalog() throws Exception {
         mockMvc.perform(post("/v1/document-ia/fixtures/passport-td3")
-                        .param("until", "mrz")
+                        .param("until", "parse")
                         .header("Authorization", "Bearer " + TEST))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stoppedAt").value("mrz"))
-                .andExpect(jsonPath("$.providerCalled").value(false))
-                .andExpect(jsonPath("$.mrz.format").value("TD3"))
-                .andExpect(jsonPath("$.mrz.status").value("VALID"))
-                .andExpect(jsonPath("$.mrz.mrzScore").value(1.0))
-                .andExpect(jsonPath("$.mrz.lines", hasSize(2)))
-                .andExpect(jsonPath("$.mrz.checkDigits[?(@.field == 'documentNumber')].calculated").value(hasItem("6")))
-                .andExpect(jsonPath("$.mrz.checkDigits[?(@.field == 'documentNumber')].valid").value(hasItem(true)))
-                .andExpect(jsonPath("$.fields[?(@.field == 'lastName')].source").value(hasItem("VISUAL_AND_MRZ")))
-                .andExpect(jsonPath("$.decision").value(nullValue()));
+                .andExpect(jsonPath("$.stoppedAt").value("parse"))
+                .andExpect(jsonPath("$.parsed.classification.code").value("UNKNOWN"));
     }
 
     @Test

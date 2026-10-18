@@ -27,22 +27,32 @@ public final class MediaQuality {
     }
 
     public static boolean acceptableDocument(byte[] body) {
-        if (body == null || body.length == 0 || body.length > MAX_BYTES) {
-            return false;
+        return rejectionReason(body) == null;
+    }
+
+    /** Cause réelle du refus média, ou {@code null} si l'image peut être analysée. */
+    public static String rejectionReason(byte[] body) {
+        if (body == null || body.length == 0) {
+            return "INVALID_IMAGE";
         }
-        String type = sniff(body);
-        if (type == null) {
-            return false;
+        if (body.length > MAX_BYTES) {
+            return "TOO_LARGE";
+        }
+        if (sniff(body) == null) {
+            return "INVALID_IMAGE";
         }
         try {
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(body));
             if (image == null) {
-                return false;
+                return "INVALID_IMAGE";
             }
             int shortSide = Math.min(image.getWidth(), image.getHeight());
-            return shortSide >= MIN_SHORT_SIDE;
+            if (shortSide < MIN_SHORT_SIDE) {
+                return "TOO_SMALL";
+            }
+            return null;
         } catch (IOException e) {
-            return false;
+            return "INVALID_IMAGE";
         }
     }
 

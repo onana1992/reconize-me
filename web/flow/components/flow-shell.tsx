@@ -74,15 +74,15 @@ function FlowFooter() {
   const t = useT();
   return (
     <footer className="rm-flow-footer">
-      <p className="rm-flow-privacy">
+      <div className="rm-flow-privacy">
         <LockIcon size={14} />
         <span>{t("shell.privacy")}</span>
-      </p>
-      <p className="rm-flow-powered">
+      </div>
+      <div className="rm-flow-powered">
         <span>{t("shell.poweredBy")}</span>
         <Logo size={14} tone="mono" />
         <strong>Recogniz-Me</strong>
-      </p>
+      </div>
     </footer>
   );
 }

@@ -109,7 +109,7 @@ export type CheckoutSession = {
 
 export type ApiResult<T> =
   | { ok: true; data: T }
-  | { ok: false; status: number; code: string; message: string };
+  | { ok: false; status: number; code: string; message: string; details?: { field: string; code: string }[] };
 
 function errorBody(status: number, code: string, message: string): ApiResult<never> {
   return { ok: false, status, code, message };
@@ -117,13 +117,17 @@ function errorBody(status: number, code: string, message: string): ApiResult<nev
 
 async function parseError(response: Response): Promise<ApiResult<never>> {
   const body = (await response.json().catch(() => ({}))) as {
-    error?: { code?: string; message?: string };
+    error?: { code?: string; message?: string; details?: { field?: string; code?: string }[] };
   };
+  const details = (body.error?.details ?? [])
+    .filter((item): item is { field: string; code: string } => Boolean(item.field && item.code))
+    .map((item) => ({ field: item.field, code: item.code }));
   return {
     ok: false,
     status: response.status,
     code: body.error?.code ?? "error",
     message: body.error?.message ?? "Une erreur s’est produite",
+    details,
   };
 }
 
@@ -216,6 +220,49 @@ export async function consoleApi<T>(path: string, cookieHeader: string, init?: R
   }
 }
 
+export type IdvPolicyDocument = {
+  code: string;
+  document_type: string;
+  country: string;
+  sides: string[];
+  enabled: boolean;
+};
+
+export type IdvPolicy = {
+  source: "platform" | "organization";
+  version: number | null;
+  published_at: string | null;
+  published_by_name: string | null;
+  profile: {
+    expired_outcome: "DECLINED" | "REVIEW";
+    attempts_outcome: "DECLINED" | "REVIEW";
+    ocr_review_at: number;
+    liveness_pass_at: number;
+    face_match_fail_at: number;
+    face_match_pass_at: number;
+  };
+  documents: IdvPolicyDocument[];
+  flow: {
+    link_ttl_seconds: number;
+    max_capture_attempts: number;
+    max_liveness_attempts: number;
+    consent_text_version: string;
+  };
+  bounds: {
+    ocr_review_at: number[];
+    liveness_pass_at: number[];
+    face_match_fail_at: number[];
+    face_match_pass_at: number[];
+    link_ttl_seconds: number[];
+    max_capture_attempts: number[];
+    max_liveness_attempts: number[];
+  };
+};
+
+export type IdvPolicyVersions = {
+  versions: { version: number; published_at: string; active: boolean }[];
+};
+
 export type Verification = {
   id: string;
   status: string;
@@ -228,6 +275,7 @@ export type Verification = {
   decision?: string | null;
   decision_reasons?: string[] | null;
   rules_version?: string | null;
+  policy_version?: number | null;
   signals?: { code: string; outcome: string; score?: number | null }[] | null;
   extracted_identity?: {
     first_name?: string;

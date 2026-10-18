@@ -28,7 +28,8 @@ import com.kyc.enums.VerificationDecision;
 import com.kyc.enums.VerificationStatus;
 import com.kyc.adapters.AwsBiometricAi;
 import com.kyc.adapters.VisionDocumentAi;
-import com.kyc.dto.documentia.ParsedDocument;
+import com.kyc.dto.documentia.DocumentDecision;
+import com.kyc.dto.documentia.DocumentImageQuality;
 import com.kyc.ports.BiometricAiPort;
 import com.kyc.ports.DocumentAiPort;
 import com.kyc.ports.FaceLivenessClient;
@@ -67,10 +68,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class HostedFlowService {
 
     private static final Logger log = LoggerFactory.getLogger(HostedFlowService.class);
-    private static final int MAX_ATTEMPTS = 3;
     private static final Duration UPLOAD_TTL = Duration.ofMinutes(5);
     private static final Duration LIVENESS_TTL = Duration.ofMinutes(3);
-    private static final int MAX_BILLED_LIVENESS = 3;
     private static final Set<VerificationStatus> DOCUMENT_UPLOAD = EnumSet.of(
             VerificationStatus.PENDING_APPLICANT, VerificationStatus.DOCUMENT, VerificationStatus.RECAPTURE_REQUESTED);
     private static final Set<VerificationStatus> SELFIE_UPLOAD =
@@ -98,6 +97,7 @@ public class HostedFlowService {
     private final WebhookService webhookService;
     private final DocumentAnalysisBuffer analysesBuffer;
     private final DocumentAnalysisStore analyses;
+    private final IdvPolicyService policies;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -120,7 +120,8 @@ public class HostedFlowService {
             ObjectMapper objectMapper,
             WebhookService webhookService,
             DocumentAnalysisBuffer analysesBuffer,
-            DocumentAnalysisStore analyses) {
+            DocumentAnalysisStore analyses,
+            IdvPolicyService policies) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -143,6 +144,7 @@ public class HostedFlowService {
         this.webhookService = webhookService;
         this.analysesBuffer = analysesBuffer;
         this.analyses = analyses;
+        this.policies = policies;
     }
 
     @Transactional
@@ -233,37 +235,31 @@ public class HostedFlowService {
             return response;
         }
         Instant now = Instant.now();
-        if (kind == MediaKind.DOCUMENT && askForBack(loaded, now)) {
+        if (kind == MediaKind.DOCUMENT || kind == MediaKind.DOCUMENT_BACK) {
+            CompleteCaptureResponse reread = rereadCapture(loaded, kind, response.attempt(), now);
+            if (reread != null) {
+                return reread;
+            }
+        }
+        if (kind == MediaKind.DOCUMENT && askForBack(loaded)) {
             loaded.verification().requireDocumentBack(now);
-            return new CompleteCaptureResponse(
-                    Enums.json(loaded.verification().getStatus()),
-                    nextOf(loaded.verification()),
-                    true,
-                    response.attempt(),
-                    null);
+            return captured(loaded, response.attempt());
         }
         if (kind == MediaKind.DOCUMENT_BACK && accepted(loaded.verification().getId(), MediaKind.DOCUMENT).isEmpty()) {
             return response;
         }
         if (kind == MediaKind.DOCUMENT || kind == MediaKind.DOCUMENT_BACK) {
             if (kind == MediaKind.DOCUMENT_BACK) {
-                storeBack(loaded, now);
+                CompleteCaptureResponse mismatch = retryMismatch(loaded, response.attempt(), now);
+                if (mismatch != null) {
+                    return mismatch;
+                }
             }
             if (finishDocumentBeforeFace(loaded, now)) {
-                return new CompleteCaptureResponse(
-                        Enums.json(loaded.verification().getStatus()),
-                        nextOf(loaded.verification()),
-                        true,
-                        response.attempt(),
-                        null);
+                return captured(loaded, response.attempt());
             }
             loaded.verification().markSelfie(now);
-            return new CompleteCaptureResponse(
-                    Enums.json(loaded.verification().getStatus()),
-                    nextOf(loaded.verification()),
-                    true,
-                    response.attempt(),
-                    null);
+            return captured(loaded, response.attempt());
         }
         return response;
     }
@@ -304,8 +300,7 @@ public class HostedFlowService {
         Instant now = Instant.now();
         loaded.verification().markProcessing(now);
         decide(loaded, now);
-        return new CompleteCaptureResponse(
-                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, response.attempt(), null);
+        return captured(loaded, response.attempt());
     }
 
     @Transactional
@@ -314,7 +309,7 @@ public class HostedFlowService {
         requireLive(loaded);
         requireConsent(loaded.verification());
         requireFaceStep(loaded);
-        if (billedLiveness(loaded) >= MAX_BILLED_LIVENESS) {
+        if (billedLiveness(loaded) >= applied(loaded.verification()).maxLivenessAttempts()) {
             exhaustLiveness(loaded);
             throw ApiException.conflict("liveness_attempts_exceeded", "Liveness attempts exceeded");
         }
@@ -359,7 +354,7 @@ public class HostedFlowService {
         requireLive(loaded);
         requireConsent(loaded.verification());
         requireFaceStep(loaded);
-        if (billedLiveness(loaded) >= MAX_BILLED_LIVENESS) {
+        if (billedLiveness(loaded) >= applied(loaded.verification()).maxLivenessAttempts()) {
             exhaustLiveness(loaded);
             throw ApiException.conflict("liveness_attempts_exceeded", "Liveness attempts exceeded");
         }
@@ -406,7 +401,17 @@ public class HostedFlowService {
         try {
             BiometricAiPort.BiometricSignals signals =
                     liveBiometricAi.match(objectStorage.read(document.getObjectKey()), result);
-            IdvDecisionEngine.Result face = engine.applyFace(storedDocument(loaded.verification()), signals);
+            IdvDecisionEngine.Result face = engine.applyFace(
+                    storedDocument(loaded.verification()), signals, applied(loaded.verification()).profile());
+            if (retryLiveness(face) && billedLiveness(loaded) < applied(loaded.verification()).maxLivenessAttempts()) {
+                return new CompleteCaptureResponse(
+                        Enums.json(loaded.verification().getStatus()),
+                        "liveness",
+                        false,
+                        check.getAttempt(),
+                        true,
+                        "liveness_fail");
+            }
             commit(loaded, face, IdvDecisionEngine.BIO_RULES_VERSION, now);
         } catch (ProviderUnavailableException e) {
             commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
@@ -470,11 +475,12 @@ public class HostedFlowService {
     }
 
     private IdvDecisionEngine.Result storedDocument(Verification verification) {
-        IdvDecisionEngine.Result front = storedOrUnavailable(verification.getId(), "FRONT");
+        IdvPolicyService.Applied applied = applied(verification);
+        IdvDecisionEngine.Result front = storedOrUnavailable(verification.getId(), "FRONT", applied);
         if (front.decision() != VerificationDecision.APPROVED || !verification.isDocumentBackRequired()) {
             return front;
         }
-        IdvDecisionEngine.Result back = storedBack(verification.getId());
+        IdvDecisionEngine.Result back = storedBack(verification.getId(), applied);
         if (back.decision() == VerificationDecision.APPROVED) {
             return front;
         }
@@ -482,7 +488,7 @@ public class HostedFlowService {
         return new IdvDecisionEngine.Result(decision, back.reasons(), back.signals(), front.extractedIdentity());
     }
 
-    private IdvDecisionEngine.Result storedBack(UUID verificationId) {
+    private IdvDecisionEngine.Result storedBack(UUID verificationId, IdvPolicyService.Applied applied) {
         var back = analyses.find(verificationId, "BACK");
         if (back.isEmpty()) {
             return engine.providerUnavailable();
@@ -491,13 +497,14 @@ public class HostedFlowService {
         if (front.isPresent() && !analyses.sameDocument(front.get(), back.get())) {
             return engine.review("DOCUMENT_MISMATCH");
         }
-        return analyses.replay(back.get(), schemas, engine);
+        return analyses.replay(back.get(), schemas, engine, applied.profile(), applied.acceptedCodes());
     }
 
-    private IdvDecisionEngine.Result storedOrUnavailable(UUID verificationId, String side) {
+    private IdvDecisionEngine.Result storedOrUnavailable(
+            UUID verificationId, String side, IdvPolicyService.Applied applied) {
         return analyses
                 .find(verificationId, side)
-                .map(row -> analyses.replay(row, schemas, engine))
+                .map(row -> analyses.replay(row, schemas, engine, applied.profile(), applied.acceptedCodes()))
                 .orElseGet(engine::providerUnavailable);
     }
 
@@ -530,13 +537,14 @@ public class HostedFlowService {
 
     private IdvDecisionEngine.Result decideLive(UUID verificationId, byte[] documentBytes, byte[] selfieBytes, Instant now) {
         try {
-            IdvDecisionEngine.Result document = replayOrAnalyze(verificationId, documentBytes, now);
+            Verification verification = verifications.findById(verificationId).orElse(null);
+            IdvPolicyService.Applied applied = policies.applied(verification == null ? null : verification.getPolicyId());
+            IdvDecisionEngine.Result document = replayOrAnalyze(verificationId, documentBytes, now, applied);
             if (document.decision() != VerificationDecision.APPROVED) {
                 return document;
             }
-            Verification verification = verifications.findById(verificationId).orElse(null);
             if (verification != null && verification.isDocumentBackRequired()) {
-                IdvDecisionEngine.Result back = storedBack(verificationId);
+                IdvDecisionEngine.Result back = storedBack(verificationId, applied);
                 if (back.decision() != VerificationDecision.APPROVED) {
                     VerificationDecision decision = back.decision() == null
                             ? VerificationDecision.REVIEW
@@ -547,17 +555,18 @@ public class HostedFlowService {
             }
             BiometricAiPort.BiometricSignals bioSignals =
                     liveBiometricAi.evaluate(documentBytes, selfieBytes, null);
-            return engine.applyFace(document, bioSignals);
+            return engine.applyFace(document, bioSignals, applied.profile());
         } catch (ProviderUnavailableException e) {
             analysesBuffer.take();
             return engine.providerUnavailable();
         }
     }
 
-    private IdvDecisionEngine.Result replayOrAnalyze(UUID verificationId, byte[] documentBytes, Instant now) {
+    private IdvDecisionEngine.Result replayOrAnalyze(
+            UUID verificationId, byte[] documentBytes, Instant now, IdvPolicyService.Applied applied) {
         var stored = analyses.find(verificationId, "FRONT");
         if (stored.isPresent()) {
-            return analyses.replay(stored.get(), schemas, engine);
+            return analyses.replay(stored.get(), schemas, engine, applied.profile(), applied.acceptedCodes());
         }
         liveDocumentAi.analyze(documentBytes, null);
         DocumentLiveView view = analysesBuffer.take();
@@ -565,6 +574,10 @@ public class HostedFlowService {
             return engine.providerUnavailable();
         }
         analyses.saveAccepted(verificationId, view, "FRONT", now);
+        var saved = analyses.find(verificationId, "FRONT");
+        if (saved.isPresent()) {
+            return analyses.replay(saved.get(), schemas, engine, applied.profile(), applied.acceptedCodes());
+        }
         IdvDecisionEngine.Result result = view.result();
         if (result.decision() == null) {
             return new IdvDecisionEngine.Result(
@@ -573,50 +586,128 @@ public class HostedFlowService {
         return result;
     }
 
-    private boolean askForBack(Loaded loaded, Instant now) {
+    private IdvPolicyService.Applied applied(Verification verification) {
+        return policies.applied(verification == null ? null : verification.getPolicyId());
+    }
+
+    private boolean askForBack(Loaded loaded) {
         Integration integration = integrations
                 .findById(loaded.verification().getIntegrationId())
                 .orElse(null);
         if (integration == null || !integration.isLive()) {
             return false;
         }
-        var front = accepted(loaded.verification().getId(), MediaKind.DOCUMENT).orElse(null);
-        if (front == null) {
+        IdvPolicyService.Applied applied = applied(loaded.verification());
+        var saved = analyses.find(loaded.verification().getId(), "FRONT");
+        if (saved.isEmpty()) {
             return false;
         }
-        try {
-            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(front.getObjectKey()), "FRONT");
-            analyses.saveAccepted(loaded.verification().getId(), view, "FRONT", now);
-            if (!view.accepted() || view.result().decision() != VerificationDecision.APPROVED) {
-                return false;
-            }
-            String code = view.response().parsed() instanceof ParsedDocument parsed && parsed.classification() != null
-                    ? parsed.classification().code()
-                    : null;
-            return schemas.hasActiveSide(code, "BACK");
-        } catch (ProviderUnavailableException e) {
-            log.info("document-ia capture side=FRONT code=provider_unavailable");
+        IdvDecisionEngine.Result result =
+                analyses.replay(saved.get(), schemas, engine, applied.profile(), applied.acceptedCodes());
+        if (result == null || result.decision() != VerificationDecision.APPROVED) {
             return false;
+        }
+        Object code = result.extractedIdentity() == null ? null : result.extractedIdentity().get("document_code");
+        return code instanceof String value && schemas.hasActiveSide(value, "BACK");
+    }
+
+    /**
+     * Relit la capture déjà acceptée par la garde fichier. Tant qu'il reste des essais,
+     * un refus (photo illisible, lecture non approuvée, fournisseur) redemande la même face.
+     * Le dernier essai conserve la décision réelle.
+     */
+    private CompleteCaptureResponse rereadCapture(Loaded loaded, MediaKind kind, Integer attempt, Instant now) {
+        if (!liveIntegration(loaded.verification()) || attempt == null || liveDocumentAi == null) {
+            return null;
+        }
+        VerificationMedia item = media.findByVerificationIdAndKindAndAttempt(
+                        loaded.verification().getId(), kind, attempt)
+                .orElse(null);
+        if (item == null || item.getStatus() != MediaStatus.ACCEPTED) {
+            return null;
+        }
+        String side = kind == MediaKind.DOCUMENT_BACK ? "BACK" : "FRONT";
+        try {
+            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(item.getObjectKey()), side);
+            if (recaptureIssue(view)) {
+                return rejectCapture(loaded, item, attempt, now, captureReason(view));
+            }
+            analyses.saveAccepted(loaded.verification().getId(), view, side, now);
+            if (!view.accepted()) {
+                return retrySide(loaded, item, attempt, now, side, captureReason(view));
+            }
+            IdvPolicyService.Applied applied = applied(loaded.verification());
+            IdvDecisionEngine.Result result = analyses
+                    .find(loaded.verification().getId(), side)
+                    .map(row -> analyses.replay(row, schemas, engine, applied.profile(), applied.acceptedCodes()))
+                    .orElse(null);
+            if (result != null && result.decision() != VerificationDecision.APPROVED) {
+                String reason = result.reasons() == null || result.reasons().isEmpty()
+                        ? "LOW_CONFIDENCE"
+                        : result.reasons().get(0);
+                return retrySide(loaded, item, attempt, now, side, reason);
+            }
+            return null;
+        } catch (ProviderUnavailableException e) {
+            log.info("document-ia capture side={} code=provider_unavailable", side);
+            return retrySide(loaded, item, attempt, now, side, "provider_unavailable");
         }
     }
 
-    private void storeBack(Loaded loaded, Instant now) {
-        Integration integration = integrations
-                .findById(loaded.verification().getIntegrationId())
+    /** Redemande la face s'il reste un essai. Sinon laisse la décision se conclure. */
+    private CompleteCaptureResponse retrySide(
+            Loaded loaded, VerificationMedia item, int attempt, Instant now, String side, String reason) {
+        if (!attemptsRemain(loaded, item.getKind())) {
+            return null;
+        }
+        analyses.delete(loaded.verification().getId(), side);
+        return rejectCapture(loaded, item, attempt, now, reason);
+    }
+
+    private CompleteCaptureResponse retryMismatch(Loaded loaded, Integer attempt, Instant now) {
+        if (attempt == null || !attemptsRemain(loaded, MediaKind.DOCUMENT_BACK)) {
+            return null;
+        }
+        var front = analyses.find(loaded.verification().getId(), "FRONT");
+        var back = analyses.find(loaded.verification().getId(), "BACK");
+        if (front.isEmpty() || back.isEmpty() || analyses.sameDocument(front.get(), back.get())) {
+            return null;
+        }
+        VerificationMedia item = media.findByVerificationIdAndKindAndAttempt(
+                        loaded.verification().getId(), MediaKind.DOCUMENT_BACK, attempt)
                 .orElse(null);
-        if (integration == null || !integration.isLive()) {
-            return;
+        if (item == null || item.getStatus() != MediaStatus.ACCEPTED) {
+            return null;
         }
-        var back = accepted(loaded.verification().getId(), MediaKind.DOCUMENT_BACK).orElse(null);
-        if (back == null) {
-            return;
+        analyses.delete(loaded.verification().getId(), "BACK");
+        return rejectCapture(loaded, item, attempt, now, "DOCUMENT_MISMATCH");
+    }
+
+    private boolean attemptsRemain(Loaded loaded, MediaKind kind) {
+        return media.countByVerificationIdAndKind(loaded.verification().getId(), kind)
+                < applied(loaded.verification()).maxCaptureAttempts();
+    }
+
+    private static boolean recaptureIssue(DocumentLiveView view) {
+        return view != null
+                && view.response().decision() instanceof DocumentDecision decision
+                && "RECAPTURE".equals(decision.issue());
+    }
+
+    private static String captureReason(DocumentLiveView view) {
+        if (view.response().decision() instanceof DocumentDecision decision
+                && decision.reasons() != null
+                && !decision.reasons().isEmpty()
+                && decision.reasons().get(0) != null
+                && !decision.reasons().get(0).isBlank()) {
+            return decision.reasons().get(0);
         }
-        try {
-            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(back.getObjectKey()), "BACK");
-            analyses.saveAccepted(loaded.verification().getId(), view, "BACK", now);
-        } catch (ProviderUnavailableException e) {
-            log.info("document-ia capture side=BACK code=provider_unavailable");
+        if (view.response().quality() instanceof DocumentImageQuality quality
+                && quality.reason() != null
+                && !quality.reason().isBlank()) {
+            return quality.reason();
         }
+        return "IMAGE_TOO_BLURRY";
     }
 
     private boolean backTurn(Verification verification) {
@@ -632,7 +723,7 @@ public class HostedFlowService {
 
     private UploadResponse issueUpload(Loaded loaded, MediaKind kind) {
         long used = media.countByVerificationIdAndKind(loaded.verification().getId(), kind);
-        if (used >= MAX_ATTEMPTS) {
+        if (used >= applied(loaded.verification()).maxCaptureAttempts()) {
             throw ApiException.conflict("invalid_status", "Capture attempts exceeded");
         }
         int attempt = (int) used + 1;
@@ -677,21 +768,43 @@ public class HostedFlowService {
         byte[] body = objectStorage.read(item.getObjectKey());
         Instant now = Instant.now();
         if (!quality.test(body)) {
-            item.rejectQuality();
-            discardRejectedObject(item.getObjectKey());
-            if (media.countByVerificationIdAndKind(loaded.verification().getId(), kind) >= MAX_ATTEMPTS) {
-                loaded.verification().declineCaptureAttempts(now);
-                hostedTokens.revokeByVerificationId(loaded.verification().getId());
-                audit(loaded, "verification.declined", "{\"reason\":\"capture_attempts_exceeded\"}", now);
-                return new CompleteCaptureResponse(Enums.json(loaded.verification().getStatus()), "done", false, attempt, true);
-            }
-            loaded.verification().markRecapture(now);
-            return new CompleteCaptureResponse(
-                    Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), false, attempt, true);
+            return rejectCapture(loaded, item, attempt, now, MediaQuality.rejectionReason(body));
         }
         item.accept(MediaQuality.sniff(body), body.length);
         return new CompleteCaptureResponse(
-                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, false);
+                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, false, null);
+    }
+
+    private CompleteCaptureResponse rejectCapture(
+            Loaded loaded, VerificationMedia item, int attempt, Instant now, String reason) {
+        item.rejectQuality();
+        discardRejectedObject(item.getObjectKey());
+        IdvPolicyService.Applied applied = applied(loaded.verification());
+        if (media.countByVerificationIdAndKind(loaded.verification().getId(), item.getKind())
+                >= applied.maxCaptureAttempts()) {
+            loaded.verification().exhaustCaptureAttempts(now, applied.reviewOnCaptureExhausted());
+            hostedTokens.revokeByVerificationId(loaded.verification().getId());
+            audit(
+                    loaded,
+                    applied.reviewOnCaptureExhausted() ? "verification.completed" : "verification.declined",
+                    "{\"reason\":\"capture_attempts_exceeded\"}",
+                    now);
+            return new CompleteCaptureResponse(
+                    Enums.json(loaded.verification().getStatus()), "done", false, attempt, true, "capture_attempts_exceeded");
+        }
+        loaded.verification().markRecapture(now);
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()),
+                nextOf(loaded.verification()),
+                false,
+                attempt,
+                true,
+                reason);
+    }
+
+    private CompleteCaptureResponse captured(Loaded loaded, Integer attempt) {
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, null, null);
     }
 
     private void discardRejectedObject(String objectKey) {
@@ -772,6 +885,13 @@ public class HostedFlowService {
         }
     }
 
+    private static boolean retryLiveness(IdvDecisionEngine.Result face) {
+        return face != null
+                && face.decision() == VerificationDecision.DECLINED
+                && face.reasons() != null
+                && face.reasons().contains("liveness_fail");
+    }
+
     private long billedLiveness(Loaded loaded) {
         return livenessChecks.countByVerificationIdAndBilledTrue(loaded.verification().getId());
     }
@@ -826,8 +946,7 @@ public class HostedFlowService {
     }
 
     private CompleteCaptureResponse finished(Loaded loaded, Integer attempt) {
-        return new CompleteCaptureResponse(
-                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, null);
+        return captured(loaded, attempt);
     }
 
     private boolean liveIntegration(Verification verification) {

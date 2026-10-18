@@ -259,6 +259,11 @@ export default async function VerificationDetailPage({
             <Field label={t("console.verifications.rulesVersion")}>
               {verification.rules_version?.trim() || t("console.verifications.rulesVersionNone")}
             </Field>
+            <Field label={t("console.verifications.policyVersion")}>
+              {verification.policy_version != null
+                ? String(verification.policy_version)
+                : t("console.verifications.policyVersionNone")}
+            </Field>
           </dl>
           <dl className="rm-vcase-list">
             <Field label={t("console.verifications.createdAt")}>{formatUtc(verification.created_at, locale)}</Field>

@@ -14,7 +14,8 @@ public enum Permission {
     BILLING_READ,
     BILLING_WRITE,
     OWNERSHIP,
-    AUDIT_READ;
+    AUDIT_READ,
+    POLICY_WRITE;
 
     private static final Set<Permission> READONLY = Set.of(TEAM_READ, VERIFICATION_READ);
     private static final Set<Permission> MEMBER = Set.of(TEAM_READ, VERIFICATION_READ, VERIFICATION_WRITE);
@@ -26,7 +27,8 @@ public enum Permission {
             VERIFICATION_WRITE,
             API_KEY_READ,
             API_KEY_WRITE,
-            AUDIT_READ);
+            AUDIT_READ,
+            POLICY_WRITE);
     private static final Set<Permission> OWNER = Collections.unmodifiableSet(EnumSet.allOf(Permission.class));
 
     public static Set<Permission> forRole(ConsoleRole role) {

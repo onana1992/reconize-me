@@ -129,6 +129,7 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
   const [opened, setOpened] = useState<Opened | null>(null);
   const [error, setError] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
+  const [below, setBelow] = useState(false);
   const [phase, setPhase] = useState<Phase>("intro");
   const displayText = useMemo(() => livenessText(t), [t]);
   const theme = useMemo(() => livenessTheme(), []);
@@ -196,13 +197,22 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId }),
       });
-      if (response.status === 409) {
-        const body = (await response.json()) as { error?: { code?: string } };
-        if (body.error?.code === "liveness_expired") {
-          setPhase("intro");
-          await open();
-          return;
-        }
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: { code?: string };
+        accepted?: boolean;
+        next?: string;
+        reason?: string;
+      };
+      if (response.status === 409 && body.error?.code === "liveness_expired") {
+        setPhase("intro");
+        await open();
+        return;
+      }
+      if (response.ok && body.reason === "liveness_fail" && body.next === "liveness") {
+        setBelow(true);
+        setPhase("intro");
+        await open();
+        return;
       }
       if (!response.ok && response.status !== 409) {
         restart(true);
@@ -318,7 +328,8 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
           <span>{t("liveness.warningBody")}</span>
         </p>
       </div>
-      {error || checkFailed ? <Notice tone="danger">{t("liveness.error")}</Notice> : null}
+      {below ? <Notice tone="danger">{t("liveness.below")}</Notice> : null}
+      {!below && (error || checkFailed) ? <Notice tone="danger">{t("liveness.error")}</Notice> : null}
       <div className="rm-flow-cta">
         {error ? (
           <button type="button" className="rm-btn-primary" onClick={() => void open()}>
@@ -331,6 +342,7 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
             disabled={!opened}
             onClick={() => {
               setCheckFailed(false);
+              setBelow(false);
               setPhase("running");
             }}
           >

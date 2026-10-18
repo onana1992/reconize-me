@@ -75,35 +75,45 @@ export function FlowClient({ token }: { token: string }) {
     void load();
   }, [load]);
 
+  const facing = facingFor(session?.next);
+  const facingRef = useRef(facing);
+  facingRef.current = facing;
+
   useEffect(() => {
-    const next = session?.next;
-    if (next !== "capture_document" && next !== "capture_document_back" && next !== "capture_selfie") {
+    if (!facing || !liveCamera) {
       stopCamera();
       return;
     }
-    if (!liveCamera) {
-      stopCamera();
+    const current = streamRef.current?.getVideoTracks()[0];
+    if (current && current.readyState === "live" && trackMatchesFacing(current, facing)) {
+      bindStream(videoRef.current, streamRef.current);
       return;
     }
-    const facing = next === "capture_selfie" ? "user" : "environment";
-    navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      })
+    let cancelled = false;
+    stopCamera();
+    openCaptureStream(facing)
       .then((stream) => {
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play();
+        if (cancelled || facingRef.current !== facing) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
         }
+        streamRef.current = stream;
+        bindStream(videoRef.current, stream);
       })
-      .catch(() => setHint("capture.cameraError"));
-    return () => stopCamera();
-  }, [liveCamera, session?.next]);
+      .catch(() => {
+        if (!cancelled) {
+          setHint("capture.cameraError");
+        }
+      });
+    return () => {
+      cancelled = true;
+      if (facingRef.current !== facing) {
+        stopCamera();
+      }
+    };
+  }, [liveCamera, facing]);
+
+  useEffect(() => () => stopCamera(), []);
 
   useEffect(() => {
     if (session?.next !== "wait") {
@@ -151,6 +161,7 @@ export function FlowClient({ token }: { token: string }) {
     const assessment = kind === "selfie" ? assessSelfieFrame(image) : assessDocumentFrame(image);
     if (!assessment.usable) {
       setHint(hintForReasons(assessment.reasons));
+      setBusy(false);
       return;
     }
 
@@ -185,9 +196,14 @@ export function FlowClient({ token }: { token: string }) {
         setHint("capture.uploadError");
         return;
       }
-      const result = (await complete.json()) as { status: string; next: string; accepted: boolean };
+      const result = (await complete.json()) as {
+        status: string;
+        next: string;
+        accepted: boolean;
+        reason?: string;
+      };
       if (!result.accepted) {
-        setHint("capture.recapture");
+        setHint(hintForServerReason(result.reason));
       } else {
         setHint(null);
       }
@@ -202,29 +218,51 @@ export function FlowClient({ token }: { token: string }) {
   }
 
   async function capture() {
+    if (busy) {
+      return;
+    }
+    setBusy(true);
     const kind = session?.next === "capture_selfie" ? "selfie" : "document";
+    bindStream(videoRef.current, streamRef.current);
+    const video = videoRef.current;
+    if (video?.paused) {
+      try {
+        await video.play();
+      } catch {
+        /* la frame suivante est lue depuis le canvas si la lecture est refusée */
+      }
+    }
     const track = streamRef.current?.getVideoTracks()[0];
-    const still = track ? await stillFromTrack(track) : null;
+    const still = track && track.readyState === "live" ? await stillFromTrack(track) : null;
     if (still) {
       await submitFrame(kind, still.image, still.blob);
       return;
     }
-    const video = videoRef.current;
     if (!video || video.videoWidth === 0) {
       setHint("capture.cameraError");
+      setBusy(false);
       return;
     }
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       setHint("capture.cameraError");
+      setBusy(false);
       return;
     }
-    ctx.drawImage(video, 0, 0);
-    const { image, blob } = await frameFromCanvas(canvas);
-    await submitFrame(kind, image, blob);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    try {
+      const { image, blob } = await frameFromCanvas(canvas);
+      await submitFrame(kind, image, blob);
+    } catch {
+      setHint("capture.cameraError");
+      setBusy(false);
+    }
   }
 
   async function onPick(event: ChangeEvent<HTMLInputElement>) {
@@ -430,7 +468,7 @@ function CaptureScreen({
   const working = busyHint !== null;
 
   return (
-    <div className="rm-screen" key={next}>
+    <div className="rm-screen">
       <p className="rm-eyebrow">{t(`${copy}.eyebrow` as const)}</p>
       <h1>{t(`${copy}.title` as const)}</h1>
       <p className="rm-lead">{t(`${copy}.lead` as const)}</p>
@@ -516,6 +554,42 @@ function tipsFor(next: CaptureNext): { icon: React.ReactNode; label: MessageKey 
   ];
 }
 
+function hintForServerReason(reason: string | undefined): MessageKey {
+  switch (reason) {
+    case "TOO_SMALL":
+      return "capture.tooSmall";
+    case "TOO_LARGE":
+      return "capture.tooLarge";
+    case "LOW_LIGHT":
+      return "capture.tooDark";
+    case "OVEREXPOSED":
+      return "capture.tooBright";
+    case "INVALID_IMAGE":
+      return "capture.decodeError";
+    case "IMAGE_TOO_BLURRY":
+      return "capture.recapture";
+    case "DOCUMENT_SIDE_MISMATCH":
+      return "capture.wrongSide";
+    case "DOCUMENT_MISMATCH":
+      return "capture.mismatch";
+    case "document_expired":
+      return "capture.expired";
+    case "unsupported_document":
+      return "capture.unsupported";
+    case "DOCUMENT_UNKNOWN":
+      return "capture.unknown";
+    case "MISSING_REQUIRED_FIELD":
+    case "LOW_OCR_CONFIDENCE":
+    case "LOW_CONFIDENCE":
+    case "MRZ_MISMATCH":
+      return "capture.unreadable";
+    case "provider_unavailable":
+      return "capture.provider";
+    default:
+      return "capture.recapture";
+  }
+}
+
 function hintForReasons(reasons: string[]): MessageKey {
   if (reasons.includes("too_small")) {
     return "capture.tooSmall";
@@ -540,7 +614,7 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
       canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
       const ctx = canvas.getContext("2d");
@@ -560,6 +634,112 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
   });
 }
 
+const PHOTO_LONG_SIDE = 2560;
+
+function highResVideo(facing: "user" | "environment"): MediaTrackConstraints {
+  return {
+    facingMode: { ideal: facing },
+    width: { ideal: 3840 },
+    height: { ideal: 2160 },
+  };
+}
+
+async function openCaptureStream(facing: "user" | "environment"): Promise<MediaStream> {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: highResVideo(facing) });
+  if (facing === "user") {
+    await raiseTrack(stream);
+    return stream;
+  }
+  const currentId = stream.getVideoTracks()[0]?.getSettings().deviceId;
+  const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+  const mainRear = pickMainRear(devices, currentId);
+  if (!mainRear) {
+    await raiseTrack(stream);
+    return stream;
+  }
+  stream.getTracks().forEach((track) => track.stop());
+  try {
+    const rear = await navigator.mediaDevices.getUserMedia({
+      video: { ...highResVideo(facing), deviceId: { exact: mainRear } },
+    });
+    await raiseTrack(rear);
+    return rear;
+  } catch {
+    const fallback = await navigator.mediaDevices.getUserMedia({ video: highResVideo(facing) });
+    await raiseTrack(fallback);
+    return fallback;
+  }
+}
+
+function pickMainRear(devices: MediaDeviceInfo[], currentId: string | undefined): string | undefined {
+  if (!devices.some((device) => device.kind === "videoinput" && device.label)) {
+    return undefined;
+  }
+  const rear = devices.filter(
+    (device) => device.kind === "videoinput" && /back|rear|environment|arrière|arriere/i.test(device.label),
+  );
+  const main = rear.find((device) => !/ultra|wide|0\.5|depth|tele/i.test(device.label));
+  const chosen = main ?? rear[0];
+  if (!chosen || chosen.deviceId === currentId) {
+    return undefined;
+  }
+  return chosen.deviceId;
+}
+
+async function raiseTrack(stream: MediaStream): Promise<void> {
+  const track = stream.getVideoTracks()[0];
+  if (!track?.getCapabilities) {
+    return;
+  }
+  const caps = track.getCapabilities() as MediaTrackCapabilities & {
+    focusMode?: string[];
+    width?: { max?: number };
+    height?: { max?: number };
+  };
+  const width = caps.width?.max && caps.width.max > 0 ? caps.width.max : 3840;
+  const height = caps.height?.max && caps.height.max > 0 ? caps.height.max : 2160;
+  const advanced: MediaTrackConstraintSet[] = [];
+  if (caps.focusMode?.includes("continuous")) {
+    advanced.push({ focusMode: "continuous" } as MediaTrackConstraintSet);
+  }
+  try {
+    await track.applyConstraints({
+      width: { ideal: width },
+      height: { ideal: height },
+      advanced,
+    });
+  } catch {
+    /* le flux déjà ouvert reste utilisable */
+  }
+}
+
+function facingFor(next: string | undefined): "user" | "environment" | null {
+  if (next === "capture_selfie") {
+    return "user";
+  }
+  if (next === "capture_document" || next === "capture_document_back") {
+    return "environment";
+  }
+  return null;
+}
+
+function trackMatchesFacing(track: MediaStreamTrack, facing: "user" | "environment"): boolean {
+  const mode = track.getSettings().facingMode;
+  return mode == null || mode === "" || mode === facing;
+}
+
+function bindStream(video: HTMLVideoElement | null, stream: MediaStream | null) {
+  if (!video || !stream) {
+    return;
+  }
+  if (video.srcObject !== stream) {
+    video.srcObject = stream;
+  }
+  if (video.paused) {
+    void video.play().catch(() => undefined);
+  }
+}
+
 async function stillFromTrack(track: MediaStreamTrack): Promise<{ image: ImageData; blob: Blob } | null> {
   const Ctor = (window as unknown as { ImageCapture?: new (media: MediaStreamTrack) => { takePhoto: () => Promise<Blob> } })
     .ImageCapture;
@@ -567,7 +747,16 @@ async function stillFromTrack(track: MediaStreamTrack): Promise<{ image: ImageDa
     return null;
   }
   try {
-    const blob = await new Ctor(track).takePhoto();
+    const photo = new Ctor(track).takePhoto();
+    const blob = await Promise.race([
+      photo,
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), 2800);
+      }),
+    ]);
+    if (!blob) {
+      return null;
+    }
     const file = new File([blob], "capture.jpg", { type: blob.type || "image/jpeg" });
     return await frameFromFile(file);
   } catch {

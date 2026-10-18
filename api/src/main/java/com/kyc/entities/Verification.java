@@ -81,6 +81,12 @@ public class Verification {
     @Column(name = "rules_version")
     private String rulesVersion;
 
+    @Column(name = "policy_id")
+    private UUID policyId;
+
+    @Column(name = "policy_version")
+    private Integer policyVersion;
+
     @Column(name = "sandbox_scenario")
     private String sandboxScenario;
 
@@ -207,9 +213,18 @@ public class Verification {
         this.updatedAt = now;
     }
 
+    public void attachPolicy(UUID policyId, int policyVersion) {
+        this.policyId = policyId;
+        this.policyVersion = policyVersion;
+    }
+
     public void declineCaptureAttempts(Instant now) {
-        this.status = VerificationStatus.DECLINED;
-        this.decision = VerificationDecision.DECLINED;
+        exhaustCaptureAttempts(now, false);
+    }
+
+    public void exhaustCaptureAttempts(Instant now, boolean review) {
+        this.decision = review ? VerificationDecision.REVIEW : VerificationDecision.DECLINED;
+        this.status = VerificationStatus.valueOf(this.decision.name());
         this.decisionReasons = "[\"capture_attempts_exceeded\"]";
         this.updatedAt = now;
     }
