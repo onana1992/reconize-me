@@ -35,9 +35,9 @@ export default async function IntegrationSettingsPage({
 
   return (
     <div className="rm-int-settings">
-      <section className="rm-int-panel">
+      <section className="rm-int-panel rm-id-card">
         <h2>{t("console.integrations.details")}</h2>
-        <dl className="rm-int-dl">
+        <dl className="rm-id-grid">
           <div>
             <dt>{t("console.integrations.name")}</dt>
             <dd>{integration.name}</dd>
@@ -63,8 +63,7 @@ export default async function IntegrationSettingsPage({
           </div>
         </dl>
       </section>
-      <section className="rm-int-panel">
-        <h2>{t("console.product.integrationsWebhooks")}</h2>
+      <section className="rm-int-panel rm-set-card">
         <WebhookSettingsForm
           integrationId={integration.id}
           initial={webhook.endpoint}

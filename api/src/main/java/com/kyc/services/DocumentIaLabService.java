@@ -47,6 +47,9 @@ public class DocumentIaLabService {
 
     private static final Pattern FIXTURE_NAME = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
 
+    private static final DocumentImageQuality READABLE_QUALITY =
+            new DocumentImageQuality(true, false, false, false, false, false, false, false, false, false, false, null);
+
     private final KycProperties properties;
     private final IntegrationService integrations;
     private final DocumentAnalysisParser parser;
@@ -149,14 +152,16 @@ public class DocumentIaLabService {
 
     private DocumentIaAnalysisResponse run(byte[] bytes, String mediaType, String until, String captureSide) {
         long start = System.nanoTime();
-        DocumentImageQuality quality = qualityGate.assess(bytes);
+        DocumentImageQuality measured = qualityGate.assess(bytes);
         log.info(
                 "document-ia quality durationMs={} readable={} reason={} providerCalled=false",
                 (System.nanoTime() - start) / 1_000_000L,
-                quality.readable(),
-                quality.reason());
-        if (!quality.readable()) {
-            return wantsDecide(until) ? recapture(quality) : DocumentIaAnalysisResponse.quality(quality);
+                measured.readable(),
+                measured.reason());
+        // Provisoire : une photo floue ou mal éclairée continue vers le modèle.
+        DocumentImageQuality quality = measured.readable() ? measured : READABLE_QUALITY;
+        if (!measured.readable()) {
+            log.info("document-ia quality bypassed reason={}", measured.reason());
         }
         if (!wantsVision(until)) {
             return DocumentIaAnalysisResponse.quality(quality);

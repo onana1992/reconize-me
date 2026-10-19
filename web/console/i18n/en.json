@@ -307,7 +307,19 @@
       "deliveries": "Recent deliveries",
       "noDeliveries": "No deliveries yet.",
       "retry": "Retry",
-      "readonly": "You need API key write permission to configure webhooks."
+      "readonly": "You need API key write permission to configure webhooks.",
+      "notConfigured": "Not configured",
+      "statusActive": "Active",
+      "statusDisabled": "Disabled",
+      "deliveryPending": "Pending",
+      "deliveryDelivered": "Delivered",
+      "deliveryFailed": "Failed",
+      "attempt": "Attempt {n}",
+      "handlerTitle": "Receive the delivery",
+      "handlerLead": "Compute the HMAC-SHA256 of timestamp, a dot, and the raw body, using the whsec_ secret. Return 2xx after you have stored the event.",
+      "handlerLabel": "Your endpoint",
+      "handlerNote": "Keep the body raw: do not reformat the JSON before checking the signature.",
+      "languagesLabel": "Language"
     },
     "integrations": {
       "lead": "Create an integration, copy its key, then create verifications from the Verifications tab.",
@@ -356,7 +368,7 @@
         "required": "Required",
         "optional": "Optional",
         "openTitle": "How the flow opens",
-        "openLead": "Your server creates the session with the API key and returns only hosted_url to the client. Both modes open that URL.",
+        "openLead": "Your server creates the session with the API key and returns only hosted_url to the client. The Recogniz-Me plugin opens that URL from the button in your interface.",
         "redirect": "Redirect",
         "redirectBody": "The user leaves your page and continues on the hosted flow.",
         "incontext": "InContext",
@@ -367,12 +379,8 @@
         "clientsLabel": "Client library",
         "browserLabel": "Client",
         "keysLink": "The API key is on the API keys tab.",
-        "previewTitle": "Preview",
-        "previewLead": "The Recogniz-Me button, as it appears in your application.",
-        "getVerified": "Get verified",
-        "provider": "Identity verification is performed by Recogniz-Me.",
-        "previewRedirect": "On click, your application creates the session, then redirects to the flow.",
-        "previewIncontext": "On click, your application creates the session, then opens the flow on the page."
+        "buttonComment": "Your button. The label and the style stay in your interface.",
+        "buttonLabel": "Verify identity"
       },
       "keysLeadTest": "One active ky_test_ key. After revocation, you can issue a new one. The secret stays available to copy here.",
       "keysLeadLive": "One active ky_live_ key. After revocation, you can issue a new one. Each resource debits organization credit. The secret stays available to copy here."
@@ -445,6 +453,12 @@
       "noIdentity": "No data has been read from the document yet.",
       "birthDateLabel": "Date of birth",
       "documentTypeLabel": "Document type",
+      "documentTypes": {
+        "driving_license": "Driving licence",
+        "passport": "Passport",
+        "residence_permit": "Residence permit",
+        "unknown": "Unrecognized type"
+      },
       "issuingCountry": "Issuing country",
       "documentNumberLabel": "Document number",
       "checksTitle": "Checks",

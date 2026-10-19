@@ -201,6 +201,34 @@ export function tSignalCode(t: Translate, code: string): string {
   }
 }
 
+export function tDocumentCode(t: Translate, code: string): string {
+  switch (code) {
+    case "CANADA_PERMANENT_RESIDENT":
+      return t("console.rules.nameCanadaPermanentResident");
+    case "QUEBEC_DRIVER_LICENSE":
+      return t("console.rules.nameQuebecDriverLicense");
+    case "PASSPORT_TD3":
+      return t("console.verifications.documentTypes.passport");
+    default:
+      return tDocumentType(t, code);
+  }
+}
+
+export function tDocumentType(t: Translate, code: string): string {
+  switch (code) {
+    case "driving_license":
+      return t("console.verifications.documentTypes.driving_license");
+    case "passport":
+      return t("console.verifications.documentTypes.passport");
+    case "residence_permit":
+      return t("console.verifications.documentTypes.residence_permit");
+    case "unknown":
+      return t("console.verifications.documentTypes.unknown");
+    default:
+      return code;
+  }
+}
+
 export function tSandboxScenario(t: Translate, scenario: string): string {
   switch (scenario) {
     case "approved":

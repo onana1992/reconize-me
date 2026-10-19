@@ -307,7 +307,19 @@
       "deliveries": "Livraisons récentes",
       "noDeliveries": "Aucune livraison pour l’instant.",
       "retry": "Renvoyer",
-      "readonly": "La permission d’écriture des clés API est requise pour configurer les webhooks."
+      "readonly": "La permission d’écriture des clés API est requise pour configurer les webhooks.",
+      "notConfigured": "Non configuré",
+      "statusActive": "Actif",
+      "statusDisabled": "Désactivé",
+      "deliveryPending": "En attente",
+      "deliveryDelivered": "Livrée",
+      "deliveryFailed": "Échec",
+      "attempt": "Essai {n}",
+      "handlerTitle": "Recevoir la livraison",
+      "handlerLead": "Calculez le HMAC-SHA256 de timestamp + point + corps brut, avec le secret whsec_. Répondez 2xx après avoir enregistré l’événement.",
+      "handlerLabel": "Votre endpoint",
+      "handlerNote": "Le corps doit rester brut : ne le reformatez pas avant de vérifier la signature.",
+      "languagesLabel": "Langage"
     },
     "integrations": {
       "lead": "Créez une intégration, copiez sa clé, puis lancez les vérifications depuis l’onglet Vérifications.",
@@ -356,7 +368,7 @@
         "required": "Obligatoire",
         "optional": "Optionnel",
         "openTitle": "Ouverture du parcours",
-        "openLead": "Le serveur crée la session avec la clé API et ne renvoie au client que hosted_url. Les deux modes ouvrent cette URL.",
+        "openLead": "Votre serveur crée la session avec la clé API et ne renvoie au client que hosted_url. Le plugin Recogniz-Me ouvre cette URL depuis le bouton de votre interface.",
         "redirect": "Redirection",
         "redirectBody": "L’utilisateur quitte votre page et continue sur le parcours hébergé.",
         "incontext": "InContext",
@@ -367,12 +379,8 @@
         "clientsLabel": "Bibliothèque cliente",
         "browserLabel": "Client",
         "keysLink": "La clé API est dans l’onglet Clés API.",
-        "previewTitle": "Aperçu",
-        "previewLead": "Le bouton Recogniz-Me, tel qu’il apparaît dans votre application.",
-        "getVerified": "Get verified",
-        "provider": "La vérification d’identité est réalisée par Recogniz-Me.",
-        "previewRedirect": "Au clic, votre application crée la session, puis redirige vers le parcours.",
-        "previewIncontext": "Au clic, votre application crée la session, puis ouvre le parcours dans la page."
+        "buttonComment": "Votre bouton. Le libellé et le style restent dans votre interface.",
+        "buttonLabel": "Vérifier l’identité"
       },
       "keysLeadTest": "Une seule clé ky_test_ active. Après révocation, vous pouvez en émettre une nouvelle. Le secret reste copiable ici.",
       "keysLeadLive": "Une seule clé ky_live_ active. Après révocation, vous pouvez en émettre une nouvelle. Chaque ressource débite le crédit d’organisation. Le secret reste copiable ici."
@@ -445,6 +453,12 @@
       "noIdentity": "Aucune donnée n’a encore été lue sur la pièce.",
       "birthDateLabel": "Date de naissance",
       "documentTypeLabel": "Type de pièce",
+      "documentTypes": {
+        "driving_license": "Permis de conduire",
+        "passport": "Passeport",
+        "residence_permit": "Titre de séjour",
+        "unknown": "Type non reconnu"
+      },
       "issuingCountry": "Pays d’émission",
       "documentNumberLabel": "Numéro de pièce",
       "checksTitle": "Contrôles",

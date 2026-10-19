@@ -10,80 +10,100 @@ export const CLIENT_LIBRARIES: { id: ClientLibrary; label: string }[] = [
   { id: "svelte", label: "Svelte" },
 ];
 
-const SCRIPT = "https://js.recogniz.me/v1/button.js";
+const SCRIPT = "https://js.recogniz.me/v1/plugin.js";
 
-function element(mode: OpenMode, bind: "html" | "react" | "vue" | "angular" | "svelte"): string {
-  const modeValue = mode === "incontext" ? "incontext" : "redirect";
-  if (bind === "html") {
-    return `<recogniz-me-button
-  mode="${modeValue}"
-  endpoint="/api/verifications"
-  external-id="order-123"
-  first-name="Ada"
-  last-name="Lovelace"
-  email="ada@example.com"
-></recogniz-me-button>`;
-  }
-  if (bind === "react" || bind === "svelte") {
-    return `<recogniz-me-button
-  mode="${modeValue}"
-  endpoint="/api/verifications"
-  external-id={externalId}
-  first-name={firstName}
-  last-name={lastName}
-  email={email}
-></recogniz-me-button>`;
-  }
-  if (bind === "vue") {
-    return `<recogniz-me-button
-  mode="${modeValue}"
-  endpoint="/api/verifications"
-  :external-id="externalId"
-  :first-name="firstName"
-  :last-name="lastName"
-  :email="email"
-></recogniz-me-button>`;
-  }
-  return `<recogniz-me-button
-  mode="${modeValue}"
-  endpoint="/api/verifications"
-  [attr.external-id]="externalId"
-  [attr.first-name]="firstName"
-  [attr.last-name]="lastName"
-  [attr.email]="email"
-></recogniz-me-button>`;
+function modeValue(mode: OpenMode): string {
+  return mode === "incontext" ? "incontext" : "redirect";
 }
 
-export function clientSnippet(library: ClientLibrary, mode: OpenMode): string {
+function openOptions(mode: OpenMode, fields: string): string {
+  return `mode: "${modeValue(mode)}",
+      endpoint: "/api/verifications",
+      ${fields}`;
+}
+
+export function clientSnippet(
+  library: ClientLibrary,
+  mode: OpenMode,
+  buttonComment: string,
+  buttonLabel: string,
+): string {
+  const literal = openOptions(
+    mode,
+    `externalId: "order-123",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",`,
+  );
+  const bound = openOptions(
+    mode,
+    `externalId,
+      firstName,
+      lastName,
+      email,`,
+  );
+
   switch (library) {
     case "javascript":
       return `<script src="${SCRIPT}" async></script>
-${element(mode, "html")}`;
-    case "react":
-      return `import "${SCRIPT}";
 
+<!-- ${buttonComment} -->
+<button type="button" id="verify">${buttonLabel}</button>
+<script>
+  document.getElementById("verify").addEventListener("click", function () {
+    RecognizMe.open({
+      ${literal}
+    }).catch(function (error) {
+      console.error(error.message);
+    });
+  });
+</script>`;
+    case "react":
+      return `// ${SCRIPT}
+// ${buttonComment}
 export function Verify({ externalId, firstName, lastName, email }) {
+  function verify() {
+    RecognizMe.open({
+      ${bound}
+    }).catch(function (error) {
+      console.error(error.message);
+    });
+  }
+
   return (
-    ${element(mode, "react").replaceAll("\n", "\n    ")}
+    <button type="button" onClick={verify}>
+      ${buttonLabel}
+    </button>
   );
 }`;
     case "vue":
       return `<script setup>
-import "${SCRIPT}";
+// ${SCRIPT}
+// ${buttonComment}
+const props = defineProps(["externalId", "firstName", "lastName", "email"]);
 
-defineProps(["externalId", "firstName", "lastName", "email"]);
+function verify() {
+  RecognizMe.open({
+    mode: "${modeValue(mode)}",
+    endpoint: "/api/verifications",
+    externalId: props.externalId,
+    firstName: props.firstName,
+    lastName: props.lastName,
+    email: props.email,
+  }).catch((error) => console.error(error.message));
+}
 </script>
 
 <template>
-  ${element(mode, "vue").replaceAll("\n", "\n  ")}
+  <button type="button" @click="verify">${buttonLabel}</button>
 </template>`;
     case "angular":
       return `// ${SCRIPT}
+// ${buttonComment}
 @Component({
   selector: "app-verify",
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: \`
-    ${element(mode, "angular").replaceAll("\n", "\n    ")}
+    <button type="button" (click)="verify()">${buttonLabel}</button>
   \`,
 })
 export class VerifyComponent {
@@ -91,17 +111,34 @@ export class VerifyComponent {
   @Input() firstName?: string;
   @Input() lastName?: string;
   @Input() email?: string;
+
+  verify() {
+    RecognizMe.open({
+      mode: "${modeValue(mode)}",
+      endpoint: "/api/verifications",
+      externalId: this.externalId,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      email: this.email,
+    }).catch((error) => console.error(error.message));
+  }
 }`;
     case "svelte":
       return `<script>
-  import "${SCRIPT}";
-
+  // ${SCRIPT}
+  // ${buttonComment}
   export let externalId;
   export let firstName;
   export let lastName;
   export let email;
+
+  function verify() {
+    RecognizMe.open({
+      ${bound}
+    }).catch((error) => console.error(error.message));
+  }
 </script>
 
-${element(mode, "svelte")}`;
+<button type="button" on:click={verify}>${buttonLabel}</button>`;
   }
 }

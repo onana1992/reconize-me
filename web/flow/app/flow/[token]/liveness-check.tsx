@@ -124,31 +124,91 @@ function livenessTheme(): Theme {
   };
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function claimFrontCamera(): Promise<string | null> {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await wait(attempt === 0 ? 800 : 600);
+    let stream: MediaStream | null = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: "user" } },
+      });
+      const track = stream.getVideoTracks()[0];
+      const deviceId = track?.getSettings().deviceId ?? "";
+      const facing = track?.getSettings().facingMode;
+      stream.getTracks().forEach((item) => item.stop());
+      stream = null;
+      if (facing === "environment") {
+        continue;
+      }
+      await wait(400);
+      return deviceId;
+    } catch {
+      stream?.getTracks().forEach((track) => track.stop());
+    }
+  }
+  return null;
+}
+
+function livenessFailure(state: string): MessageKey {
+  switch (state) {
+    case "CAMERA_ACCESS_ERROR":
+    case "DEFAULT_CAMERA_NOT_FOUND_ERROR":
+      return "livenessUi.cameraNotFoundMessageText";
+    case "CAMERA_FRAMERATE_ERROR":
+      return "livenessUi.cameraMinSpecificationsMessageText";
+    case "TIMEOUT":
+    case "FRESHNESS_TIMEOUT":
+      return "livenessUi.timeoutMessageText";
+    case "CONNECTION_TIMEOUT":
+      return "livenessUi.connectionTimeoutMessageText";
+    case "SERVER_ERROR":
+      return "livenessUi.serverMessageText";
+    case "MOBILE_LANDSCAPE_ERROR":
+      return "livenessUi.landscapeMessageText";
+    case "MULTIPLE_FACES_ERROR":
+      return "livenessUi.multipleFacesMessageText";
+    case "FACE_DISTANCE_ERROR":
+      return "livenessUi.faceDistanceMessageText";
+    default:
+      return "liveness.error";
+  }
+}
+
 export default function LivenessCheck({ token, onDone }: { token: string; onDone: () => void }) {
   const t = useT();
   const [opened, setOpened] = useState<Opened | null>(null);
   const [error, setError] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
+  const [failure, setFailure] = useState<MessageKey | null>(null);
   const [below, setBelow] = useState(false);
   const [phase, setPhase] = useState<Phase>("intro");
+  const [armed, setArmed] = useState(false);
+  const [frontDeviceId, setFrontDeviceId] = useState<string | null>(null);
   const displayText = useMemo(() => livenessText(t), [t]);
   const theme = useMemo(() => livenessTheme(), []);
 
-  const opening = useRef<Promise<void> | null>(null);
+  const opening = useRef<Promise<boolean> | null>(null);
+  const streamed = useRef(false);
+  const requested = useRef(false);
+  const starting = useRef(false);
 
-  const open = useCallback((): Promise<void> => {
-    if (opening.current) {
-      return opening.current;
-    }
-    const run = async () => {
+  const open = useCallback((fresh = false): Promise<boolean> => {
+    const run = async (): Promise<boolean> => {
       setError(false);
-      setOpened(null);
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
-          const response = await fetch(`/v1/flow/${encodeURIComponent(token)}/liveness/session`, { method: "POST" });
+          const query = fresh ? "?fresh=true" : "";
+          const response = await fetch(`/v1/flow/${encodeURIComponent(token)}/liveness/session${query}`, {
+            method: "POST",
+          });
           if (response.ok) {
             setOpened((await response.json()) as Opened);
-            return;
+            return true;
           }
           if (response.status === 409) {
             const body = (await response.json().catch(() => ({}))) as { error?: { code?: string } };
@@ -157,26 +217,64 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
               continue;
             }
             onDone();
-            return;
+            return false;
           }
           setError(true);
-          return;
+          return false;
         } catch {
           setError(true);
-          return;
+          return false;
         }
       }
       setError(true);
+      return false;
     };
-    opening.current = run().finally(() => {
-      opening.current = null;
+    const job = (opening.current ?? Promise.resolve(false)).then(run, run);
+    opening.current = job.finally(() => {
+      if (opening.current === job) {
+        opening.current = null;
+      }
     });
     return opening.current;
   }, [token, onDone]);
 
   useEffect(() => {
-    void open();
+    if (requested.current) {
+      return;
+    }
+    requested.current = true;
+    void open(false);
   }, [open]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const deviceId = await claimFrontCamera();
+      if (cancelled) {
+        return;
+      }
+      if (deviceId == null) {
+        setFailure("livenessUi.cameraNotFoundMessageText");
+        return;
+      }
+      setFrontDeviceId(deviceId);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "running" || !opened) {
+      setArmed(false);
+      return;
+    }
+    const id = window.setTimeout(() => {
+      streamed.current = true;
+      setArmed(true);
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [phase, opened]);
 
   useEffect(() => {
     if (phase !== "running") {
@@ -205,29 +303,61 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
       };
       if (response.status === 409 && body.error?.code === "liveness_expired") {
         setPhase("intro");
-        await open();
+        await open(true);
         return;
       }
       if (response.ok && body.reason === "liveness_fail" && body.next === "liveness") {
         setBelow(true);
+        setFailure(null);
+        setOpened(null);
+        streamed.current = false;
         setPhase("intro");
-        await open();
+        await open(false);
         return;
       }
       if (!response.ok && response.status !== 409) {
-        restart(true);
+        fail("liveness.error");
         return;
       }
       onDone();
     } catch {
-      restart(true);
+      fail("liveness.error");
     }
   }
 
-  function restart(failed: boolean) {
-    setCheckFailed(failed);
+  function fail(message: MessageKey) {
+    setFailure(message);
+    setCheckFailed(true);
     setPhase("intro");
-    void open();
+  }
+
+  async function begin() {
+    if (starting.current) {
+      return;
+    }
+    starting.current = true;
+    setFailure(null);
+    setCheckFailed(false);
+    setBelow(false);
+    try {
+      if (streamed.current || !opened) {
+        const ready = await open(streamed.current);
+        if (!ready) {
+          return;
+        }
+      }
+      if (frontDeviceId == null) {
+        const deviceId = await claimFrontCamera();
+        if (deviceId == null) {
+          setFailure("livenessUi.cameraNotFoundMessageText");
+          return;
+        }
+        setFrontDeviceId(deviceId);
+      }
+      setPhase("running");
+    } finally {
+      starting.current = false;
+    }
   }
 
   const components = useMemo<Components>(
@@ -256,7 +386,11 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
     return <StateScreen tone="progress" title={t("livenessUi.hintVerifyingText")} lead={t("outcome.waitLead")} />;
   }
 
-  if (phase === "running" && opened) {
+  if (phase === "running" && opened && !armed) {
+    return <StateScreen tone="progress" title={t("liveness.preparing")} lead={t("liveness.lead")} />;
+  }
+
+  if (phase === "running" && opened && armed) {
     return createPortal(
       <div className="rm-flow-page rm-flow rm-liveness rm-liveness-stage" style={flowThemeStyle()}>
         <div className="rm-liveness-stage-frame">
@@ -271,9 +405,12 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
               onAnalysisComplete={async () => {
                 await finish(opened.session_id);
               }}
-              onUserCancel={() => restart(false)}
-              onError={() => restart(true)}
+              onUserCancel={() => {
+                setPhase("intro");
+              }}
+              onError={(livenessError) => fail(livenessFailure(livenessError.state))}
               config={{
+                ...(frontDeviceId ? { deviceId: frontDeviceId } : {}),
                 credentialProvider: async () => ({
                   accessKeyId: opened.credentials.access_key_id,
                   secretAccessKey: opened.credentials.secret_access_key,
@@ -328,26 +465,18 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
           <span>{t("liveness.warningBody")}</span>
         </p>
       </div>
-      {below ? <Notice tone="danger">{t("liveness.below")}</Notice> : null}
-      {!below && (error || checkFailed) ? <Notice tone="danger">{t("liveness.error")}</Notice> : null}
+      {failure ? <Notice tone="danger">{t(failure)}</Notice> : null}
+      {!failure && below ? <Notice tone="danger">{t("liveness.below")}</Notice> : null}
+      {!failure && !below && (error || checkFailed) ? <Notice tone="danger">{t("liveness.error")}</Notice> : null}
       <div className="rm-flow-cta">
-        {error ? (
-          <button type="button" className="rm-btn-primary" onClick={() => void open()}>
+        {failure || checkFailed || error ? (
+          <button type="button" className="rm-btn-primary" onClick={() => void begin()}>
             {t("liveness.retry")}
           </button>
         ) : (
-          <button
-            type="button"
-            className="rm-btn-primary"
-            disabled={!opened}
-            onClick={() => {
-              setCheckFailed(false);
-              setBelow(false);
-              setPhase("running");
-            }}
-          >
-            {opened ? null : <span className="rm-spinner" data-size="sm" aria-hidden="true" />}
-            {opened ? t("liveness.start") : t("liveness.preparing")}
+          <button type="button" className="rm-btn-primary" disabled={!opened || frontDeviceId == null} onClick={() => void begin()}>
+            {opened && frontDeviceId != null ? null : <span className="rm-spinner" data-size="sm" aria-hidden="true" />}
+            {opened && frontDeviceId != null ? t("liveness.start") : t("liveness.preparing")}
           </button>
         )}
       </div>

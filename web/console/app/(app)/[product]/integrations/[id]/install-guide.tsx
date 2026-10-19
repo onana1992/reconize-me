@@ -1,47 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { StatusBadge } from "@/brand/status-badge";
 import { CopyButton } from "../../../../../components/copy-button";
 import { useT } from "../../../../../i18n/client";
 import { CLIENT_LIBRARIES, clientSnippet, type ClientLibrary, type OpenMode } from "./client-snippets";
 import { SERVER_LANGUAGES, serverSnippet, type ServerLanguage } from "./server-snippets";
-
-function NativeButton({ mode }: { mode: OpenMode }) {
-  const host = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const parent = host.current;
-    if (!parent) return;
-    let cancelled = false;
-
-    async function mount() {
-      if (!customElements.get("recogniz-me-button")) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "/recogniz-me-button.js";
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("recogniz-me-button"));
-          document.head.appendChild(script);
-        });
-      }
-      if (cancelled || !parent) return;
-      const element = document.createElement("recogniz-me-button");
-      element.setAttribute("mode", mode);
-      element.setAttribute("preview", "");
-      parent.replaceChildren(element);
-    }
-
-    void mount();
-    return () => {
-      cancelled = true;
-    };
-  }, [mode]);
-
-  return <div ref={host} />;
-}
 
 function Example<T extends string>({
   label,
@@ -106,7 +71,12 @@ export function InstallGuide({
     t("console.integrations.install.serverComment"),
     optional,
   );
-  const browser = clientSnippet(library, mode);
+  const browser = clientSnippet(
+    library,
+    mode,
+    t("console.integrations.install.buttonComment"),
+    t("console.integrations.install.buttonLabel"),
+  );
 
   const fields: { label: string; name: string; required: boolean }[] = [
     {
@@ -218,19 +188,6 @@ export function InstallGuide({
           </p>
         </section>
       </div>
-
-      <aside className="rm-int-panel rm-int-preview">
-        <h2>{t("console.integrations.install.previewTitle")}</h2>
-        <p className="rm-lead">{t("console.integrations.install.previewLead")}</p>
-        <div className="rm-int-preview-stage">
-          <NativeButton mode={mode} />
-        </div>
-        <p className="rm-int-preview-note">
-          {mode === "redirect"
-            ? t("console.integrations.install.previewRedirect")
-            : t("console.integrations.install.previewIncontext")}
-        </p>
-      </aside>
     </div>
   );
 }

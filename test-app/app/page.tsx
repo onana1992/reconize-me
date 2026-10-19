@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { VerifyButton } from "./verify-button";
+import { Verify } from "./verify-button";
+import { WebhookPanel } from "./webhook-panel";
 
 export default function HomePage() {
   const [mode, setMode] = useState<"redirect" | "incontext">("redirect");
@@ -16,8 +17,7 @@ export default function HomePage() {
     <main>
       <h1>Vérifier une identité</h1>
       <p className="lead">
-        Le bouton est celui de Recogniz-Me. Au clic, cette application crée la session sur son serveur, puis ouvre le
-        parcours hébergé.
+        Le bouton est celui de cette application. Au clic, le plugin Recogniz-Me ouvre le parcours hébergé.
       </p>
       <form
         onSubmit={(event) => event.preventDefault()}
@@ -60,7 +60,7 @@ export default function HomePage() {
           <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
         </label>
       </form>
-      <VerifyButton
+      <Verify
         mode={mode}
         externalId={externalId}
         firstName={firstName}
@@ -69,6 +69,7 @@ export default function HomePage() {
         onError={report}
       />
       {error ? <p className="error">{error}</p> : null}
+      <WebhookPanel />
     </main>
   );
 }

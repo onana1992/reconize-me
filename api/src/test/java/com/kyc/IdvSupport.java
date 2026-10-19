@@ -213,7 +213,12 @@ final class IdvSupport {
     }
 
     static JsonNode openLiveness(MockMvc mockMvc, String token) throws Exception {
-        MvcResult opened = mockMvc.perform(post("/v1/flow/" + token + "/liveness/session"))
+        return openLiveness(mockMvc, token, false);
+    }
+
+    static JsonNode openLiveness(MockMvc mockMvc, String token, boolean fresh) throws Exception {
+        MvcResult opened = mockMvc.perform(post("/v1/flow/" + token + "/liveness/session")
+                        .param("fresh", Boolean.toString(fresh)))
                 .andExpect(status().isOk())
                 .andReturn();
         return JSON.readTree(opened.getResponse().getContentAsString());

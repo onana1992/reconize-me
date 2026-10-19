@@ -217,7 +217,7 @@ Le seul mode d’installation est le parcours hébergé. La session est créée 
 | `last_name` | Optionnel. |
 | `email` | Optionnel. |
 
-Dans l’application du client, l’utilisateur voit l’élément natif `<recogniz-me-button>` : bouton **Get verified**, sceau, et la ligne qui précise que la vérification d’identité est réalisée par Recogniz-Me. Le client ne redessine pas cette interface. L’onglet Installation de la console montre cet aperçu. Le clic crée la session sur le serveur du client, puis ouvre `hosted_url` selon le mode choisi. Aucun des deux modes n’embarque la clé secrète.
+Dans l’application du client, l’intégrateur crée son propre bouton. Il charge le plugin Recogniz-Me (`https://js.recogniz.me/v1/plugin.js`) et, au clic, appelle `RecognizMe.open`. Le plugin demande la session au serveur du client, puis ouvre `hosted_url` : redirection, ou cadre InContext. L’interface du parcours est celle de Recogniz-Me. Aucun des deux modes n’embarque la clé secrète. L’onglet Installation de la console montre l’extrait à copier.
 
 ### 9.1 Redirection
 
@@ -358,7 +358,7 @@ Trois onglets.
 
 | Onglet | Contenu |
 |---|---|
-| Installation | Parcours hébergé. Champs envoyés par l’application, choix redirection ou InContext, extrait à copier, aperçu du bouton Get verified et de la mention fournisseur. Le préfixe de clé seulement, jamais la clé réelle. |
+| Installation | Parcours hébergé. Champs envoyés par l’application, choix redirection ou InContext, extrait à copier. Le bouton reste dans l’interface de l’intégrateur. Le préfixe de clé seulement, jamais la clé réelle. |
 | Clés | Préfixe, date, statut actif ou révoqué, copie du secret tant que la clé est active, révocation, émission s’il n’y a pas de clé active. |
 | Réglages | Nom, mode, identifiant, date. Formulaire webhook : URL, préfixe du secret, rotation, suppression, journal des livraisons, relance. |
 

@@ -80,9 +80,12 @@ public class FlowController {
 
     @PostMapping("/liveness/session")
     @Operation(summary = "Ouvrir une session Face Liveness")
-    public LivenessSessionResponse livenessSession(@PathVariable String token, HttpServletResponse response) {
+    public LivenessSessionResponse livenessSession(
+            @PathVariable String token,
+            @RequestParam(value = "fresh", defaultValue = "false") boolean fresh,
+            HttpServletResponse response) {
         noStore(response);
-        return flow.openLiveness(token);
+        return flow.openLiveness(token, fresh);
     }
 
     @PostMapping("/liveness/complete")

@@ -77,6 +77,8 @@ export function FlowClient({ token }: { token: string }) {
 
   const facing = facingFor(session?.next);
   const facingRef = useRef(facing);
+  const cameraEpoch = useRef(0);
+  const capturing = useRef(false);
   facingRef.current = facing;
 
   useEffect(() => {
@@ -91,9 +93,10 @@ export function FlowClient({ token }: { token: string }) {
     }
     let cancelled = false;
     stopCamera();
+    const epoch = cameraEpoch.current;
     openCaptureStream(facing)
       .then((stream) => {
-        if (cancelled || facingRef.current !== facing) {
+        if (cancelled || facingRef.current !== facing || cameraEpoch.current !== epoch) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
@@ -123,7 +126,27 @@ export function FlowClient({ token }: { token: string }) {
     return () => window.clearInterval(id);
   }, [session?.next, load]);
 
+  function focusPreview(stage: HTMLDivElement, clientX: number, clientY: number) {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track || track.readyState !== "live") {
+      return;
+    }
+    const rect = stage.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      return;
+    }
+    const x = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const y = Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
+    void focusTrack(track, { x, y });
+  }
+
   function stopCamera() {
+    cameraEpoch.current += 1;
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
   }
@@ -207,6 +230,9 @@ export function FlowClient({ token }: { token: string }) {
       } else {
         setHint(null);
       }
+      if (facingFor(result.next) == null) {
+        stopCamera();
+      }
       setSession((current) =>
         current ? { ...current, status: result.status, next: result.next } : current,
       );
@@ -218,49 +244,50 @@ export function FlowClient({ token }: { token: string }) {
   }
 
   async function capture() {
-    if (busy) {
+    if (capturing.current) {
       return;
     }
+    capturing.current = true;
     setBusy(true);
-    const kind = session?.next === "capture_selfie" ? "selfie" : "document";
-    bindStream(videoRef.current, streamRef.current);
-    const video = videoRef.current;
-    if (video?.paused) {
-      try {
-        await video.play();
-      } catch {
-        /* la frame suivante est lue depuis le canvas si la lecture est refusée */
-      }
-    }
-    const track = streamRef.current?.getVideoTracks()[0];
-    const still = track && track.readyState === "live" ? await stillFromTrack(track) : null;
-    if (still) {
-      await submitFrame(kind, still.image, still.blob);
-      return;
-    }
-    if (!video || video.videoWidth === 0) {
-      setHint("capture.cameraError");
-      setBusy(false);
-      return;
-    }
-    const canvas = document.createElement("canvas");
-    const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(video.videoWidth, video.videoHeight));
-    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      setHint("capture.cameraError");
-      setBusy(false);
-      return;
-    }
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    setHint("capture.uploading");
     try {
+      const kind = session?.next === "capture_selfie" ? "selfie" : "document";
+      bindStream(videoRef.current, streamRef.current);
+      const video = videoRef.current;
+      if (video?.paused) {
+        await withTimeout(video.play(), 400).catch(() => undefined);
+      }
+      const track = streamRef.current?.getVideoTracks()[0];
+      if (track && track.readyState === "live") {
+        await focusTrack(track, { x: 0.5, y: 0.5 });
+      }
+      const still = track && track.readyState === "live" ? await stillFromTrack(track) : null;
+      if (still) {
+        await submitFrame(kind, still.image, still.blob);
+        return;
+      }
+      if (!video || video.videoWidth === 0) {
+        setHint("capture.cameraError");
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(video.videoWidth, video.videoHeight));
+      canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+      canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        setHint("capture.cameraError");
+        return;
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const { image, blob } = await frameFromCanvas(canvas);
       await submitFrame(kind, image, blob);
     } catch {
       setHint("capture.cameraError");
+    } finally {
+      capturing.current = false;
       setBusy(false);
     }
   }
@@ -271,12 +298,19 @@ export function FlowClient({ token }: { token: string }) {
     if (!file) {
       return;
     }
+    if (capturing.current) {
+      return;
+    }
+    capturing.current = true;
     const kind = session?.next === "capture_selfie" ? "selfie" : "document";
     try {
       const { image, blob } = await frameFromFile(file);
       await submitFrame(kind, image, blob);
     } catch {
       setHint("capture.decodeError");
+    } finally {
+      capturing.current = false;
+      setBusy(false);
     }
   }
 
@@ -316,6 +350,7 @@ export function FlowClient({ token }: { token: string }) {
           liveCamera={liveCamera}
           videoRef={videoRef}
           onCapture={() => void capture()}
+          onFocus={(event) => focusPreview(event.currentTarget, event.clientX, event.clientY)}
           onPick={(event) => void onPick(event)}
         />
       </FlowShell>
@@ -450,6 +485,7 @@ function CaptureScreen({
   liveCamera,
   videoRef,
   onCapture,
+  onFocus,
   onPick,
 }: {
   next: CaptureNext;
@@ -458,6 +494,7 @@ function CaptureScreen({
   liveCamera: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   onCapture: () => void;
+  onFocus: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPick: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   const t = useT();
@@ -481,7 +518,12 @@ function CaptureScreen({
         ))}
       </ul>
       <div className="rm-camera" data-kind={selfie ? "selfie" : "document"}>
-        <div className="rm-camera-stage" role="img" aria-label={t(`${copy}.frame` as const)}>
+        <div
+          className="rm-camera-stage"
+          role="img"
+          aria-label={t(`${copy}.frame` as const)}
+          onPointerDown={onFocus}
+        >
           {liveCamera ? (
             <video ref={videoRef} autoPlay playsInline muted />
           ) : (
@@ -634,7 +676,7 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
   });
 }
 
-const PHOTO_LONG_SIDE = 2560;
+const PHOTO_LONG_SIDE = 3840;
 
 function highResVideo(facing: "user" | "environment"): MediaTrackConstraints {
   return {
@@ -698,19 +740,82 @@ async function raiseTrack(stream: MediaStream): Promise<void> {
   };
   const width = caps.width?.max && caps.width.max > 0 ? caps.width.max : 3840;
   const height = caps.height?.max && caps.height.max > 0 ? caps.height.max : 2160;
-  const advanced: MediaTrackConstraintSet[] = [];
-  if (caps.focusMode?.includes("continuous")) {
-    advanced.push({ focusMode: "continuous" } as MediaTrackConstraintSet);
-  }
+  const advanced: MediaTrackConstraintSet[] = focusConstraints(caps, { x: 0.5, y: 0.5 });
   try {
-    await track.applyConstraints({
-      width: { ideal: width },
-      height: { ideal: height },
-      advanced,
-    });
+    await withTimeout(
+      track.applyConstraints({
+        width: { ideal: width },
+        height: { ideal: height },
+        advanced,
+      }),
+      1000,
+    );
   } catch {
     /* le flux déjà ouvert reste utilisable */
   }
+  await focusTrack(track, { x: 0.5, y: 0.5 });
+}
+
+function focusConstraints(
+  caps: MediaTrackCapabilities & {
+    focusMode?: string[];
+    exposureMode?: string[];
+    pointsOfInterest?: boolean;
+  },
+  point: { x: number; y: number },
+): MediaTrackConstraintSet[] {
+  const advanced: MediaTrackConstraintSet[] = [];
+  if (caps.pointsOfInterest) {
+    advanced.push({ pointsOfInterest: [point] } as MediaTrackConstraintSet);
+  }
+  if (caps.focusMode?.includes("continuous")) {
+    advanced.push({ focusMode: "continuous" } as MediaTrackConstraintSet);
+  }
+  if (caps.exposureMode?.includes("continuous")) {
+    advanced.push({ exposureMode: "continuous" } as MediaTrackConstraintSet);
+  }
+  return advanced;
+}
+
+async function focusTrack(track: MediaStreamTrack, point: { x: number; y: number }): Promise<void> {
+  if (!track.getCapabilities || track.readyState !== "live") {
+    return;
+  }
+  const caps = track.getCapabilities() as MediaTrackCapabilities & {
+    focusMode?: string[];
+    exposureMode?: string[];
+    pointsOfInterest?: boolean;
+  };
+  const advanced = focusConstraints(caps, point);
+  if (advanced.length === 0) {
+    return;
+  }
+  try {
+    await withTimeout(track.applyConstraints({ advanced }), 700);
+  } catch {
+    return;
+  }
+  await wait(200);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T | undefined> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => resolve(undefined), ms);
+    work.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 function facingFor(next: string | undefined): "user" | "environment" | null {
@@ -740,20 +845,53 @@ function bindStream(video: HTMLVideoElement | null, stream: MediaStream | null) 
   }
 }
 
+async function takeStill(
+  camera: {
+    takePhoto: (settings?: { imageWidth?: number; imageHeight?: number }) => Promise<Blob>;
+  },
+  settings: { imageWidth?: number; imageHeight?: number } | undefined,
+): Promise<Blob | null> {
+  const attempt = (photo: Promise<Blob>) =>
+    Promise.race([
+      photo,
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), 1200);
+      }),
+    ]);
+  const sized = await attempt(camera.takePhoto(settings)).catch(() => null);
+  if (sized || !settings) {
+    return sized;
+  }
+  return attempt(camera.takePhoto()).catch(() => null);
+}
+
 async function stillFromTrack(track: MediaStreamTrack): Promise<{ image: ImageData; blob: Blob } | null> {
-  const Ctor = (window as unknown as { ImageCapture?: new (media: MediaStreamTrack) => { takePhoto: () => Promise<Blob> } })
-    .ImageCapture;
+  const Ctor = (
+    window as unknown as {
+      ImageCapture?: new (media: MediaStreamTrack) => {
+        takePhoto: (settings?: { imageWidth?: number; imageHeight?: number }) => Promise<Blob>;
+        getPhotoCapabilities?: () => Promise<{
+          imageWidth?: { max?: number };
+          imageHeight?: { max?: number };
+        }>;
+      };
+    }
+  ).ImageCapture;
   if (!Ctor) {
     return null;
   }
   try {
-    const photo = new Ctor(track).takePhoto();
-    const blob = await Promise.race([
-      photo,
-      new Promise<null>((resolve) => {
-        window.setTimeout(() => resolve(null), 2800);
-      }),
-    ]);
+    const camera = new Ctor(track);
+    let settings: { imageWidth?: number; imageHeight?: number } | undefined;
+    const photoCaps = await withTimeout(camera.getPhotoCapabilities?.() ?? Promise.resolve(undefined), 600).catch(
+      () => undefined,
+    );
+    const imageWidth = photoCaps?.imageWidth?.max;
+    const imageHeight = photoCaps?.imageHeight?.max;
+    if (imageWidth && imageHeight) {
+      settings = { imageWidth, imageHeight };
+    }
+    const blob = await takeStill(camera, settings);
     if (!blob) {
       return null;
     }

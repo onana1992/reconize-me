@@ -1,6 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+// https://js.recogniz.me/v1/plugin.js
+// Chargé localement dans layout.tsx (/recogniz-me.js).
+// Votre bouton. Le libellé et le style restent dans votre interface.
+
+declare global {
+  var RecognizMe: {
+    open: (options: {
+      mode: "redirect" | "incontext";
+      endpoint: string;
+      externalId?: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+    }) => Promise<void>;
+  };
+}
 
 type Props = {
   mode: "redirect" | "incontext";
@@ -11,35 +26,24 @@ type Props = {
   onError: (message: string) => void;
 };
 
-export function VerifyButton({ mode, externalId, firstName, lastName, email, onError }: Props) {
-  const host = useRef<HTMLDivElement>(null);
+export function Verify({ mode, externalId, firstName, lastName, email, onError }: Props) {
+  function verify() {
+    RecognizMe.open({
+      mode,
+      endpoint: "/api/verifications",
+      externalId,
+      firstName,
+      lastName,
+      email,
+    }).catch(function (error: { message?: string }) {
+      console.error(error.message);
+      onError(error.message ?? "La session n’a pas pu être créée.");
+    });
+  }
 
-  useEffect(() => {
-    const parent = host.current;
-    if (!parent) return;
-    const element = parent.querySelector("recogniz-me-button") ?? document.createElement("recogniz-me-button");
-    element.setAttribute("mode", mode);
-    element.setAttribute("endpoint", "/api/verifications");
-    element.setAttribute("lang", "fr");
-    setOptional(element, "external-id", externalId);
-    setOptional(element, "first-name", firstName);
-    setOptional(element, "last-name", lastName);
-    setOptional(element, "email", email);
-    if (!element.isConnected) parent.appendChild(element);
-
-    const report = (event: Event) => {
-      const detail = (event as CustomEvent<string>).detail;
-      onError(typeof detail === "string" ? detail : "La session n’a pas pu être créée.");
-    };
-    element.addEventListener("recogniz-error", report);
-    return () => element.removeEventListener("recogniz-error", report);
-  }, [mode, externalId, firstName, lastName, email, onError]);
-
-  return <div ref={host} />;
-}
-
-function setOptional(element: Element, name: string, value: string) {
-  const trimmed = value.trim();
-  if (trimmed) element.setAttribute(name, trimmed);
-  else element.removeAttribute(name);
+  return (
+    <button type="button" className="verify" onClick={verify}>
+      Vérifier l’identité
+    </button>
+  );
 }

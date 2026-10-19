@@ -282,6 +282,7 @@ export type Verification = {
     last_name?: string;
     birth_date?: string;
     document_type?: string;
+    document_code?: string;
     document_country?: string;
     document_number?: string;
   } | null;

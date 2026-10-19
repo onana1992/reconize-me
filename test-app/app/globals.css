@@ -9,7 +9,7 @@ body {
 }
 
 main {
-  max-width: 32rem;
+  max-width: 40rem;
   margin: 0 auto;
   padding: 3rem 1.25rem;
 }
@@ -70,7 +70,57 @@ input[type="email"] {
   background: #fff;
 }
 
+.verify {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: #111a15;
+  color: #fff;
+  font: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.verify:hover:not(:disabled) {
+  background: #243029;
+}
+
+.verify:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .error {
   margin: 1rem 0 0;
   color: #b3261e;
+}
+
+.ok {
+  margin: 0 0 0.75rem;
+  color: #146c43;
+}
+
+.webhook {
+  margin-top: 2.5rem;
+}
+
+.webhook h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.webhook code {
+  font-size: 0.85em;
+}
+
+.webhook pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  border: 1px solid #dde5e0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }

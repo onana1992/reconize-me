@@ -304,7 +304,7 @@ public class HostedFlowService {
     }
 
     @Transactional
-    public LivenessSessionResponse openLiveness(String token) {
+    public LivenessSessionResponse openLiveness(String token, boolean fresh) {
         Loaded loaded = load(token);
         requireLive(loaded);
         requireConsent(loaded.verification());
@@ -318,10 +318,11 @@ public class HostedFlowService {
                 loaded.verification().getId(), LivenessCheckStatus.OPEN);
         if (open.isPresent()) {
             VerificationLivenessCheck check = open.get();
-            if (check.getExpiresAt().isAfter(now)) {
+            if (!fresh && check.getExpiresAt().isAfter(now)) {
                 return credentialsFor(check);
             }
             check.markExpired();
+            livenessChecks.saveAndFlush(check);
         }
         int attempt = (int) livenessChecks.countByVerificationId(loaded.verification().getId()) + 1;
         String requestToken = loaded.verification().getId().toString().replace("-", "") + attempt;

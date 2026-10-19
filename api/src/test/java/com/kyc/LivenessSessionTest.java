@@ -1,6 +1,7 @@
 package com.kyc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -90,6 +91,16 @@ class LivenessSessionTest {
         assertEquals(first, second);
         assertEquals(1, CREATES.get());
         assertEquals("us-east-1", IdvSupport.openLiveness(mockMvc, token).path("region").asText());
+    }
+
+    @Test
+    void freshSessionReplacesTheOpenOne() throws Exception {
+        CREATES.set(0);
+        String token = reachLiveness("ky_live_fresh001");
+        String first = IdvSupport.openLiveness(mockMvc, token).path("session_id").asText();
+        String second = IdvSupport.openLiveness(mockMvc, token, true).path("session_id").asText();
+        assertNotEquals(first, second);
+        assertEquals(2, CREATES.get());
     }
 
     @Test

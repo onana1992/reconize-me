@@ -14,6 +14,8 @@ import {
   signalOutcomeTone,
   tDecision,
   tSignalCode,
+  tDocumentCode,
+  tDocumentType,
   tSignalOutcome,
   tVerificationStatus,
   verificationTone,
@@ -102,9 +104,12 @@ export default async function VerificationDetailPage({
       found: clean(extracted?.last_name),
     },
   ].filter((row) => row.declared || row.found);
+  const documentCode = clean(extracted?.document_code);
+  const documentType = clean(extracted?.document_type);
+  const documentName = documentCode ? tDocumentCode(t, documentCode) : documentType ? tDocumentType(t, documentType) : "";
   const documentFields = [
     { label: t("console.verifications.birthDateLabel"), value: clean(extracted?.birth_date) },
-    { label: t("console.verifications.documentTypeLabel"), value: clean(extracted?.document_type) },
+    { label: t("console.verifications.documentTypeLabel"), value: documentName },
     { label: t("console.verifications.issuingCountry"), value: clean(extracted?.document_country) },
     {
       label: t("console.verifications.documentNumberLabel"),
