@@ -16,7 +16,7 @@ export function IntegrationTabs({ product, id }: { product: ProductId; id: strin
 
   return (
     <nav className="rm-int-tabs" aria-label={t("console.integrations.tabsLabel")}>
-      {INTEGRATION_TABS.map((tab) => {
+      {INTEGRATION_TABS.filter((tab) => product === "aml" ? tab.id !== "settings" : true).map((tab) => {
         const href = integrationTabHref(product, id, tab.id);
         const current = matchIntegrationTab(pathname, product, id, tab.id);
         return (

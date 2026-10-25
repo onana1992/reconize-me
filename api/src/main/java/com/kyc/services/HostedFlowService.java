@@ -98,6 +98,7 @@ public class HostedFlowService {
     private final DocumentAnalysisBuffer analysesBuffer;
     private final DocumentAnalysisStore analyses;
     private final IdvPolicyService policies;
+    private final com.kyc.services.aml.AmlAttachmentService amlAttachment;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -121,7 +122,8 @@ public class HostedFlowService {
             WebhookService webhookService,
             DocumentAnalysisBuffer analysesBuffer,
             DocumentAnalysisStore analyses,
-            IdvPolicyService policies) {
+            IdvPolicyService policies,
+            com.kyc.services.aml.AmlAttachmentService amlAttachment) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -145,6 +147,7 @@ public class HostedFlowService {
         this.analysesBuffer = analysesBuffer;
         this.analyses = analyses;
         this.policies = policies;
+        this.amlAttachment = amlAttachment;
     }
 
     @Transactional
@@ -532,7 +535,11 @@ public class HostedFlowService {
                     signal.score(),
                     now));
         }
-        audit(loaded, "verification.completed", "{\"decision\":\"" + Enums.json(result.decision()) + "\"}", now);
+        Integration identity = integrations
+                .findById(verification.getIntegrationId())
+                .orElseThrow(() -> ApiException.notFound("Integration not found"));
+        amlAttachment.attach(verification, identity, now);
+        audit(loaded, "verification.completed", "{\"decision\":\"" + Enums.json(verification.getDecision()) + "\"}", now);
         webhookService.enqueueCompleted(verification, now);
     }
 

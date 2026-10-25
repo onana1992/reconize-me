@@ -263,6 +263,66 @@ export type IdvPolicyVersions = {
   versions: { version: number; published_at: string; active: boolean }[];
 };
 
+export type ScreeningHit = {
+  id: string;
+  entity_id: string;
+  category: string;
+  categories?: string[] | null;
+  score: number;
+  matched_name?: string | null;
+  listed_name?: string | null;
+  features?: string[] | null;
+  disposition: string;
+  reason?: string | null;
+  prior_disposition?: string | null;
+};
+
+export type Screening = {
+  id: string;
+  integration_id?: string | null;
+  external_id?: string | null;
+  status: string;
+  outcome?: string | null;
+  failure_reason?: string | null;
+  engine?: string | null;
+  policy_version?: string | null;
+  corpus_version?: string | null;
+  hit_count: number;
+  hits?: ScreeningHit[] | null;
+  subject?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    middle_name?: string | null;
+    date_of_birth?: string | null;
+    nationality?: string | null;
+    id_number?: string | null;
+  } | null;
+  created_at: string;
+  updated_at?: string | null;
+};
+
+export type ScreeningList = {
+  data: Screening[];
+  next_cursor?: string | null;
+};
+
+export type AmlPolicy = {
+  version: string;
+  review_threshold: number;
+  confirm_threshold: number;
+  categories: string[];
+  attach_to_identity: boolean;
+  on_match: string;
+  test_integration_id?: string | null;
+  live_integration_id?: string | null;
+  published: boolean;
+  published_at?: string | null;
+};
+
+export type AmlPolicyVersions = {
+  versions: AmlPolicy[];
+};
+
 export type Verification = {
   id: string;
   status: string;

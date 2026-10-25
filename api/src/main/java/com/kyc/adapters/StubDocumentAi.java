@@ -11,6 +11,19 @@ public class StubDocumentAi implements DocumentAiPort {
         return switch (scenario) {
             case "unsupported" -> new DocumentSignals(
                     "unknown", "ZZ", null, false, false, false, null, null, null, null, null, "stub");
+            case "screening_nora" -> new DocumentSignals(
+                    "passport",
+                    "FR",
+                    null,
+                    false,
+                    true,
+                    false,
+                    "Nora",
+                    "Potentialexample",
+                    LocalDate.of(1982, 11, 3),
+                    "FR000NORA",
+                    LocalDate.of(2030, 1, 1),
+                    "stub");
             case "expired" -> new DocumentSignals(
                     "passport",
                     "FR",

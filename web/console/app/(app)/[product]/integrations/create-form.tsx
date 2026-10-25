@@ -11,6 +11,8 @@ import { createIntegrationAction } from "../../settings/actions";
 export function CreateIntegrationButton({ product, liveUnlocked }: { product: string; liveUnlocked: boolean }) {
   const t = useT();
   const router = useRouter();
+  const productLabel =
+    product === "aml" ? t("console.nav.aml") : product === "biometrics" ? t("console.nav.biometric") : t("console.nav.idv");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
                       : "console.integrations.modeTest",
                   ),
                 )
-              : t("console.integrations.createTitle")}
+              : t("console.integrations.createTitle").replace("{product}", productLabel)}
           </h2>
           <button type="button" className="rm-dialog-close" aria-label={t("common.close")} onClick={closeDialog}>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -128,6 +130,7 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
           </div>
         ) : (
           <form ref={formRef} action={onSubmit} className="rm-form">
+            <input type="hidden" name="product" value={product} />
             <label>
               <span>
                 {t("console.integrations.name")}
@@ -140,12 +143,12 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
               <span>{t("console.integrations.mode")}</span>
               <select name="mode" defaultValue="test">
                 <option value="test">{t("console.integrations.modeTest")}</option>
-                <option value="live" disabled={!liveUnlocked}>
+                <option value="live" disabled={product === "aml" || !liveUnlocked}>
                   {t("console.integrations.modeLive")}
                 </option>
               </select>
             </label>
-            {liveUnlocked ? null : (
+            {product === "aml" || liveUnlocked ? null : (
               <p className="rm-hint">
                 {t("console.integrations.liveLocked")}{" "}
                 <Link href="/settings/billing">{t("console.nav.billing")}</Link>

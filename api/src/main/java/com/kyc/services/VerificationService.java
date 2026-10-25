@@ -309,6 +309,7 @@ public class VerificationService {
                 verification.getPolicyVersion(),
                 signalItems.isEmpty() ? null : signalItems,
                 extracted,
+                verification.getAmlScreeningId(),
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
     }

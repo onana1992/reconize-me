@@ -1,3 +1,3 @@
 package com.kyc.dto.console;
 
-public record CreateIntegrationRequest(String name, String mode) {}
+public record CreateIntegrationRequest(String name, String mode, String product) {}

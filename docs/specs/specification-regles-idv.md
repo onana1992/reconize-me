@@ -72,7 +72,7 @@ Tant que l’organisation n’a rien publié, ce comportement reste la politique
 | Webhooks, clés, mode test ou live | Fiche d’intégration |
 | Branding, logo, couleur, nom du tenant sur le parcours | Hors MVP (spécification fonctionnelle §3.2) |
 | Produit Biométrie (seuil d’un visage déjà enrôlé) | Onglet Règles de `/biometrics`, plus tard |
-| Listes AML, politique « ignorer / revue / bloquer » | Après le produit AML |
+| Listes AML, politique « ignorer / revue / bloquer » | [Cahier des charges AML](../aml/cahier-des-charges-aml.md) |
 | Enrôlement du selfie à l’approbation | Après la décision IDV |
 | Réécriture d’une session déjà créée | Interdit |
 

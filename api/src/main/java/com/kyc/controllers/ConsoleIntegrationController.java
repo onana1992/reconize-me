@@ -51,8 +51,9 @@ public class ConsoleIntegrationController {
     public ResponseEntity<IntegrationResponse> create(@RequestBody(required = false) CreateIntegrationRequest body) {
         String name = body == null ? null : body.name();
         String mode = body == null ? null : body.mode();
+        String product = body == null ? null : body.product();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(integrations.create(CurrentConsole.require(), name, mode));
+                .body(integrations.create(CurrentConsole.require(), name, mode, product));
     }
 
     @GetMapping("/{id}")

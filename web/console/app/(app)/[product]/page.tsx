@@ -6,6 +6,7 @@ import { formatCount } from "../../../lib/pricing";
 import { parseProduct } from "../../../lib/parse-product";
 import { PRODUCTS, productTabHref } from "../../../lib/products";
 import { requireMe } from "../../../lib/session";
+import { AmlOverview } from "./aml-overview";
 import { IdentityOverview } from "./identity-overview";
 
 export default async function ProductOverviewPage({
@@ -30,6 +31,15 @@ export default async function ProductOverviewPage({
     );
   }
 
+  if (productId === "aml") {
+    return (
+      <AmlOverview
+        canRead={canReadSessions || me.permissions.includes("API_KEY_READ")}
+        canWrite={canWriteSessions}
+      />
+    );
+  }
+
   return (
     <main>
       <PageHeader
@@ -38,8 +48,8 @@ export default async function ProductOverviewPage({
         lead={t(product.leadKey)}
         actions={
           <StatusBadge
-            label={product.metered ? t("console.product.metered") : t("console.nav.soon")}
-            tone={product.metered ? "info" : "neutral"}
+            label={product.api ? t("console.home.available") : t("console.nav.soon")}
+            tone={product.api ? "info" : "neutral"}
           />
         }
       />

@@ -18,6 +18,9 @@ export default async function IntegrationSettingsPage({
   params: Promise<{ product: string; id: string }>;
 }) {
   const resolved = await params;
+  if (resolved.product === "aml") {
+    notFound();
+  }
   await parseProduct(Promise.resolve({ product: resolved.product }));
   const [t, locale, result, me, webhook] = await Promise.all([
     getT(),

@@ -65,8 +65,8 @@ export default async function HomePage() {
                     </span>
                     <span className="rm-catalog-meta">
                       <StatusBadge
-                        label={product.metered ? t("console.home.available") : t("console.nav.soon")}
-                        tone={product.metered ? "info" : "neutral"}
+                        label={product.api ? t("console.home.available") : t("console.nav.soon")}
+                        tone={product.api ? "info" : "neutral"}
                       />
                       <span className="rm-catalog-chevron" aria-hidden="true" />
                     </span>

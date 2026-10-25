@@ -66,6 +66,14 @@ public class IdvDecisionEngine {
             case "expired" -> declined("document_expired");
             case "liveness_fail" -> declined("liveness_fail");
             case "mismatch" -> declined("face_match_fail");
+            case "screening_nora" -> new Result(
+                    VerificationDecision.APPROVED,
+                    List.of("liveness_pass", "face_match_pass"),
+                    List.of(
+                            new Signal("authenticity_stub_pass", SignalOutcome.PASS, null),
+                            new Signal("liveness_pass", SignalOutcome.PASS, 0.99),
+                            new Signal("face_match_pass", SignalOutcome.PASS, 0.96)),
+                    noraIdentity());
             case "review" -> new Result(
                     VerificationDecision.REVIEW,
                     List.of("mrz_unavailable"),
@@ -338,5 +346,21 @@ public class IdvDecisionEngine {
                 "FR",
                 "document_number",
                 "XX0000000");
+    }
+
+    private static Map<String, Object> noraIdentity() {
+        return Map.of(
+                "first_name",
+                "Nora",
+                "last_name",
+                "Potentialexample",
+                "birth_date",
+                "1982-11-03",
+                "document_type",
+                "passport",
+                "document_country",
+                "FR",
+                "document_number",
+                "FR000NORA");
     }
 }

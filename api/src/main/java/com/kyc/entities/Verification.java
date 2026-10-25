@@ -93,6 +93,9 @@ public class Verification {
     @Column(name = "extracted_identity", columnDefinition = "TEXT")
     private String extractedIdentity;
 
+    @Column(name = "aml_screening_id")
+    private UUID amlScreeningId;
+
     @Column(name = "document_back_required", nullable = false)
     private boolean documentBackRequired;
 
@@ -194,6 +197,20 @@ public class Verification {
         this.rulesVersion = rulesVersion;
         this.extractedIdentity = extractedIdentity;
         this.status = VerificationStatus.valueOf(decision.name());
+        this.updatedAt = now;
+    }
+
+    public void linkAml(UUID screeningId, VerificationDecision decision, String reasonsJson, Instant now) {
+        if (screeningId != null) {
+            this.amlScreeningId = screeningId;
+        }
+        if (decision != null) {
+            this.decision = decision;
+            this.status = VerificationStatus.valueOf(decision.name());
+        }
+        if (reasonsJson != null) {
+            this.decisionReasons = reasonsJson;
+        }
         this.updatedAt = now;
     }
 

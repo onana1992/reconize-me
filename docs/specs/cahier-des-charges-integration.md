@@ -10,6 +10,7 @@
 - [`specification-fonctionnelle-idv.md`](./specification-fonctionnelle-idv.md) — ce que prouve une vérification
 - [`specification-regles-idv.md`](./specification-regles-idv.md) — politique de décision figée sur le dossier
 - [`../MVP/specification-m5-aws-live-webhook.md`](../MVP/specification-m5-aws-live-webhook.md) — livraison webhook actuelle
+- [`../aml/cahier-des-charges-aml.md`](../aml/cahier-des-charges-aml.md) — criblage AML : clé et mode ; la décision est dans la réponse
 
 Ce document fixe le contrat par lequel une entreprise branche Recogniz-Me dans son produit. Il décrit l’intégration comme une unité d’exploitation isolée : identifiants, environnement, session, parcours utilisateur, notification de décision, et conditions de passage en production.
 

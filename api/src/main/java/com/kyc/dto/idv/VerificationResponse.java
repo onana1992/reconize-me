@@ -23,6 +23,7 @@ public record VerificationResponse(
         @JsonProperty("policy_version") Integer policyVersion,
         List<Signal> signals,
         @JsonProperty("extracted_identity") Map<String, Object> extractedIdentity,
+        @JsonProperty("aml_screening_id") UUID amlScreeningId,
         @JsonProperty("created_at") Instant createdAt,
         @JsonProperty("updated_at") Instant updatedAt) {
 

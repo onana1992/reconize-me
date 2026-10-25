@@ -17,7 +17,7 @@ export default async function IntegrationLayout({
   const resolved = await params;
   const productId = await parseProduct(Promise.resolve({ product: resolved.product }));
   const product = PRODUCTS[productId];
-  if (!product.metered) {
+  if (!product.api) {
     notFound();
   }
   const [, result] = await Promise.all([requireMe(), loadIntegration(resolved.id)]);

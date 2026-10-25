@@ -20,6 +20,7 @@ import {
   tVerificationStatus,
   verificationTone,
 } from "../../../../../lib/status";
+import { AmlCase } from "../../aml-case";
 import { VerificationActions } from "./verification-actions";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,9 @@ export default async function VerificationDetailPage({
   const resolved = await params;
   const productId = await parseProduct(Promise.resolve({ product: resolved.product }));
   const id = resolved.id;
+  if (productId === "aml") {
+    return <AmlCase id={id} />;
+  }
   if (productId !== "identity") {
     notFound();
   }

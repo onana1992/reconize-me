@@ -78,15 +78,24 @@ public class IntegrationService {
 
     @Transactional
     public IntegrationResponse create(ConsolePrincipal principal, String name, String mode) {
+        return create(principal, name, mode, null);
+    }
+
+    @Transactional
+    public IntegrationResponse create(ConsolePrincipal principal, String name, String mode, String product) {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
+        ProductCode productCode = normalizeProduct(product);
         IntegrationMode normalized = normalizeMode(mode);
+        if (productCode == ProductCode.AML && normalized == IntegrationMode.LIVE) {
+            throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
+        }
         if (normalized == IntegrationMode.LIVE) {
             if (!credits.coversUnit(principal.organizationId())) {
                 throw ApiException.forbidden("insufficient_credit", "Live integrations require a credit balance");
             }
         }
-        String resolvedName = requireUniqueName(principal.organizationId(), name);
-        Integration saved = saveNew(principal.organizationId(), normalized, resolvedName, principal.userId());
+        String resolvedName = requireUniqueName(principal.organizationId(), productCode, name);
+        Integration saved = saveNew(principal.organizationId(), productCode, normalized, resolvedName, principal.userId());
         IssuedApiKeyResponse issued = apiKeyIssuer.issue(saved, principal.userId());
         return toResponse(saved, keysOf(saved.getId()), issued.key());
     }
@@ -121,7 +130,7 @@ public class IntegrationService {
         }
     }
 
-    private String requireUniqueName(UUID organizationId, String name) {
+    private String requireUniqueName(UUID organizationId, ProductCode product, String name) {
         if (name == null || name.isBlank()) {
             throw ApiException.validation("Name is required", List.of(new ErrorDetail("name", "required")));
         }
@@ -129,17 +138,17 @@ public class IntegrationService {
         if (resolvedName.length() > 128) {
             throw ApiException.validation("Invalid name", List.of(new ErrorDetail("name", "size")));
         }
-        if (integrations.existsByOrganizationIdAndProductAndNameIgnoreCase(
-                organizationId, ProductCode.IDENTITY, resolvedName)) {
+        if (integrations.existsByOrganizationIdAndProductAndNameIgnoreCase(organizationId, product, resolvedName)) {
             throw ApiException.conflict("name_taken", "An integration with this name already exists");
         }
         return resolvedName;
     }
 
-    private Integration saveNew(UUID organizationId, IntegrationMode mode, String name, UUID actorId) {
+    private Integration saveNew(
+            UUID organizationId, ProductCode product, IntegrationMode mode, String name, UUID actorId) {
         Instant now = Instant.now();
-        Integration saved = integrations.save(new Integration(
-                UUID.randomUUID(), organizationId, ProductCode.IDENTITY, mode, name, now));
+        Integration saved = integrations.save(
+                new Integration(UUID.randomUUID(), organizationId, product, mode, name, now));
         auditEvents.save(new AuditEvent(
                 organizationId,
                 actorId == null ? "system" : "user",
@@ -167,6 +176,17 @@ public class IntegrationService {
                 integration.getCreatedAt(),
                 keys,
                 key);
+    }
+
+    private static ProductCode normalizeProduct(String product) {
+        if (product == null || product.isBlank()) {
+            return ProductCode.IDENTITY;
+        }
+        try {
+            return ProductCode.valueOf(product.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw ApiException.validation("Invalid product", List.of(new ErrorDetail("product", "invalid")));
+        }
     }
 
     private static IntegrationMode normalizeMode(String mode) {

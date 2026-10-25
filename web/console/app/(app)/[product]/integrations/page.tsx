@@ -31,7 +31,7 @@ export default async function ProductIntegrationsPage({
   const [t, locale] = await Promise.all([getT(), getLocale()]);
   const canWrite = (me.permissions ?? []).includes("API_KEY_WRITE");
 
-  if (!product.metered) {
+  if (!product.api) {
     return (
       <main className="rm-idv">
         <PageHeader

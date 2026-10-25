@@ -201,7 +201,7 @@ export function AppShell({
             {PRODUCT_IDS.map((id) => {
               const product = PRODUCTS[id];
               const current = pathname === product.href || pathname.startsWith(`${product.href}/`);
-              const label = t(product.navKey);
+              const label = t(product.sidebarKey);
               return (
                 <Link
                   key={product.id}

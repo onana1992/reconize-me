@@ -11,6 +11,7 @@
 - [`guide-implementation-s1.md`](./guide-implementation-s1.md) — archive S1 (code retiré)
 - [`guide-implementation-s2.md`](./guide-implementation-s2.md) — archive S2
 - [`roadmap-implementation-idv.md`](./roadmap-implementation-idv.md) — ordre de build vision
+- [`../aml/cahier-des-charges-aml.md`](../aml/cahier-des-charges-aml.md) — criblage sanctions et PEP, produit séparé
 
 Ce document décrit **uniquement** le produit Identity & Document Verification : ce qu’il prouve, pour qui, comment le parcours se déroule, comment on analyse, comment on tranche. Les détails d’implémentation restent dans les guides de sprint.
 
@@ -28,7 +29,7 @@ C’est le **premier produit de la gamme à livrer de bout en bout**. La platefo
 
 - Un tunnel caméra sans décision.
 - Le produit **Biometric Authentication** : ici le selfie sert à lier un visage **à une pièce**. Là-bas, on recompare un visage **déjà enrôlé**, sans redemander la pièce.
-- Un criblage AML : l’AML est une autre solution, **attachable** à une session IDV.
+- Un criblage AML : c’est le produit [AML Screening](../aml/cahier-des-charges-aml.md), attachable à une session IDV.
 
 ---
 
@@ -59,7 +60,7 @@ Trois questions, **dans cet ordre**. On ne saute pas une étape pour « aller pl
 - Moteur de risque et de décision (règles versionnées, pas un modèle de langage juge)
 - Revue manuelle des dossiers en zone grise
 - Enrôlement biométrique à l’approbation, si l’organisation l’active (pour une autre solution de la gamme)
-- AML **attaché** optionnel (le criblage est spécifié dans le produit AML ; ici on dit seulement comment il **alimente** la décision IDV)
+- AML **attaché** optionnel (contrat : [cahier des charges AML](../aml/cahier-des-charges-aml.md) ; ici, seulement l’effet sur la décision IDV)
 - Notifications de résultat (cible plateforme)
 - Audit, pas de données personnelles dans les journaux
 
@@ -433,7 +434,7 @@ Personne (référence client)
 | « Revue » | Hit possible → *revue* |
 | « Bloquer » | Hit confirmé → *refusée* |
 
-Le criblage part **après** lecture de la pièce, pas sur le seul nom fourni à la création (repli si la lecture échoue → plutôt revue). Le résultat AML reste consultable **à part**.
+Le criblage part **après** lecture de la pièce, pas sur le seul nom fourni à la création (repli si la lecture échoue → plutôt revue). Le résultat AML reste consultable **à part**. Le contrat du criblage, des issues et des trois politiques est dans le [cahier des charges AML](../aml/cahier-des-charges-aml.md).
 
 Interdit : ouvrir un IDV **uniquement** pour cribler un nom (utiliser l’AML seul).
 

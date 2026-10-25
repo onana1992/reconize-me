@@ -11,11 +11,14 @@ export type ProductDef = {
   href: string;
   icon: IconName;
   navKey: "console.nav.idv" | "console.nav.biometric" | "console.nav.aml";
+  sidebarKey: "console.nav.idvTitle" | "console.nav.biometricTitle" | "console.nav.amlTitle";
   topKey: "console.top.identity" | "console.top.biometrics" | "console.top.aml";
   titleKey: "console.home.idvTitle" | "console.nav.biometric" | "console.nav.aml";
   leadKey: "console.home.idvCardLead" | "console.home.biometricLead" | "console.home.amlLead";
   /** Live usage of this service debits the organization credit. Teasers do not. */
   metered: boolean;
+  /** The public API for this service is available. Billing may still be off. */
+  api: boolean;
 };
 
 export const PRODUCTS: Record<ProductId, ProductDef> = {
@@ -24,30 +27,36 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
     href: "/identity",
     icon: "idcard",
     navKey: "console.nav.idv",
+    sidebarKey: "console.nav.idvTitle",
     topKey: "console.top.identity",
     titleKey: "console.home.idvTitle",
     leadKey: "console.home.idvCardLead",
     metered: true,
+    api: true,
   },
   biometrics: {
     id: "biometrics",
     href: "/biometrics",
     icon: "scan",
     navKey: "console.nav.biometric",
+    sidebarKey: "console.nav.biometricTitle",
     topKey: "console.top.biometrics",
     titleKey: "console.nav.biometric",
     leadKey: "console.home.biometricLead",
     metered: false,
+    api: false,
   },
   aml: {
     id: "aml",
     href: "/aml",
     icon: "search",
     navKey: "console.nav.aml",
+    sidebarKey: "console.nav.amlTitle",
     topKey: "console.top.aml",
     titleKey: "console.nav.aml",
     leadKey: "console.home.amlLead",
     metered: false,
+    api: true,
   },
 };
 

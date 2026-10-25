@@ -13,11 +13,13 @@ import { sessionCookieHeader } from "../../../lib/session";
 export async function createIntegrationAction(formData: FormData): Promise<ApiResult<IntegrationResponse>> {
   const name = String(formData.get("name") ?? "").trim();
   const mode = String(formData.get("mode") ?? "test").trim() || "test";
+  const product = String(formData.get("product") ?? "").trim();
   return consoleApi("/v1/console/integrations", await sessionCookieHeader(), {
     method: "POST",
     body: JSON.stringify({
       name,
       mode,
+      ...(product ? { product } : {}),
     }),
   });
 }

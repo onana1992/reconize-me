@@ -21,7 +21,7 @@
 }
 
 .rm-shell {
-  --rm-shell-expanded: 16.5rem;
+  --rm-shell-expanded: 19rem;
   --rm-shell-collapsed: 4.25rem;
   display: flex;
   min-height: 100dvh;
@@ -142,9 +142,7 @@
 
 .rm-shell-label {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
 }
 
 .rm-shell-foot {
@@ -1395,7 +1393,7 @@ a.rm-back:hover {
   font-size: var(--rm-text-sm);
 }
 
-.rm-rich-table-empty {
+.rm-table td.rm-rich-table-empty {
   text-align: center;
   color: var(--rm-text-muted);
   padding: var(--rm-space-8) var(--rm-space-4);
@@ -3472,7 +3470,11 @@ a.rm-idv-row:focus-visible {
 .rm-rules-status-copy p {
   color: var(--rm-text);
   font-size: var(--rm-text-sm);
-  line-height: 1.5;
+  line-height: 1.35;
+}
+
+.rm-rules-status-copy p + .rm-rules-applies {
+  margin-top: calc(-1 * var(--rm-space-2));
 }
 
 .rm-rules-applies,
