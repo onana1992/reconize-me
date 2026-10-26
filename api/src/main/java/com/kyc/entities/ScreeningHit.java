@@ -111,6 +111,10 @@ public class ScreeningHit {
         this.disposition = HitDisposition.UNREVIEWED;
     }
 
+    public void replaceProviderFeatures(String providerFeaturesJson) {
+        this.providerFeaturesJson = providerFeaturesJson == null || providerFeaturesJson.isBlank() ? "{}" : providerFeaturesJson;
+    }
+
     public void qualify(HitDisposition disposition, String reason, String note) {
         this.disposition = disposition;
         this.dispositionReason = reason;

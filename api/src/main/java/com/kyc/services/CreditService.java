@@ -245,6 +245,43 @@ public class CreditService {
                 now);
     }
 
+    @Transactional
+    public void debitForLiveScreening(UUID organizationId, UUID screeningId, UUID actorId, String actorType) {
+        CreditAccount account = lockOrCreate(organizationId);
+        long unit = properties.billing().unitAmountMinor();
+        if (account.getBalanceMinor() < unit) {
+            throw ApiException.forbidden("insufficient_credit", "Live screening requires a credit balance");
+        }
+        if (ledger.existsByResourceTypeAndResourceId(LedgerResourceType.SCREENING, screeningId)) {
+            return;
+        }
+        Instant now = Instant.now();
+        account.apply(-unit, now);
+        UUID entryId = UUID.randomUUID();
+        ledger.save(new CreditLedgerEntry(
+                entryId,
+                organizationId,
+                LedgerEntryType.DEBIT,
+                -unit,
+                account.getBalanceMinor(),
+                ProductCode.AML,
+                LedgerResourceType.SCREENING,
+                screeningId,
+                null,
+                null,
+                actorId,
+                now));
+        audit.save(
+                organizationId,
+                actorType == null ? "system" : actorType,
+                actorId,
+                "credit.debited",
+                "screening",
+                screeningId,
+                "{\"amount_minor\":" + unit + ",\"product\":\"aml\"}",
+                now);
+    }
+
     private BillingResponse snapshot(UUID organizationId, String cursor, Integer limit, boolean includeLedger) {
         CreditAccount account = accounts.findById(organizationId).orElse(null);
         long unit = properties.billing().unitAmountMinor();

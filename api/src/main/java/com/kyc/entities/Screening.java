@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -58,6 +59,13 @@ public class Screening {
 
     @Column(name = "retrieved_at")
     private Instant retrievedAt;
+
+    @Column(name = "match_algorithm", length = 32)
+    private String matchAlgorithm;
+
+    @Lob
+    @Column(name = "provider_response", columnDefinition = "LONGTEXT")
+    private String providerResponse;
 
     @Column(name = "subject_type", nullable = false, length = 16)
     private String subjectType;
@@ -135,6 +143,17 @@ public class Screening {
         this.idType = idType;
         this.createdAt = now;
         this.updatedAt = now;
+    }
+
+    public void rememberProviderResponse(String body) {
+        this.providerResponse = body == null || body.isBlank() ? null : body;
+    }
+
+    public void useEngine(String engine, String corpusVersion, String matchAlgorithm, Instant retrievedAt) {
+        this.engine = engine;
+        this.corpusVersion = corpusVersion;
+        this.matchAlgorithm = matchAlgorithm;
+        this.retrievedAt = retrievedAt;
     }
 
     public void fail(String reason, Instant now) {

@@ -4,9 +4,19 @@ import { StatusBadge } from "@/brand";
 import { BackLink } from "../../../components/back-link";
 import { getLocale, getT } from "../../../i18n";
 import { consoleApi, type Screening } from "../../../lib/api";
+import { countryLabel } from "../../../lib/countries";
 import { requireMe, sessionCookieHeader } from "../../../lib/session";
 import { formatUtc } from "../../../lib/status";
-import { categoryLabel, dispositionLabel, dispositionTone, outcomeLabel, outcomeTone, reasonLabel } from "./aml-labels";
+import {
+  categoryLabel,
+  dispositionLabel,
+  dispositionTone,
+  featureLabel,
+  featureTone,
+  outcomeLabel,
+  outcomeTone,
+  reasonLabel,
+} from "./aml-labels";
 import { AmlQualifyForm } from "./aml-qualify";
 
 export async function AmlCase({ id }: { id: string }) {
@@ -63,12 +73,15 @@ export async function AmlCase({ id }: { id: string }) {
             <Field label={t("console.verifications.fields.firstName")}>{screening.subject?.first_name || "—"}</Field>
             <Field label={t("console.verifications.fields.lastName")}>{screening.subject?.last_name || "—"}</Field>
             {birth ? <Field label={t("console.product.amlBirth")}>{birth}</Field> : null}
-            <Field label={t("console.product.amlNationality")}>{screening.subject?.nationality || "—"}</Field>
+            <Field label={t("console.product.amlNationality")}>
+              {countryLabel(locale, screening.subject?.nationality) || "—"}
+            </Field>
           </dl>
         </section>
 
         <section className="rm-vcase-card">
           <h2>{t("console.product.amlHitsTitle")}</h2>
+          {hits.length > 0 ? <p className="rm-hint">{t("console.product.amlLeadingHit")}</p> : null}
           {hits.length === 0 ? (
             <p className="rm-vcase-empty">{t("console.product.amlNoHits")}</p>
           ) : (
@@ -93,12 +106,9 @@ export async function AmlCase({ id }: { id: string }) {
 
       {hits.map((hit) => (
         <section key={hit.id} className="rm-vcase-card">
-          <h2>
-            {categoryLabel(t, hit.category)} · {hit.entity_id}
-          </h2>
+          <h2>{categoryLabel(t, hit.category)}</h2>
           <dl className="rm-vcase-list">
             <Field label={t("console.product.amlListed")}>{hit.listed_name || "—"}</Field>
-            <Field label={t("console.product.amlMatched")}>{hit.matched_name || "—"}</Field>
             <Field label={t("console.product.amlOutcome")}>{dispositionLabel(t, hit.disposition)}</Field>
             {hit.reason ? <Field label={t("console.product.amlReason")}>{reasonLabel(t, hit.reason)}</Field> : null}
           </dl>
@@ -108,13 +118,22 @@ export async function AmlCase({ id }: { id: string }) {
             </p>
           ) : null}
           {hit.features && hit.features.length > 0 ? (
-            <p className="rm-hint">{hit.features.join(" · ")}</p>
+            <p className="rm-vcase-features">
+              {hit.features.map((feature) => (
+                <StatusBadge key={feature} label={featureLabel(t, feature)} tone={featureTone(feature)} />
+              ))}
+            </p>
           ) : null}
           {canWrite && hit.disposition === "unreviewed" ? (
             <AmlQualifyForm screeningId={screening.id} hitId={hit.id} />
           ) : null}
         </section>
       ))}
+
+      <section className="rm-vcase-card">
+        <h2>{t("console.product.amlProviderResponse")}</h2>
+        <pre className="rm-vcase-json">{apiResponse(screening)}</pre>
+      </section>
 
       <section className="rm-vcase-card">
         <h2>{t("console.product.amlSessionTitle")}</h2>
@@ -130,6 +149,11 @@ export async function AmlCase({ id }: { id: string }) {
       </section>
     </main>
   );
+}
+
+function apiResponse(screening: Screening): string {
+  const { provider_response: _provider, ...response } = screening;
+  return JSON.stringify(response, null, 2);
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

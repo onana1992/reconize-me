@@ -17,10 +17,14 @@ import com.kyc.enums.HitDisposition;
 import com.kyc.enums.ProductCode;
 import com.kyc.enums.ScreeningOutcome;
 import com.kyc.enums.ScreeningStatus;
+import com.kyc.config.KycProperties;
+import com.kyc.ports.SanctionsMatchPort;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.ScreeningHitRepository;
 import com.kyc.repositories.ScreeningIdempotencyRepository;
 import com.kyc.repositories.ScreeningRepository;
+import com.kyc.services.aml.Aml2;
+import com.kyc.services.aml.Aml2Decider;
 import com.kyc.services.aml.AmlNames;
 import com.kyc.services.aml.AmlPolicy;
 import com.kyc.services.aml.AmlPolicyService;
@@ -28,9 +32,11 @@ import com.kyc.services.aml.DeterministicAmlEngine;
 import com.kyc.services.aml.SubjectParser;
 import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +53,7 @@ public class ScreeningService {
 
     private static final Logger log = LoggerFactory.getLogger(ScreeningService.class);
     private static final TypeReference<List<String>> STRINGS = new TypeReference<>() {};
+    private static final TypeReference<Map<String, BigDecimal>> NUMBERS = new TypeReference<>() {};
     private static final Set<String> FALSE_REASONS =
             Set.of("different_person", "date_of_birth_conflict", "nationality_conflict", "name_only");
     private static final Set<String> TRUE_REASONS = Set.of("same_person", "listed_alias");
@@ -56,7 +63,11 @@ public class ScreeningService {
     private final ScreeningIdempotencyRepository idempotency;
     private final AuditEventRepository auditEvents;
     private final DeterministicAmlEngine engine;
+    private final Aml2Decider decider;
+    private final SanctionsMatchPort sanctions;
     private final AmlPolicyService policies;
+    private final CreditService credits;
+    private final KycProperties properties;
     private final ObjectMapper objectMapper;
 
     public ScreeningService(
@@ -65,14 +76,22 @@ public class ScreeningService {
             ScreeningIdempotencyRepository idempotency,
             AuditEventRepository auditEvents,
             DeterministicAmlEngine engine,
+            Aml2Decider decider,
+            SanctionsMatchPort sanctions,
             AmlPolicyService policies,
+            CreditService credits,
+            KycProperties properties,
             ObjectMapper objectMapper) {
         this.screenings = screenings;
         this.hits = hits;
         this.idempotency = idempotency;
         this.auditEvents = auditEvents;
         this.engine = engine;
+        this.decider = decider;
+        this.sanctions = sanctions;
         this.policies = policies;
+        this.credits = credits;
+        this.properties = properties;
         this.objectMapper = objectMapper;
     }
 
@@ -80,9 +99,7 @@ public class ScreeningService {
     public ResponseEntity<ScreeningResponse> create(
             Integration integration, String actorType, UUID actorId, CreateScreeningRequest request, String idempotencyKey) {
         requireAml(integration);
-        if (integration.isLive()) {
-            throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
-        }
+        requireLiveReady(integration);
         long started = System.nanoTime();
         String bodyHash = CryptoTokens.sha256Hex(write(request));
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
@@ -100,19 +117,26 @@ public class ScreeningService {
         ParsedRequest parsed = parse(request);
         AmlPolicy policy = policies.effective(integration.getOrganizationId());
         Instant now = Instant.now();
-        var result = engine.screen(parsed.input(), policy);
-        Screening screening = persist(integration, parsed, policy, result, now);
+        Screening screening = integration.isLive()
+                ? persistLive(integration, parsed, policy, now)
+                : persist(integration, parsed, policy, engine.screen(parsed.input(), policy), now);
         UUID id = screening.getId();
+        if (integration.isLive() && screening.getStatus() == ScreeningStatus.COMPLETED) {
+            credits.debitForLiveScreening(integration.getOrganizationId(), id, actorId, actorType);
+        }
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             idempotency.save(new ScreeningIdempotencyKey(
                     integration.getOrganizationId(), idempotencyKey, bodyHash, id, now));
         }
         audit(integration.getOrganizationId(), actorType, actorId, "screening.created", id, "{}", now);
+        if (screening.getStatus() == ScreeningStatus.FAILED) {
+            audit(integration.getOrganizationId(), actorType, actorId, "screening.failed", id, "{}", now);
+        }
         log.info(
-                "screening.created id={} outcome={} hits={} duration_ms={}",
+                "screening.created id={} outcome={} failure={} duration_ms={}",
                 id,
-                result.outcome(),
-                result.hits().size(),
+                screening.getOutcome(),
+                screening.getFailureReason(),
                 (System.nanoTime() - started) / 1_000_000);
         return new ResponseEntity<>(toResponse(screening, true), HttpStatus.CREATED);
     }
@@ -208,17 +232,104 @@ public class ScreeningService {
     @Transactional
     public Screening createForVerification(Integration amlIntegration, UUID verificationId, ParsedRequest parsed) {
         requireAml(amlIntegration);
-        if (amlIntegration.isLive()) {
-            throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
-        }
+        requireLiveReady(amlIntegration);
         AmlPolicy policy = policies.effective(amlIntegration.getOrganizationId());
         Instant now = Instant.now();
-        var result = engine.screen(parsed.input(), policy);
         ParsedRequest linked = new ParsedRequest(
                 parsed.input(), parsed.country(), parsed.idType(), parsed.externalId(), verificationId);
-        Screening screening = persist(amlIntegration, linked, policy, result, now);
+        Screening screening = amlIntegration.isLive()
+                ? persistLive(amlIntegration, linked, policy, now)
+                : persist(amlIntegration, linked, policy, engine.screen(parsed.input(), policy), now);
+        if (amlIntegration.isLive() && screening.getStatus() == ScreeningStatus.COMPLETED) {
+            credits.debitForLiveScreening(amlIntegration.getOrganizationId(), screening.getId(), null, "system");
+        }
         audit(amlIntegration.getOrganizationId(), "system", null, "screening.created", screening.getId(), "{}", now);
+        if (screening.getStatus() == ScreeningStatus.FAILED) {
+            audit(amlIntegration.getOrganizationId(), "system", null, "screening.failed", screening.getId(), "{}", now);
+        }
         return screenings.findById(screening.getId()).orElseThrow();
+    }
+
+    private void requireLiveReady(Integration integration) {
+        if (!integration.isLive()) {
+            return;
+        }
+        if (!properties.opensanctions().inService()) {
+            throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
+        }
+        if (!credits.coversUnit(integration.getOrganizationId())) {
+            throw ApiException.forbidden("insufficient_credit", "Live screening requires a credit balance");
+        }
+    }
+
+    private Screening persistLive(Integration integration, ParsedRequest parsed, AmlPolicy policy, Instant now) {
+        SanctionsMatchPort.MatchResult match = sanctions.match(new SanctionsMatchPort.Query(
+                displayName(parsed),
+                parsed.input().dateOfBirth(),
+                parsed.input().nationality(),
+                parsed.country(),
+                parsed.input().idNumber(),
+                policy.reviewThreshold()));
+        Aml2Decider.Result decided = decider.decide(parsed.input(), policy, match);
+        UUID id = UUID.randomUUID();
+        Screening screening = new Screening(
+                id,
+                integration.getOrganizationId(),
+                integration.getId(),
+                parsed.externalId(),
+                parsed.verificationId(),
+                decided.outcome(),
+                policy.version(),
+                normalized(parsed),
+                parsed.input().firstName(),
+                parsed.input().lastName(),
+                parsed.input().middleName(),
+                parsed.input().dateOfBirth(),
+                parsed.input().nationality(),
+                parsed.country(),
+                parsed.input().idNumber(),
+                parsed.idType(),
+                now);
+        screening.useEngine(Aml2.ENGINE, Aml2.CORPUS, Aml2.ALGORITHM, match instanceof SanctionsMatchPort.MatchResult.Ok ? now : null);
+        screening.rememberProviderResponse(match.providerResponse());
+        if (decided.status() == ScreeningStatus.FAILED) {
+            screening.fail(decided.failureReason(), now);
+        }
+        screenings.save(screening);
+        if (decided.status() == ScreeningStatus.COMPLETED) {
+            for (Aml2Decider.Hit scored : decided.hits()) {
+                ScreeningHit hit = new ScreeningHit(
+                        UUID.randomUUID(),
+                        id,
+                        scored.entityId(),
+                        scored.category(),
+                        join(scored.categories()),
+                        scored.score(),
+                        clip(scored.matchedName(), 256),
+                        clip(scored.listedName(), 256),
+                        write(scored.aliases()),
+                        write(scored.birthDates()),
+                        write(scored.countries()),
+                        write(scored.datasets()),
+                        write(scored.features()));
+                hit.replaceProviderFeatures(write(scored.providerFeatures()));
+                remember(hit, screening);
+                hits.save(hit);
+            }
+        }
+        return screening;
+    }
+
+    private static String displayName(ParsedRequest parsed) {
+        return String.join(
+                        " ",
+                        java.util.Arrays.stream(new String[] {
+                                    parsed.input().firstName(), parsed.input().middleName(), parsed.input().lastName()
+                                })
+                                .filter(part -> part != null && !part.isBlank())
+                                .map(String::trim)
+                                .toList())
+                .replaceAll(" +", " ");
     }
 
     private Screening persist(
@@ -354,7 +465,8 @@ public class ScreeningService {
                 hitItems,
                 stored.size(),
                 screening.getCreatedAt(),
-                screening.getUpdatedAt());
+                screening.getUpdatedAt(),
+                detail ? screening.getProviderResponse() : null);
     }
 
     private ScreeningResponse.Hit hit(ScreeningHit row) {
@@ -371,6 +483,7 @@ public class ScreeningService {
                 readStrings(row.getCountriesJson()),
                 readStrings(row.getDatasetsJson()),
                 readStrings(row.getFeaturesJson()),
+                readNumbers(row.getProviderFeaturesJson()),
                 row.getDisposition().name().toLowerCase(Locale.ROOT),
                 row.getDispositionReason(),
                 row.getPriorDisposition() == null ? null : row.getPriorDisposition().name().toLowerCase(Locale.ROOT),
@@ -432,6 +545,17 @@ public class ScreeningService {
             return objectMapper.writeValueAsString(value == null ? List.of() : value);
         } catch (JsonProcessingException ex) {
             return "[]";
+        }
+    }
+
+    private Map<String, BigDecimal> readNumbers(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, NUMBERS);
+        } catch (JsonProcessingException ex) {
+            return Map.of();
         }
     }
 
@@ -506,6 +630,14 @@ public class ScreeningService {
         if (key.length() < 8 || key.length() > 64 || !key.chars().allMatch(ch -> ch >= 32 && ch <= 126)) {
             throw ApiException.validation("Invalid Idempotency-Key", List.of(new ErrorDetail("Idempotency-Key", "invalid")));
         }
+    }
+
+    private static String clip(String value, int max) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String trimmed = value.trim();
+        return trimmed.length() <= max ? trimmed : trimmed.substring(0, max);
     }
 
     private static String blank(String value) {

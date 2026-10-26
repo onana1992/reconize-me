@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,7 +25,8 @@ public record ScreeningResponse(
         List<Hit> hits,
         @JsonProperty("hit_count") int hitCount,
         @JsonProperty("created_at") Instant createdAt,
-        @JsonProperty("updated_at") Instant updatedAt) {
+        @JsonProperty("updated_at") Instant updatedAt,
+        @JsonProperty("provider_response") String providerResponse) {
 
     public record Subject(
             String type,
@@ -50,6 +52,7 @@ public record ScreeningResponse(
             List<String> countries,
             List<String> datasets,
             List<String> features,
+            @JsonProperty("provider_features") Map<String, BigDecimal> providerFeatures,
             String disposition,
             String reason,
             @JsonProperty("prior_disposition") String priorDisposition,

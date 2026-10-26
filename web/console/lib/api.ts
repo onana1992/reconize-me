@@ -299,6 +299,7 @@ export type Screening = {
   } | null;
   created_at: string;
   updated_at?: string | null;
+  provider_response?: string | null;
 };
 
 export type ScreeningList = {

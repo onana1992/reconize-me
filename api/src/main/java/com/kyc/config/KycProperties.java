@@ -19,7 +19,8 @@ public record KycProperties(
         @DefaultValue Billing billing,
         @DefaultValue Stripe stripe,
         @DefaultValue Aws aws,
-        @DefaultValue DocumentIa documentIa) {
+        @DefaultValue DocumentIa documentIa,
+        @DefaultValue OpenSanctions opensanctions) {
 
     public record Mail(
             @DefaultValue("log") String mode,
@@ -83,6 +84,13 @@ public record KycProperties(
     }
 
     public record DocumentIa(@DefaultValue("false") boolean labEnabled) {}
+
+    public record OpenSanctions(@DefaultValue("false") boolean enabled, @DefaultValue("") String apiKey) {
+
+        public boolean inService() {
+            return enabled && apiKey != null && !apiKey.isBlank();
+        }
+    }
 
     public String consoleUrl(String path) {
         return join(publicConsoleBaseUrl, path);

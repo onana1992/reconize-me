@@ -190,7 +190,7 @@ export function AmlPolicyForm({
             {versions.length === 0 ? (
               <p className="rm-rules-empty">{t("console.rules.historyEmpty")}</p>
             ) : (
-              <ol className="rm-rules-history">
+              <ol className="rm-rules-history rm-rules-history-named">
                 {versions.map((item) => (
                   <li key={item.version}>
                     <span className="rm-rules-history-version">{item.version}</span>

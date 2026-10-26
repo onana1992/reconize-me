@@ -72,7 +72,8 @@ class ObjectStorageHmacTest {
                         new KycProperties.Aws.S3(false, "", "", "", "", ""),
                         new KycProperties.Aws.Textract("", "", ""),
                         new KycProperties.Aws.Rekognition("", "", "")),
-                new KycProperties.DocumentIa(false));
+                new KycProperties.DocumentIa(false),
+                new KycProperties.OpenSanctions(false, ""));
     }
 
     private static String value(String query, String name) {

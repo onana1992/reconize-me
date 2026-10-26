@@ -1,5 +1,6 @@
 package com.kyc.services;
 
+import com.kyc.config.KycProperties;
 import com.kyc.dto.account.IssuedApiKeyResponse;
 import com.kyc.dto.console.ApiKeyListItem;
 import com.kyc.dto.console.IntegrationListItem;
@@ -32,18 +33,21 @@ public class IntegrationService {
     private final AuditEventRepository auditEvents;
     private final ApiKeyIssuer apiKeyIssuer;
     private final CreditService credits;
+    private final KycProperties properties;
 
     public IntegrationService(
             IntegrationRepository integrations,
             ApiKeyRepository apiKeys,
             AuditEventRepository auditEvents,
             ApiKeyIssuer apiKeyIssuer,
-            CreditService credits) {
+            CreditService credits,
+            KycProperties properties) {
         this.integrations = integrations;
         this.apiKeys = apiKeys;
         this.auditEvents = auditEvents;
         this.apiKeyIssuer = apiKeyIssuer;
         this.credits = credits;
+        this.properties = properties;
     }
 
     @Transactional
@@ -86,7 +90,9 @@ public class IntegrationService {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
         ProductCode productCode = normalizeProduct(product);
         IntegrationMode normalized = normalizeMode(mode);
-        if (productCode == ProductCode.AML && normalized == IntegrationMode.LIVE) {
+        if (productCode == ProductCode.AML
+                && normalized == IntegrationMode.LIVE
+                && !properties.opensanctions().inService()) {
             throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
         }
         if (normalized == IntegrationMode.LIVE) {

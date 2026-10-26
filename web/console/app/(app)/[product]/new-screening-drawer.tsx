@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
+import { CountrySelect } from "../../../components/country-select";
 import { RequiredMark } from "../../../components/required-mark";
 import { useT } from "../../../i18n/client";
 import { tIntegrationMode } from "../../../lib/environment";
@@ -67,20 +69,22 @@ export function NewScreeningDrawer({
   const formRef = useRef<HTMLFormElement>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditBlocked, setCreditBlocked] = useState(false);
   const [pending, setPending] = useState(false);
   const initialId = defaultIntegrationId ?? integrations[0]?.id ?? "";
   const [selectedId, setSelectedId] = useState(initialId);
   const [personId, setPersonId] = useState<SandboxPerson["id"]>(SANDBOX_PEOPLE[0].id);
-  const [firstName, setFirstName] = useState(SANDBOX_PEOPLE[0].first);
-  const [lastName, setLastName] = useState(SANDBOX_PEOPLE[0].last);
-  const [birth, setBirth] = useState(SANDBOX_PEOPLE[0].dob);
-  const [nationality, setNationality] = useState(SANDBOX_PEOPLE[0].nationality);
+  const [firstName, setFirstName] = useState<string>(SANDBOX_PEOPLE[0].first);
+  const [lastName, setLastName] = useState<string>(SANDBOX_PEOPLE[0].last);
+  const [birth, setBirth] = useState<string>(SANDBOX_PEOPLE[0].dob);
+  const [nationality, setNationality] = useState<string>(SANDBOX_PEOPLE[0].nationality);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const selected = integrations.find((item) => item.id === selectedId) ?? integrations[0];
+  const live = selected?.mode === "live";
 
   function applyPerson(person: SandboxPerson) {
     setPersonId(person.id);
@@ -90,11 +94,25 @@ export function NewScreeningDrawer({
     setNationality(person.nationality);
   }
 
+  function applyMode(mode: string | undefined) {
+    if (mode === "live") {
+      setPersonId(SANDBOX_PEOPLE[0].id);
+      setFirstName("");
+      setLastName("");
+      setBirth("");
+      setNationality("");
+      return;
+    }
+    applyPerson(SANDBOX_PEOPLE[0]);
+  }
+
   function openDrawer() {
     setError(null);
+    setCreditBlocked(false);
     setPending(false);
-    setSelectedId(defaultIntegrationId ?? integrations[0]?.id ?? "");
-    applyPerson(SANDBOX_PEOPLE[0]);
+    const nextId = defaultIntegrationId ?? integrations[0]?.id ?? "";
+    setSelectedId(nextId);
+    applyMode(integrations.find((item) => item.id === nextId)?.mode ?? integrations[0]?.mode);
     dialogRef.current?.showModal();
     window.requestAnimationFrame(() => {
       formRef.current?.querySelector<HTMLInputElement>("input[name='first_name']")?.focus();
@@ -127,10 +145,18 @@ export function NewScreeningDrawer({
     event.preventDefault();
     setPending(true);
     setError(null);
+    setCreditBlocked(false);
     try {
       const result = await createScreeningAction(new FormData(event.currentTarget));
       if (!result.ok) {
-        setError(result.code === "forbidden" ? t("console.product.sessionsLocked") : t("console.product.amlCreateError"));
+        setCreditBlocked(result.code === "insufficient_credit");
+        setError(
+          result.code === "insufficient_credit"
+            ? t("console.verifications.insufficientCredit")
+            : result.code === "forbidden"
+              ? t("console.product.sessionsLocked")
+              : t("console.product.amlCreateError"),
+        );
         return;
       }
       closeDrawer();
@@ -148,6 +174,7 @@ export function NewScreeningDrawer({
       onPointerDown={onBackdropPointerDown}
       onClose={() => {
         setError(null);
+        setCreditBlocked(false);
         setPending(false);
       }}
     >
@@ -155,7 +182,7 @@ export function NewScreeningDrawer({
         <div>
           <p className="rm-drawer-kicker">{t("console.nav.aml")}</p>
           <h2 id="create-screening-title">{t("console.product.newVerification")}</h2>
-          <p className="rm-lead">{t("console.product.amlCreateLead")}</p>
+          <p className="rm-lead">{live ? t("console.product.amlCreateLeadLive") : t("console.product.amlCreateLead")}</p>
         </div>
         <button type="button" className="rm-dialog-close" aria-label={t("common.close")} onClick={closeDrawer}>
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -175,6 +202,12 @@ export function NewScreeningDrawer({
           {error ? (
             <p role="alert" className="rm-alert">
               {error}
+              {creditBlocked ? (
+                <>
+                  {" "}
+                  <Link href="/settings/billing">{t("console.nav.billing")}</Link>
+                </>
+              ) : null}
             </p>
           ) : null}
           {integrations.length > 1 ? (
@@ -188,7 +221,11 @@ export function NewScreeningDrawer({
                   disabled={pending}
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => event.stopPropagation()}
-                  onChange={(event) => setSelectedId(event.target.value)}
+                  onChange={(event) => {
+                    const nextId = event.target.value;
+                    setSelectedId(nextId);
+                    applyMode(integrations.find((item) => item.id === nextId)?.mode);
+                  }}
                 >
                   {integrations.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -199,30 +236,33 @@ export function NewScreeningDrawer({
               </label>
             </section>
           ) : null}
-          <fieldset className="rm-drawer-section" disabled={pending}>
-            <legend className="rm-drawer-section-title">{t("console.verifications.scenario")}</legend>
-            <p className="rm-hint">{t("console.product.amlScenarioHint")}</p>
-            <div className="rm-choice-list">
-              {SANDBOX_PEOPLE.map((person) => (
-                <label key={person.id} className="rm-choice">
-                  <input
-                    type="radio"
-                    name="sandbox_person"
-                    value={person.id}
-                    checked={personId === person.id}
-                    onChange={() => applyPerson(person)}
-                  />
-                  <span>
-                    {person.first} {person.last}
-                    {" · "}
-                    {t(person.scenario)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          {live ? null : (
+            <fieldset className="rm-drawer-section" disabled={pending}>
+              <legend className="rm-drawer-section-title">{t("console.verifications.scenario")}</legend>
+              <p className="rm-hint">{t("console.product.amlScenarioHint")}</p>
+              <div className="rm-choice-list">
+                {SANDBOX_PEOPLE.map((person) => (
+                  <label key={person.id} className="rm-choice">
+                    <input
+                      type="radio"
+                      name="sandbox_person"
+                      value={person.id}
+                      checked={personId === person.id}
+                      onChange={() => applyPerson(person)}
+                    />
+                    <span>
+                      {person.first} {person.last}
+                      {" · "}
+                      {t(person.scenario)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
           <section className="rm-drawer-section">
             <h3 className="rm-drawer-section-title">{t("console.product.amlSubject")}</h3>
+            {live ? <p className="rm-hint">{t("console.product.amlLiveSubjectHint")}</p> : null}
             <div className="rm-drawer-row">
               <label>
                 {t("console.verifications.firstName")}
@@ -264,16 +304,7 @@ export function NewScreeningDrawer({
               </label>
               <label>
                 {t("console.product.amlNationality")}
-                <input
-                  name="nationality"
-                  type="text"
-                  maxLength={2}
-                  autoCapitalize="characters"
-                  disabled={pending}
-                  placeholder="FR"
-                  value={nationality}
-                  onChange={(event) => setNationality(event.target.value.toUpperCase())}
-                />
+                <CountrySelect name="nationality" value={nationality} disabled={pending} onChange={setNationality} />
               </label>
             </div>
           </section>

@@ -3,14 +3,18 @@ package com.kyc.services.aml;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kyc.config.KycProperties;
 import com.kyc.entities.Integration;
+import com.kyc.entities.Screening;
 import com.kyc.entities.Verification;
 import com.kyc.enums.AmlOnMatch;
 import com.kyc.enums.ProductCode;
 import com.kyc.enums.ScreeningOutcome;
+import com.kyc.enums.ScreeningStatus;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.services.ScreeningService;
+import com.kyc.web.ApiException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,16 +31,19 @@ public class AmlAttachmentService {
     private final ScreeningService screenings;
     private final IntegrationRepository integrations;
     private final ObjectMapper objectMapper;
+    private final KycProperties properties;
 
     public AmlAttachmentService(
             AmlPolicyService policies,
             ScreeningService screenings,
             IntegrationRepository integrations,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            KycProperties properties) {
         this.policies = policies;
         this.screenings = screenings;
         this.integrations = integrations;
         this.objectMapper = objectMapper;
+        this.properties = properties;
     }
 
     public void attach(Verification verification, Integration identity, Instant now) {
@@ -44,21 +51,24 @@ public class AmlAttachmentService {
         if (!policy.attachToIdentity()) {
             return;
         }
-        if (identity.isLive()) {
+        boolean live = identity.isLive();
+        if (live && !properties.opensanctions().inService()) {
             unavailable(verification, now);
             return;
         }
-        if (policy.onMatch() != AmlOnMatch.IGNORE && policy.testIntegrationId() == null) {
+        java.util.UUID integrationId = live ? policy.liveIntegrationId() : policy.testIntegrationId();
+        if (policy.onMatch() != AmlOnMatch.IGNORE && integrationId == null) {
             unavailable(verification, now);
             return;
         }
-        if (policy.testIntegrationId() == null) {
+        if (integrationId == null) {
             return;
         }
         Integration aml = integrations
-                .findByIdAndOrganizationId(policy.testIntegrationId(), verification.getOrganizationId())
+                .findByIdAndOrganizationId(integrationId, verification.getOrganizationId())
                 .orElse(null);
-        if (aml == null || aml.getProduct() != ProductCode.AML || aml.isLive()) {
+        boolean wrongMode = aml != null && aml.isLive() != live;
+        if (aml == null || aml.getProduct() != ProductCode.AML || wrongMode) {
             if (policy.onMatch() != AmlOnMatch.IGNORE) {
                 unavailable(verification, now);
             }
@@ -92,7 +102,27 @@ public class AmlAttachmentService {
             }
             return;
         }
-        var screening = screenings.createForVerification(aml, verification.getId(), parsed);
+        Screening screening;
+        try {
+            screening = screenings.createForVerification(aml, verification.getId(), parsed);
+        } catch (ApiException ex) {
+            if (policy.onMatch() != AmlOnMatch.IGNORE) {
+                unavailable(verification, now);
+            }
+            return;
+        }
+        if (screening.getStatus() != ScreeningStatus.COMPLETED) {
+            if (policy.onMatch() == AmlOnMatch.IGNORE) {
+                verification.linkAml(screening.getId(), null, null, now);
+                return;
+            }
+            verification.linkAml(
+                    screening.getId(),
+                    VerificationDecision.REVIEW,
+                    write(append(verification.getDecisionReasons(), "aml_unavailable")),
+                    now);
+            return;
+        }
         if (policy.onMatch() == AmlOnMatch.IGNORE || screening.getOutcome() == ScreeningOutcome.CLEAR) {
             verification.linkAml(screening.getId(), null, null, now);
             return;

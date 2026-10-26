@@ -87,6 +87,88 @@ class Aml2DeciderTest {
     }
 
     @Test
+    void aliasCanCarryTheExactName() {
+        var result = decider.decide(ivan(), policy, new SanctionsMatchPort.MatchResult.Ok(List.of(person(
+                "os-alias",
+                "1.000",
+                List.of("sanction"),
+                List.of("Someone Else", "Ivan Sanctionexample"),
+                List.of("1971-04-12"),
+                List.of(),
+                List.of()))));
+        assertEquals(ScreeningOutcome.CONFIRMED_MATCH, result.outcome());
+        assertTrue(result.hits().get(0).features().contains("name_exact"));
+    }
+
+    @Test
+    void categoryFilterDropsNonTargetsAndTheHighestScoreDecides() {
+        var noise = new SanctionsMatchPort.Candidate(
+                "ru-inn-1",
+                new BigDecimal("0.733"),
+                "Person",
+                false,
+                List.of(),
+                List.of("ВЛАДИМИР АЛЕКСАНДРОВИЧ ПУЛИН"),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of("ext_ru_egrul"),
+                java.util.Map.of());
+        var company = new SanctionsMatchPort.Candidate(
+                "co-1",
+                new BigDecimal("0.990"),
+                "Company",
+                true,
+                List.of("sanction"),
+                List.of("Ivan Sanctionexample"),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of("opensanctions"),
+                java.util.Map.of());
+        var pep = person(
+                "os-pep",
+                "0.990",
+                List.of("role.pep"),
+                List.of("Nora Potentialexample"),
+                List.of("1982-11-03"),
+                List.of("FR"),
+                List.of());
+        var sanction = person(
+                "os-sanction",
+                "0.960",
+                List.of("sanction"),
+                List.of("Ivan Sanctionexample"),
+                List.of("1971-04-12"),
+                List.of(),
+                List.of("X1234567"));
+        var result = decider.decide(ivan(), policy, new SanctionsMatchPort.MatchResult.Ok(List.of(noise, company, pep, sanction)));
+        assertEquals(ScreeningOutcome.POTENTIAL_MATCH, result.outcome());
+        assertEquals(2, result.hits().size());
+        assertEquals("os-pep", result.hits().get(0).entityId());
+        assertEquals(AmlCategory.PEP, result.hits().get(0).category());
+    }
+
+    @Test
+    void enabledSanctionCategoryKeepsANonTargetPerson() {
+        var listed = new SanctionsMatchPort.Candidate(
+                "os-listed",
+                new BigDecimal("1.000"),
+                "Person",
+                false,
+                List.of("sanction"),
+                List.of("Ivan Sanctionexample"),
+                List.of("1971-04-12"),
+                List.of(),
+                List.of("X1234567"),
+                List.of("opensanctions"),
+                java.util.Map.of());
+        var result = decider.decide(ivan(), policy, new SanctionsMatchPort.MatchResult.Ok(List.of(listed)));
+        assertEquals(ScreeningOutcome.CONFIRMED_MATCH, result.outcome());
+        assertEquals("os-listed", result.hits().get(0).entityId());
+    }
+
+    @Test
     void missingIdOrScoreAboveThresholdFails() {
         var missingId = decider.decide(ivan(), policy, new SanctionsMatchPort.MatchResult.Ok(List.of(person(
                 " ",
@@ -108,7 +190,8 @@ class Aml2DeciderTest {
                 List.of("1971-04-12"),
                 List.of(),
                 List.of(),
-                List.of("sanctions")))));
+                List.of("sanctions"),
+                java.util.Map.of()))));
         assertEquals(ScreeningStatus.FAILED, missingScore.status());
         assertNull(missingScore.outcome());
     }
@@ -139,6 +222,7 @@ class Aml2DeciderTest {
                 births,
                 nationalities,
                 ids,
-                List.of("opensanctions"));
+                List.of("opensanctions"),
+                java.util.Map.of());
     }
 }

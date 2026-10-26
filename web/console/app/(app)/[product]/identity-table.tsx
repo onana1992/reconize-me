@@ -53,7 +53,7 @@ export function IdentityTable({
           integrationLabel,
           whenLabel: formatUtc(item.created_at, locale),
           statusLabel: tVerificationStatus(t, item.status),
-          idLabel: item.id.slice(0, 8),
+          idLabel: item.id,
         };
       }),
     [integrationNames, items, locale, t],

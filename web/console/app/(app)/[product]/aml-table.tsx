@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { StatusBadge } from "@/brand";
 import { useLocale, useT } from "../../../i18n/client";
 import type { Screening } from "../../../lib/api";
+import { integrationModeTone, tIntegrationMode } from "../../../lib/environment";
 import { formatUtc } from "../../../lib/status";
 import { listScreeningsAction } from "./aml-actions";
 import { outcomeLabel, outcomeTone } from "./aml-labels";
@@ -15,9 +16,13 @@ const OUTCOMES = ["clear", "potential_match", "confirmed_match", "failed"] as co
 export function AmlTable({
   initialItems,
   initialCursor,
+  integrationNames = {},
+  integrationModes = {},
 }: {
   initialItems: Screening[];
   initialCursor: string | null;
+  integrationNames?: Record<string, string>;
+  integrationModes?: Record<string, string>;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -29,6 +34,7 @@ export function AmlTable({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(10);
   const [subjectFilter, setSubjectFilter] = useState("");
+  const [integrationFilter, setIntegrationFilter] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState("");
   const [whenFilter, setWhenFilter] = useState("");
   const [idFilter, setIdFilter] = useState("");
@@ -38,24 +44,33 @@ export function AmlTable({
       items.map((item) => {
         const subject = personName(item) || t("console.verifications.untitled");
         const outcome = item.status === "failed" ? "failed" : item.outcome ?? item.status;
+        const integrationId = item.integration_id ?? "";
+        const integrationLabel = (integrationId && integrationNames[integrationId]) || "—";
+        const integrationMode = integrationId ? integrationModes[integrationId] : undefined;
         return {
           item,
           subject,
+          integrationLabel,
+          integrationMode,
           outcome,
           outcomeLabel: outcomeLabel(t, outcome),
           whenLabel: formatUtc(item.created_at, locale),
-          idLabel: item.id.slice(0, 8),
+          idLabel: item.id,
         };
       }),
-    [items, locale, t],
+    [integrationModes, integrationNames, items, locale, t],
   );
 
   const filtered = useMemo(() => {
     const subject = subjectFilter.trim().toLowerCase();
+    const integration = integrationFilter.trim().toLowerCase();
     const when = whenFilter.trim().toLowerCase();
     const id = idFilter.trim().toLowerCase();
     return rows.filter((row) => {
       if (subject && !row.subject.toLowerCase().includes(subject)) {
+        return false;
+      }
+      if (integration && !row.integrationLabel.toLowerCase().includes(integration)) {
         return false;
       }
       if (outcomeFilter && row.outcome !== outcomeFilter) {
@@ -69,14 +84,14 @@ export function AmlTable({
       }
       return true;
     });
-  }, [idFilter, outcomeFilter, rows, subjectFilter, whenFilter]);
+  }, [idFilter, integrationFilter, outcomeFilter, rows, subjectFilter, whenFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const from = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const to = Math.min(currentPage * pageSize, filtered.length);
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const filtersActive = Boolean(subjectFilter || outcomeFilter || whenFilter || idFilter);
+  const filtersActive = Boolean(subjectFilter || integrationFilter || outcomeFilter || whenFilter || idFilter);
 
   function openRow(id: string) {
     router.push(`/aml/verifications/${id}`);
@@ -100,6 +115,7 @@ export function AmlTable({
 
   function clearFilters() {
     setSubjectFilter("");
+    setIntegrationFilter("");
     setOutcomeFilter("");
     setWhenFilter("");
     setIdFilter("");
@@ -118,6 +134,7 @@ export function AmlTable({
           <thead>
             <tr>
               <th>{t("console.product.amlSubject")}</th>
+              <th>{t("console.verifications.integration")}</th>
               <th>{t("console.product.amlOutcome")}</th>
               <th>{t("console.product.amlHits")}</th>
               <th>{t("console.verifications.createdAt")}</th>
@@ -134,6 +151,18 @@ export function AmlTable({
                   }}
                   aria-label={t("console.product.amlFilterSubject")}
                   placeholder={t("console.product.amlFilterSubject")}
+                />
+              </th>
+              <th>
+                <input
+                  type="search"
+                  value={integrationFilter}
+                  onChange={(event) => {
+                    setIntegrationFilter(event.target.value);
+                    setPage(1);
+                  }}
+                  aria-label={t("console.verifications.integration")}
+                  placeholder={t("console.verifications.integration")}
                 />
               </th>
               <th>
@@ -183,7 +212,7 @@ export function AmlTable({
           <tbody>
             {pageRows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="rm-rich-table-empty">
+                <td colSpan={6} className="rm-rich-table-empty">
                   {items.length === 0 ? t("console.product.amlEmpty") : t("console.verifications.emptyFiltered")}
                 </td>
               </tr>
@@ -193,7 +222,7 @@ export function AmlTable({
                   key={row.item.id}
                   className="rm-table-row"
                   tabIndex={0}
-                  aria-label={`${row.subject}, ${row.outcomeLabel}, ${row.whenLabel}`}
+                  aria-label={`${row.subject}, ${row.integrationLabel}, ${row.outcomeLabel}, ${row.whenLabel}`}
                   onClick={() => openRow(row.item.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -203,6 +232,17 @@ export function AmlTable({
                   }}
                 >
                   <td>{row.subject}</td>
+                  <td>
+                    <span className="rm-int-cell">
+                      {row.integrationLabel}
+                      {row.integrationMode ? (
+                        <StatusBadge
+                          label={tIntegrationMode(t, row.integrationMode)}
+                          tone={integrationModeTone(row.integrationMode)}
+                        />
+                      ) : null}
+                    </span>
+                  </td>
                   <td>
                     <StatusBadge label={row.outcomeLabel} tone={outcomeTone(row.outcome)} />
                   </td>

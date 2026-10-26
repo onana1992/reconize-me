@@ -15,7 +15,10 @@ export async function AmlOverview({ canRead, canWrite }: { canRead: boolean; can
         consoleApi<IntegrationListItem[]>("/v1/console/integrations", cookie),
       ])
     : [null, null];
-  const integrationItems = (integrations?.ok ? integrations.data : []).filter((item) => item.product === "aml");
+  const catalog = integrations?.ok ? integrations.data : [];
+  const integrationItems = catalog.filter((item) => item.product === "aml");
+  const integrationNames = Object.fromEntries(catalog.map((item) => [item.id, item.name]));
+  const integrationModes = Object.fromEntries(catalog.map((item) => [item.id, item.mode]));
 
   return (
     <main className="rm-idv">
@@ -48,7 +51,12 @@ export async function AmlOverview({ canRead, canWrite }: { canRead: boolean; can
           <p className="rm-idv-empty-title">{t("console.verifications.loadError")}</p>
         </div>
       ) : list?.ok ? (
-        <AmlTable initialItems={list.data.data} initialCursor={list.data.next_cursor ?? null} />
+        <AmlTable
+          initialItems={list.data.data}
+          initialCursor={list.data.next_cursor ?? null}
+          integrationNames={integrationNames}
+          integrationModes={integrationModes}
+        />
       ) : null}
     </main>
   );

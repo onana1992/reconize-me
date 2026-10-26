@@ -143,12 +143,12 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
               <span>{t("console.integrations.mode")}</span>
               <select name="mode" defaultValue="test">
                 <option value="test">{t("console.integrations.modeTest")}</option>
-                <option value="live" disabled={product === "aml" || !liveUnlocked}>
+                <option value="live" disabled={!liveUnlocked}>
                   {t("console.integrations.modeLive")}
                 </option>
               </select>
             </label>
-            {product === "aml" || liveUnlocked ? null : (
+            {liveUnlocked ? null : (
               <p className="rm-hint">
                 {t("console.integrations.liveLocked")}{" "}
                 <Link href="/settings/billing">{t("console.nav.billing")}</Link>

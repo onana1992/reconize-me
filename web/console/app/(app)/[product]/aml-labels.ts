@@ -36,6 +36,28 @@ export function dispositionTone(value: string): "success" | "danger" | "neutral"
   return "neutral";
 }
 
+export function featureLabel(t: Translate, feature: string): string {
+  if (feature === "name_exact") return t("console.product.amlFeatureNameExact");
+  if (feature === "name_partial") return t("console.product.amlFeatureNamePartial");
+  if (feature === "birth_date_exact") return t("console.product.amlFeatureBirthExact");
+  if (feature === "birth_date_partial") return t("console.product.amlFeatureBirthPartial");
+  if (feature === "birth_year_match") return t("console.product.amlFeatureBirthYear");
+  if (feature === "birth_year_mismatch") return t("console.product.amlFeatureBirthYearMismatch");
+  if (feature === "birth_date_absent") return t("console.product.amlFeatureBirthAbsent");
+  if (feature === "nationality_match") return t("console.product.amlFeatureNationalityMatch");
+  if (feature === "nationality_mismatch") return t("console.product.amlFeatureNationalityMismatch");
+  if (feature === "id_number_exact") return t("console.product.amlFeatureIdExact");
+  if (feature === "id_number_mismatch") return t("console.product.amlFeatureIdMismatch");
+  return feature;
+}
+
+export function featureTone(feature: string): "success" | "warning" | "danger" | "neutral" {
+  if (feature.endsWith("_exact") || feature.endsWith("_match")) return "success";
+  if (feature.endsWith("_partial")) return "warning";
+  if (feature.endsWith("_mismatch")) return "danger";
+  return "neutral";
+}
+
 export function reasonLabel(t: Translate, reason: string): string {
   if (reason === "different_person") return t("console.product.amlReasonDifferent");
   if (reason === "date_of_birth_conflict") return t("console.product.amlReasonDob");

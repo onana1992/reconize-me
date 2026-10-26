@@ -49,6 +49,11 @@ public class DeterministicAmlEngine {
         return new EngineResult(outcome, List.copyOf(scored));
     }
 
+    public NameScore scoreName(SubjectInput subject, String listedName) {
+        Variant variant = scoreVariant(subject.queryName(), AmlNames.normalize(listedName));
+        return new NameScore(variant.matchedName(), variant.nameScore());
+    }
+
     public List<String> features(
             SubjectInput subject, String listedName, String birth, String nationality, String idNumber) {
         Variant best = scoreVariant(subject.queryName(), AmlNames.normalize(listedName));
@@ -201,6 +206,8 @@ public class DeterministicAmlEngine {
             return AmlNames.queryName(firstName, middleName, lastName);
         }
     }
+
+    public record NameScore(String matchedName, BigDecimal score) {}
 
     public record EngineResult(ScreeningOutcome outcome, List<ScoredHit> hits) {}
 

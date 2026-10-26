@@ -27,11 +27,22 @@ public interface SanctionsMatchPort {
             List<String> birthDates,
             List<String> nationalities,
             List<String> idNumbers,
-            List<String> datasets) {}
+            List<String> datasets,
+            Map<String, BigDecimal> providerFeatures) {}
 
     sealed interface MatchResult {
-        record Ok(List<Candidate> candidates) implements MatchResult {}
+        String providerResponse();
 
-        record Failed(String reason) implements MatchResult {}
+        record Ok(List<Candidate> candidates, String providerResponse) implements MatchResult {
+            public Ok(List<Candidate> candidates) {
+                this(candidates, null);
+            }
+        }
+
+        record Failed(String reason, String providerResponse) implements MatchResult {
+            public Failed(String reason) {
+                this(reason, null);
+            }
+        }
     }
 }
