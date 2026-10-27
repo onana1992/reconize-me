@@ -76,7 +76,7 @@ public class ConsoleAmlPolicyController {
         return ResponseEntity.status(201).body(response(AmlPolicyService.toPolicy(saved), true, saved));
     }
 
-    private static AmlPolicyResponse response(AmlPolicy policy, boolean published, AmlPolicyEntity row) {
+    private AmlPolicyResponse response(AmlPolicy policy, boolean published, AmlPolicyEntity row) {
         return new AmlPolicyResponse(
                 policy.version(),
                 policy.reviewThreshold(),
@@ -87,6 +87,8 @@ public class ConsoleAmlPolicyController {
                 policy.testIntegrationId(),
                 policy.liveIntegrationId(),
                 published,
-                row == null ? null : row.getPublishedAt());
+                row != null && row.isActive(),
+                row == null ? null : row.getPublishedAt(),
+                row == null ? null : policies.publisherName(row.getPublishedBy()));
     }
 }

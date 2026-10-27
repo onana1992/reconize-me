@@ -248,6 +248,10 @@ export type IdvPolicy = {
     max_liveness_attempts: number;
     consent_text_version: string;
   };
+  screening: {
+    enabled: boolean;
+    on_match: "ignore" | "review" | "block";
+  };
   bounds: {
     ocr_review_at: number[];
     liveness_pass_at: number[];
@@ -317,7 +321,9 @@ export type AmlPolicy = {
   test_integration_id?: string | null;
   live_integration_id?: string | null;
   published: boolean;
+  active?: boolean;
   published_at?: string | null;
+  published_by_name?: string | null;
 };
 
 export type AmlPolicyVersions = {
@@ -335,6 +341,19 @@ export type Verification = {
   metadata?: Record<string, unknown> | null;
   decision?: string | null;
   decision_reasons?: string[] | null;
+  aml_screening_id?: string | null;
+  screening?: {
+    status: string;
+    outcome?: string | null;
+    failure_reason?: string | null;
+    hits?: {
+      category: string;
+      score: number;
+      listed_name?: string | null;
+      matched_name?: string | null;
+      features?: string[] | null;
+    }[] | null;
+  } | null;
   rules_version?: string | null;
   policy_version?: number | null;
   signals?: { code: string; outcome: string; score?: number | null }[] | null;

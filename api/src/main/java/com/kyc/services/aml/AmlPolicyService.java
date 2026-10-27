@@ -3,6 +3,7 @@ package com.kyc.services.aml;
 import com.kyc.entities.AmlPolicyEntity;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Integration;
+import com.kyc.entities.User;
 import com.kyc.enums.AmlCategory;
 import com.kyc.enums.AmlOnMatch;
 import com.kyc.enums.IntegrationMode;
@@ -10,6 +11,7 @@ import com.kyc.enums.ProductCode;
 import com.kyc.repositories.AmlPolicyRepository;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IntegrationRepository;
+import com.kyc.repositories.UserRepository;
 import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
 import java.math.BigDecimal;
@@ -28,12 +30,32 @@ public class AmlPolicyService {
     private final AmlPolicyRepository policies;
     private final IntegrationRepository integrations;
     private final AuditEventRepository auditEvents;
+    private final UserRepository users;
 
     public AmlPolicyService(
-            AmlPolicyRepository policies, IntegrationRepository integrations, AuditEventRepository auditEvents) {
+            AmlPolicyRepository policies,
+            IntegrationRepository integrations,
+            AuditEventRepository auditEvents,
+            UserRepository users) {
         this.policies = policies;
         this.integrations = integrations;
         this.auditEvents = auditEvents;
+        this.users = users;
+    }
+
+    @Transactional(readOnly = true)
+    public String publisherName(UUID userId) {
+        if (userId == null) {
+            return null;
+        }
+        return users.findById(userId).map(AmlPolicyService::nameOf).orElse(null);
+    }
+
+    private static String nameOf(User user) {
+        String first = user.getFirstName() == null ? "" : user.getFirstName().trim();
+        String last = user.getLastName() == null ? "" : user.getLastName().trim();
+        String name = (first + " " + last).trim();
+        return name.isBlank() ? user.getEmail() : name;
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +95,7 @@ public class AmlPolicyService {
                 .orElse(1);
         policies.findByOrganizationIdAndActiveTrue(organizationId).ifPresent(current -> {
             current.retire();
-            policies.save(current);
+            policies.saveAndFlush(current);
         });
         Instant now = Instant.now();
         AmlPolicyEntity saved = policies.save(new AmlPolicyEntity(

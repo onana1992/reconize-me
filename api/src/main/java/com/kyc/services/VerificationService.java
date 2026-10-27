@@ -66,6 +66,7 @@ public class VerificationService {
     private final CreditService creditService;
     private final WebhookService webhookService;
     private final IdvPolicyService policies;
+    private final IdentityScreeningService identityScreening;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -80,7 +81,8 @@ public class VerificationService {
             ObjectMapper objectMapper,
             CreditService creditService,
             WebhookService webhookService,
-            IdvPolicyService policies) {
+            IdvPolicyService policies,
+            IdentityScreeningService identityScreening) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -94,6 +96,7 @@ public class VerificationService {
         this.creditService = creditService;
         this.webhookService = webhookService;
         this.policies = policies;
+        this.identityScreening = identityScreening;
     }
 
     @Transactional
@@ -164,11 +167,12 @@ public class VerificationService {
         return new ResponseEntity<>(toResponse(verification, token), HttpStatus.CREATED);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public VerificationResponse get(UUID organizationId, UUID id) {
         Verification verification = verifications
                 .findByIdAndOrganizationId(id, organizationId)
                 .orElseThrow(() -> ApiException.notFound("Verification not found"));
+        identityScreening.ensureReport(verification);
         return toResponse(verification, true);
     }
 
@@ -310,6 +314,7 @@ public class VerificationService {
                 signalItems.isEmpty() ? null : signalItems,
                 extracted,
                 verification.getAmlScreeningId(),
+                parseScreening(verification.getScreeningReport()),
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
     }
@@ -412,6 +417,17 @@ public class VerificationService {
             return objectMapper.writeValueAsString(value == null ? Map.of() : value);
         } catch (JsonProcessingException e) {
             throw ApiException.validation("Invalid JSON", List.of());
+        }
+    }
+
+    private VerificationResponse.Screening parseScreening(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, VerificationResponse.Screening.class);
+        } catch (JsonProcessingException ex) {
+            return null;
         }
     }
 

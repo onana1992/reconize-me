@@ -12,6 +12,7 @@ public record IdvPolicyResponse(
         Profile profile,
         List<Document> documents,
         Flow flow,
+        Screening screening,
         Bounds bounds) {
 
     public record Profile(
@@ -34,6 +35,8 @@ public record IdvPolicyResponse(
             @JsonProperty("max_capture_attempts") int maxCaptureAttempts,
             @JsonProperty("max_liveness_attempts") int maxLivenessAttempts,
             @JsonProperty("consent_text_version") String consentTextVersion) {}
+
+    public record Screening(boolean enabled, @JsonProperty("on_match") String onMatch) {}
 
     public record Bounds(
             @JsonProperty("ocr_review_at") double[] ocrReviewAt,

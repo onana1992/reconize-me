@@ -1,5 +1,6 @@
 package com.kyc.entities;
 
+import com.kyc.enums.IdentityScreeningEffect;
 import com.kyc.enums.VerificationDecision;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -70,6 +71,13 @@ public class IdvPolicy {
     @Column(name = "max_liveness_attempts", nullable = false)
     private int maxLivenessAttempts;
 
+    @Column(name = "screening_enabled", nullable = false)
+    private boolean screeningEnabled;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "screening_on_match", nullable = false, length = 16)
+    private IdentityScreeningEffect screeningOnMatch;
+
     @Column(name = "published_at", nullable = false)
     private Instant publishedAt;
 
@@ -89,6 +97,8 @@ public class IdvPolicy {
             int linkTtlSeconds,
             int maxCaptureAttempts,
             int maxLivenessAttempts,
+            boolean screeningEnabled,
+            IdentityScreeningEffect screeningOnMatch,
             UUID publishedBy,
             Instant publishedAt) {
         this.id = id;
@@ -105,6 +115,8 @@ public class IdvPolicy {
         this.linkTtlSeconds = linkTtlSeconds;
         this.maxCaptureAttempts = maxCaptureAttempts;
         this.maxLivenessAttempts = maxLivenessAttempts;
+        this.screeningEnabled = screeningEnabled;
+        this.screeningOnMatch = screeningOnMatch;
         this.publishedBy = publishedBy;
         this.publishedAt = publishedAt;
     }

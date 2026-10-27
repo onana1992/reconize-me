@@ -55,7 +55,13 @@ export async function publishAmlPolicyAction(formData: FormData): Promise<ApiRes
       categories,
       attach_to_identity: formData.get("attach_to_identity") === "on",
       on_match: String(formData.get("on_match") ?? "review"),
-      test_integration_id: String(formData.get("test_integration_id") ?? "") || null,
+      test_integration_id: optionalId(formData.get("test_integration_id")),
+      live_integration_id: optionalId(formData.get("live_integration_id")),
     }),
   });
+}
+
+function optionalId(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  return text || null;
 }

@@ -196,6 +196,12 @@ export function tSignalCode(t: Translate, code: string): string {
       return t("console.verifications.signalCodes.consentDeclined");
     case "document_fields_incomplete":
       return t("console.verifications.signalCodes.documentFieldsIncomplete");
+    case "aml_potential_match":
+      return t("console.verifications.signalCodes.amlPotentialMatch");
+    case "aml_confirmed_match":
+      return t("console.verifications.signalCodes.amlConfirmedMatch");
+    case "aml_unavailable":
+      return t("console.verifications.signalCodes.amlUnavailable");
     default:
       return code;
   }

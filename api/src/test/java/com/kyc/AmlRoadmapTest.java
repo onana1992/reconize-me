@@ -311,16 +311,10 @@ class AmlRoadmapTest {
     }
 
     @Test
-    void attachedNoraReviewDoesNotCallOpenSanctionsAndALaterDispositionLeavesIdentity() throws Exception {
+    void identityScreeningReviewsNoraWithoutAnAmlDossier() throws Exception {
         assertThrows(IllegalStateException.class, () -> sanctionsMatch.match(null));
         Issued aml = amlKey("aml-attach@example.com", "Aml Attach");
-        mockMvc.perform(post("/v1/console/aml/policy")
-                        .cookie(aml.owner())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"review_threshold":0.70,"confirm_threshold":0.95,"categories":["sanction","pep","rca","debarment"],"attach_to_identity":true,"on_match":"review","test_integration_id":"%s"}
-                                """.formatted(aml.integrationId())))
-                .andExpect(status().isCreated());
+        enableIdentityScreening(aml.owner());
 
         var created = IdvSupport.create(
                 mockMvc,
@@ -338,36 +332,10 @@ class AmlRoadmapTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("review"))
                 .andExpect(jsonPath("$.decision_reasons[?(@ == 'aml_potential_match')]").exists())
-                .andExpect(jsonPath("$.aml_screening_id").exists());
-
-        String screeningId = IdvSupport.JSON
-                .readTree(mockMvc.perform(get("/v1/verifications/" + verificationId)
-                                .header("Authorization", "Bearer " + aml.identityKey()))
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString())
-                .get("aml_screening_id")
-                .asText();
-        mockMvc.perform(get("/v1/screenings/" + screeningId).header("Authorization", "Bearer " + aml.key()))
-                .andExpect(jsonPath("$.engine").value("aml-1"))
-                .andExpect(jsonPath("$.outcome").value("potential_match"));
-
-        String hitId = IdvSupport.JSON
-                .readTree(mockMvc.perform(get("/v1/screenings/" + screeningId).header("Authorization", "Bearer " + aml.key()))
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString())
-                .get("hits")
-                .get(0)
-                .get("id")
-                .asText();
-        mockMvc.perform(post("/v1/screenings/" + screeningId + "/hits/" + hitId + "/disposition")
-                        .header("Authorization", "Bearer " + aml.key())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"disposition\":\"false_positive\",\"reason\":\"different_person\"}"))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/v1/verifications/" + verificationId).header("Authorization", "Bearer " + aml.identityKey()))
-                .andExpect(jsonPath("$.decision").value("review"));
+                .andExpect(jsonPath("$.aml_screening_id").doesNotExist())
+                .andExpect(jsonPath("$.screening.outcome").value("potential_match"))
+                .andExpect(jsonPath("$.screening.hits[0].listed_name").exists());
+        assertEquals(0, count(aml.organizationId(), null));
     }
 
     @Test
@@ -465,6 +433,36 @@ class AmlRoadmapTest {
                         new UUID(Long.MAX_VALUE, Long.MAX_VALUE),
                         PageRequest.of(0, 50))
                 .size();
+    }
+
+    private void enableIdentityScreening(Cookie owner) throws Exception {
+        String raw = mockMvc.perform(get("/v1/console/identity/policy").cookie(owner))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        var policy = IdvSupport.JSON.readTree(raw);
+        var body = IdvSupport.JSON.createObjectNode();
+        body.set("profile", policy.get("profile"));
+        var codes = body.putArray("document_codes");
+        for (var document : policy.get("documents")) {
+            if (document.path("enabled").asBoolean()) {
+                codes.add(document.path("code").asText());
+            }
+        }
+        var flow = policy.get("flow");
+        var flowBody = body.putObject("flow");
+        flowBody.put("link_ttl_seconds", flow.path("link_ttl_seconds").asInt());
+        flowBody.put("max_capture_attempts", flow.path("max_capture_attempts").asInt());
+        flowBody.put("max_liveness_attempts", flow.path("max_liveness_attempts").asInt());
+        var screening = body.putObject("screening");
+        screening.put("enabled", true);
+        screening.put("on_match", "review");
+        mockMvc.perform(post("/v1/console/identity/policy")
+                        .cookie(owner)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.toString()))
+                .andExpect(status().isCreated());
     }
 
     private static String ivanBody(String dob) {

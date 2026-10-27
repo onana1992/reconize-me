@@ -1,0 +1,3 @@
+ALTER TABLE idv_policies
+    ADD COLUMN screening_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN screening_on_match VARCHAR(16) NOT NULL DEFAULT 'REVIEW';

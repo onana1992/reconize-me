@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { useT } from "../../../i18n/client";
 import type { AmlPolicy } from "../../../lib/api";
-import { formatUtc } from "../../../lib/status";
 import { publishAmlPolicyAction } from "./aml-actions";
 import { categoryLabel } from "./aml-labels";
 
@@ -43,8 +42,8 @@ export function AmlPolicyForm({
   const published = policy.published
     ? t("console.rules.sourceOrganization")
         .replace("{version}", policy.version.replace("aml-policy-", ""))
-        .replace("{date}", policy.published_at ? formatUtc(policy.published_at, locale) : "—")
-        .replace("{name}", "—")
+        .replace("{date}", policy.published_at ? formatWhen(policy.published_at, locale) : "—")
+        .replace("{name}", policy.published_by_name ?? "—")
     : t("console.rules.sourcePlatform");
 
   function toggleCategory(category: string) {
@@ -79,6 +78,9 @@ export function AmlPolicyForm({
     if (policy.test_integration_id) {
       body.set("test_integration_id", policy.test_integration_id);
     }
+    if (policy.live_integration_id) {
+      body.set("live_integration_id", policy.live_integration_id);
+    }
     if (policy.attach_to_identity) {
       body.set("attach_to_identity", "on");
     }
@@ -101,7 +103,7 @@ export function AmlPolicyForm({
         <div className="rm-rules-status-copy">
           <StatusBadge label={badge} tone={policy.published ? "success" : "info"} />
           <p>{published}</p>
-          <p className="rm-rules-applies">{t("console.product.amlConfirm")}</p>
+          <p className="rm-rules-applies">{t("console.rules.applies")}</p>
         </div>
         {canWrite ? (
           <button type="submit" className="rm-rules-publish" disabled={pending || !canPublish}>
@@ -124,39 +126,26 @@ export function AmlPolicyForm({
             <p>{t("console.product.amlThresholdHint")}</p>
           </div>
           <div className="rm-rules-metrics">
-            <label className="rm-rules-metric">
-              <span>
-                {t("console.product.amlPolicyReview")}
-                <small>0.50 – 0.85</small>
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                name="review_threshold"
-                min="0.5"
-                max="0.85"
-                step="0.001"
-                value={draft.review}
-                disabled={!canWrite}
-                onChange={(event) => setDraft((current) => ({ ...current, review: event.target.value }))}
-              />
-            </label>
-            <label className="rm-rules-metric">
-              <span>
-                {t("console.product.amlPolicyConfirm")}
-                <small>0.90 – 1</small>
-              </span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0.9"
-                max="1"
-                step="0.001"
-                value={draft.confirm}
-                disabled={!canWrite}
-                onChange={(event) => setDraft((current) => ({ ...current, confirm: event.target.value }))}
-              />
-            </label>
+            <NumberField
+              label={t("console.product.amlPolicyReview")}
+              hint={rangeHint(t, [0.5, 0.85])}
+              value={draft.review}
+              min={0.5}
+              max={0.85}
+              step="0.001"
+              disabled={!canWrite}
+              onChange={(value) => setDraft((current) => ({ ...current, review: value }))}
+            />
+            <NumberField
+              label={t("console.product.amlPolicyConfirm")}
+              hint={rangeHint(t, [0.9, 1])}
+              value={draft.confirm}
+              min={0.9}
+              max={1}
+              step="0.001"
+              disabled={!canWrite}
+              onChange={(value) => setDraft((current) => ({ ...current, confirm: value }))}
+            />
           </div>
         </section>
         <div className="rm-rules-side">
@@ -190,12 +179,12 @@ export function AmlPolicyForm({
             {versions.length === 0 ? (
               <p className="rm-rules-empty">{t("console.rules.historyEmpty")}</p>
             ) : (
-              <ol className="rm-rules-history rm-rules-history-named">
+              <ol className="rm-rules-history">
                 {versions.map((item) => (
-                  <li key={item.version}>
-                    <span className="rm-rules-history-version">{item.version}</span>
-                    <span>{item.published_at ? formatUtc(item.published_at, locale) : ""}</span>
-                    {item.published ? <StatusBadge label={t("console.rules.historyActive")} tone="success" /> : null}
+                  <li key={item.version} data-active={item.active ? "true" : "false"}>
+                    <span className="rm-rules-history-version">{item.version.replace(/^aml-policy-/, "")}</span>
+                    <span>{item.published_at ? formatWhen(item.published_at, locale) : ""}</span>
+                    {item.active ? <StatusBadge label={t("console.rules.historyActive")} tone="success" /> : <span />}
                   </li>
                 ))}
               </ol>
@@ -205,6 +194,57 @@ export function AmlPolicyForm({
       </div>
     </form>
   );
+}
+
+function formatWhen(value: string, locale: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function NumberField({
+  label,
+  hint,
+  value,
+  min,
+  max,
+  step,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  min: number;
+  max: number;
+  step: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="rm-rules-metric">
+      <span>
+        {label}
+        <small>{hint}</small>
+      </span>
+      <input
+        type="number"
+        inputMode="decimal"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function rangeHint(t: ReturnType<typeof useT>, bounds: number[]) {
+  return t("console.rules.range").replace("{min}", String(bounds[0])).replace("{max}", String(bounds[1]));
 }
 
 function draftOf(policy: AmlPolicy): Draft {

@@ -9,6 +9,7 @@ import type { IdvPolicy, IdvPolicyDocument, IdvPolicyVersions } from "../../../.
 import { publishPolicyAction } from "./actions";
 
 type Outcome = "DECLINED" | "REVIEW";
+type ScreeningEffect = "ignore" | "review" | "block";
 
 type Draft = {
   expired: Outcome;
@@ -21,6 +22,8 @@ type Draft = {
   captures: string;
   livenessAttempts: string;
   codes: string[];
+  screening: boolean;
+  onMatch: ScreeningEffect;
 };
 
 export function PolicyForm({
@@ -88,6 +91,10 @@ export function PolicyForm({
         link_ttl_seconds: Number(draft.ttl),
         max_capture_attempts: Number(draft.captures),
         max_liveness_attempts: Number(draft.livenessAttempts),
+      },
+      screening: {
+        enabled: draft.screening,
+        on_match: draft.onMatch,
       },
     });
     setPending(false);
@@ -192,6 +199,57 @@ export function PolicyForm({
         </section>
 
         <div className="rm-rules-side">
+          <section className="rm-rules-panel">
+            <div className="rm-rules-panel-head">
+              <h2>{t("console.rules.amlTitle")}</h2>
+              <p>{t("console.rules.amlHint")}</p>
+            </div>
+            <label className="rm-rules-doc" data-on={draft.screening ? "true" : "false"}>
+              <input
+                type="checkbox"
+                checked={draft.screening}
+                disabled={!canWrite}
+                onChange={(event) => setField("screening", event.target.checked)}
+              />
+              <span className="rm-rules-doc-mark" aria-hidden="true" />
+              <span>{t("console.rules.amlEnable")}</span>
+            </label>
+            {draft.screening ? (
+              <>
+                <div className="rm-rules-outcome">
+                  <span>{t("console.rules.amlEffect")}</span>
+                  <div className="rm-rules-seg" role="radiogroup" aria-label={t("console.rules.amlEffect")}>
+                    {(["ignore", "review", "block"] as const).map((effect) => (
+                      <button
+                        key={effect}
+                        type="button"
+                        role="radio"
+                        aria-checked={draft.onMatch === effect}
+                        data-choice={effect === "block" ? "declined" : effect}
+                        data-on={draft.onMatch === effect ? "true" : "false"}
+                        disabled={!canWrite}
+                        onClick={() => setField("onMatch", effect)}
+                      >
+                        {effect === "ignore"
+                          ? t("console.rules.amlIgnore")
+                          : effect === "block"
+                            ? t("console.rules.amlBlock")
+                            : t("console.rules.amlReview")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="rm-rules-empty">
+                  {draft.onMatch === "ignore"
+                    ? t("console.rules.amlIgnoreHint")
+                    : draft.onMatch === "block"
+                      ? t("console.rules.amlBlockHint")
+                      : t("console.rules.amlReviewHint")}
+                </p>
+              </>
+            ) : null}
+          </section>
+
           <DocumentCatalog
             documents={policy.documents}
             selected={draft.codes}
@@ -539,6 +597,14 @@ function NumberField({
   );
 }
 
+function screeningEffect(policy: IdvPolicy): ScreeningEffect {
+  const effect = policy.screening?.on_match;
+  if (effect === "ignore" || effect === "block") {
+    return effect;
+  }
+  return "review";
+}
+
 function draftOf(policy: IdvPolicy): Draft {
   return {
     expired: policy.profile.expired_outcome,
@@ -551,6 +617,8 @@ function draftOf(policy: IdvPolicy): Draft {
     captures: String(policy.flow.max_capture_attempts),
     livenessAttempts: String(policy.flow.max_liveness_attempts),
     codes: policy.documents.filter((document) => document.enabled).map((document) => document.code),
+    screening: policy.screening?.enabled ?? false,
+    onMatch: screeningEffect(policy),
   };
 }
 

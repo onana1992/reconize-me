@@ -20,6 +20,7 @@ import {
   tVerificationStatus,
   verificationTone,
 } from "../../../../../lib/status";
+import { categoryLabel, featureLabel, featureTone, outcomeLabel, outcomeTone } from "../../aml-labels";
 import { AmlCase } from "../../aml-case";
 import { VerificationActions } from "./verification-actions";
 
@@ -253,6 +254,48 @@ export default async function VerificationDetailPage({
           </section>
         </div>
       </div>
+
+      {verification.screening ? (
+        <section className="rm-vcase-card">
+          <div className="rm-vcase-name">
+            <h2>{t("console.verifications.amlScreening")}</h2>
+            <StatusBadge
+              label={outcomeLabel(t, verification.screening.status === "failed" ? "failed" : verification.screening.outcome ?? "failed")}
+              tone={outcomeTone(verification.screening.status === "failed" ? "failed" : verification.screening.outcome ?? "failed")}
+            />
+          </div>
+          {(verification.screening.hits ?? []).length === 0 ? (
+            verification.screening.status === "failed" ? (
+              <p className="rm-vcase-empty">{t("console.product.amlVerdictFailed")}</p>
+            ) : verification.screening.outcome === "clear" ? null : (
+              <p className="rm-vcase-empty">{t("console.product.amlNoHits")}</p>
+            )
+          ) : (
+            <ul className="rm-vcase-checks">
+              {(verification.screening.hits ?? []).map((hit) => (
+                <li key={`${hit.category}-${hit.listed_name}-${hit.score}`}>
+                  <span className="rm-vcase-check-dot" aria-hidden="true" />
+                  <span className="rm-vcase-check-name">
+                    {categoryLabel(t, hit.category)}
+                    <small>
+                      {t("console.product.amlScore").replace("{score}", Number(hit.score).toFixed(3))}
+                      {hit.listed_name ? ` · ${hit.listed_name}` : ""}
+                      {hit.matched_name && hit.matched_name !== hit.listed_name ? ` · ${hit.matched_name}` : ""}
+                    </small>
+                  </span>
+                  {hit.features && hit.features.length > 0 ? (
+                    <span className="rm-vcase-features">
+                      {hit.features.map((feature) => (
+                        <StatusBadge key={feature} label={featureLabel(t, feature)} tone={featureTone(feature)} />
+                      ))}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
       <section className="rm-vcase-card">
         <h2>{t("console.verifications.sessionDetails")}</h2>

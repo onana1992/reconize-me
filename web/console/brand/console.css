@@ -2638,10 +2638,10 @@ a.rm-idv-row:focus-visible {
   max-height: 28rem;
   overflow: auto;
   padding: var(--rm-space-4);
-  border: 1px solid #111;
+  border: 1px solid var(--rm-border);
   border-radius: var(--rm-radius-md);
-  background: #000;
-  color: #f2f2f2;
+  background: var(--rm-surface-sunken);
+  color: var(--rm-text);
   font-family: var(--rm-font-mono);
   font-size: var(--rm-text-xs);
   line-height: 1.5;
@@ -3779,7 +3779,8 @@ a.rm-idv-row:focus-visible {
   gap: 0.15rem;
 }
 
-.rm-rules-metric input {
+.rm-rules-metric input,
+.rm-rules-metric select {
   width: 100%;
   min-height: 2.4rem;
   font-variant-numeric: tabular-nums;
@@ -3990,21 +3991,6 @@ a.rm-idv-row:focus-visible {
 .rm-rules-history li[data-active="true"] .rm-rules-history-version {
   background: var(--rm-accent-subtle);
   color: var(--rm-accent-active);
-}
-
-.rm-rules-history-named li {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-}
-
-.rm-rules-history-named .rm-rules-history-version {
-  width: auto;
-  height: auto;
-  padding: 0.2rem 0.7rem;
-  white-space: nowrap;
-}
-
-.rm-rules-history-named li > span:nth-child(2) {
-  white-space: nowrap;
 }
 
 .rm-rules-empty {

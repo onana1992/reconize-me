@@ -11,6 +11,7 @@ export async function publishPolicyAction(body: {
     max_capture_attempts: number;
     max_liveness_attempts: number;
   };
+  screening: IdvPolicy["screening"];
 }) {
   return consoleApi<IdvPolicy>("/v1/console/identity/policy", await sessionCookieHeader(), {
     method: "POST",

@@ -393,7 +393,24 @@
       "ttlHours": "{hours} h",
       "accepted": "Accepted",
       "refused": "Outside the corridor",
-      "applies": "Links already issued stay unchanged."
+      "applies": "Links already issued stay unchanged.",
+      "amlTitle": "AML screening",
+      "amlHint": "After a successful document read, the extracted name is screened.",
+      "amlEnable": "Enable screening",
+      "amlEffect": "Effect on the decision",
+      "amlIgnore": "Ignore",
+      "amlReview": "Review",
+      "amlBlock": "Decline",
+      "amlIgnoreHint": "Identity decides without waiting for the screening.",
+      "amlReviewHint": "A possible or confirmed match sends the case to review.",
+      "amlBlockHint": "A confirmed match declines the case. A possible match goes to review.",
+      "amlTest": "Sandbox integration",
+      "amlLive": "Live integration",
+      "amlNone": "None",
+      "amlMissing": "Create an AML integration so the screening can run.",
+      "amlCreateIntegration": "Create an integration",
+      "amlConfirm": "This version applies to the next verifications. Cases already created stay as they are.",
+      "amlPublished": "Screening option published."
     },
     "webhooks": {
       "url": "Endpoint URL",
@@ -582,6 +599,8 @@
       "rulesVersionNone": "Not applied",
       "policyVersion": "Policy version",
       "policyVersionNone": "Platform policy",
+      "amlScreening": "AML screening",
+      "amlScreeningOpen": "Open the case",
       "lastActivity": "Last activity",
       "duration": "Duration",
       "durationSeconds": "Less than a minute",
@@ -648,7 +667,10 @@
         "faceMatchBorderline": "Uncertain face match",
         "captureAttemptsExceeded": "Photo attempts exceeded",
         "consentDeclined": "Consent declined",
-        "documentFieldsIncomplete": "Document fields incomplete"
+        "documentFieldsIncomplete": "Document fields incomplete",
+        "amlPotentialMatch": "Possible AML match",
+        "amlConfirmedMatch": "Confirmed AML match",
+        "amlUnavailable": "AML screening unavailable"
       },
       "fields": {
         "firstName": "First name",

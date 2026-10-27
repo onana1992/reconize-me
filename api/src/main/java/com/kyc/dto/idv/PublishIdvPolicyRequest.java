@@ -6,7 +6,8 @@ import java.util.List;
 public record PublishIdvPolicyRequest(
         Profile profile,
         @JsonProperty("document_codes") List<String> documentCodes,
-        Flow flow) {
+        Flow flow,
+        Screening screening) {
 
     public record Profile(
             @JsonProperty("expired_outcome") String expiredOutcome,
@@ -20,4 +21,6 @@ public record PublishIdvPolicyRequest(
             @JsonProperty("link_ttl_seconds") Integer linkTtlSeconds,
             @JsonProperty("max_capture_attempts") Integer maxCaptureAttempts,
             @JsonProperty("max_liveness_attempts") Integer maxLivenessAttempts) {}
+
+    public record Screening(Boolean enabled, @JsonProperty("on_match") String onMatch) {}
 }

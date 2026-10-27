@@ -393,7 +393,24 @@
       "ttlHours": "{hours} h",
       "accepted": "Accepté",
       "refused": "Hors corridor",
-      "applies": "Les liens déjà émis ne changent pas."
+      "applies": "Les liens déjà émis ne changent pas.",
+      "amlTitle": "Criblage AML",
+      "amlHint": "Après une lecture de pièce réussie, le nom extrait est criblé.",
+      "amlEnable": "Activer le criblage",
+      "amlEffect": "Effet sur la décision",
+      "amlIgnore": "Ignorer",
+      "amlReview": "Revue",
+      "amlBlock": "Refuser",
+      "amlIgnoreHint": "L’identité tranche sans attendre le criblage.",
+      "amlReviewHint": "Une correspondance possible ou confirmée envoie le dossier en revue.",
+      "amlBlockHint": "Une correspondance confirmée refuse le dossier. Une correspondance possible part en revue.",
+      "amlTest": "Intégration sandbox",
+      "amlLive": "Intégration live",
+      "amlNone": "Aucune",
+      "amlMissing": "Créez une intégration AML pour que le criblage parte.",
+      "amlCreateIntegration": "Créer une intégration",
+      "amlConfirm": "Cette version s’applique aux prochaines vérifications. Les dossiers déjà créés ne changent pas.",
+      "amlPublished": "Option de criblage publiée."
     },
     "webhooks": {
       "url": "URL de l’endpoint",
@@ -582,6 +599,8 @@
       "rulesVersionNone": "Non appliquée",
       "policyVersion": "Version de politique",
       "policyVersionNone": "Politique plateforme",
+      "amlScreening": "Criblage AML",
+      "amlScreeningOpen": "Ouvrir le dossier",
       "lastActivity": "Dernière activité",
       "duration": "Durée",
       "durationSeconds": "Moins d’une minute",
@@ -648,7 +667,10 @@
         "faceMatchBorderline": "Correspondance des visages incertaine",
         "captureAttemptsExceeded": "Nombre de photos dépassé",
         "consentDeclined": "Consentement refusé",
-        "documentFieldsIncomplete": "Champs de la pièce incomplets"
+        "documentFieldsIncomplete": "Champs de la pièce incomplets",
+        "amlPotentialMatch": "Correspondance AML possible",
+        "amlConfirmedMatch": "Correspondance AML confirmée",
+        "amlUnavailable": "Criblage AML indisponible"
       },
       "fields": {
         "firstName": "Prénom",

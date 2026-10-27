@@ -79,7 +79,8 @@ class IdvPolicyServiceTest {
                 new PublishIdvPolicyRequest.Flow(
                         policy.flow().linkTtlSeconds(),
                         policy.flow().maxCaptureAttempts(),
-                        policy.flow().maxLivenessAttempts()));
+                        policy.flow().maxLivenessAttempts()),
+                new PublishIdvPolicyRequest.Screening(policy.screening().enabled(), policy.screening().onMatch()));
     }
 
     private static PublishIdvPolicyRequest withOcr(IdvPolicyResponse policy, double ocr) {
@@ -93,12 +94,13 @@ class IdvPolicyServiceTest {
                         base.profile().faceMatchFailAt(),
                         base.profile().faceMatchPassAt()),
                 base.documentCodes(),
-                base.flow());
+                base.flow(),
+                base.screening());
     }
 
     private static PublishIdvPolicyRequest withCodes(IdvPolicyResponse policy, List<String> codes) {
         PublishIdvPolicyRequest base = sameAs(policy);
-        return new PublishIdvPolicyRequest(base.profile(), codes, base.flow());
+        return new PublishIdvPolicyRequest(base.profile(), codes, base.flow(), base.screening());
     }
 
     private static PublishIdvPolicyRequest withFaces(IdvPolicyResponse policy, double fail, double pass) {
@@ -112,6 +114,7 @@ class IdvPolicyServiceTest {
                         fail,
                         pass),
                 base.documentCodes(),
-                base.flow());
+                base.flow(),
+                base.screening());
     }
 }

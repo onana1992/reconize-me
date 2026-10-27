@@ -9,6 +9,7 @@ import com.kyc.entities.AuditEvent;
 import com.kyc.entities.IdvPolicy;
 import com.kyc.entities.IdvPolicyDocument;
 import com.kyc.entities.User;
+import com.kyc.enums.IdentityScreeningEffect;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IdvPolicyDocumentRepository;
@@ -88,7 +89,9 @@ public class IdvPolicyService {
             Set<String> acceptedCodes,
             int maxCaptureAttempts,
             int maxLivenessAttempts,
-            boolean reviewOnCaptureExhausted) {}
+            boolean reviewOnCaptureExhausted,
+            boolean screeningEnabled,
+            IdentityScreeningEffect screeningOnMatch) {}
 
     @Transactional(readOnly = true)
     public IdvPolicyResponse effective(UUID organizationId) {
@@ -145,6 +148,8 @@ public class IdvPolicyService {
                 checked.ttl(),
                 checked.captures(),
                 checked.livenessAttempts(),
+                checked.screeningEnabled(),
+                checked.screeningOnMatch(),
                 userId,
                 now);
         policies.save(policy);
@@ -174,7 +179,9 @@ public class IdvPolicyService {
                 codesOf(policy.getId()),
                 policy.getMaxCaptureAttempts(),
                 policy.getMaxLivenessAttempts(),
-                policy.getAttemptsOutcome() == VerificationDecision.REVIEW);
+                policy.getAttemptsOutcome() == VerificationDecision.REVIEW,
+                policy.isScreeningEnabled(),
+                policy.getScreeningOnMatch());
     }
 
     private Applied platformApplied() {
@@ -183,7 +190,9 @@ public class IdvPolicyService {
                 null,
                 PLATFORM_ATTEMPTS,
                 PLATFORM_ATTEMPTS,
-                false);
+                false,
+                false,
+                IdentityScreeningEffect.REVIEW);
     }
 
     private IdvPolicyResponse platformResponse() {
@@ -206,6 +215,7 @@ public class IdvPolicyService {
                         PLATFORM_ATTEMPTS,
                         PLATFORM_ATTEMPTS,
                         properties.consentTextVersion()),
+                new IdvPolicyResponse.Screening(false, IdentityScreeningEffect.REVIEW.json()),
                 BOUNDS);
     }
 
@@ -228,6 +238,8 @@ public class IdvPolicyService {
                         policy.getMaxCaptureAttempts(),
                         policy.getMaxLivenessAttempts(),
                         properties.consentTextVersion()),
+                new IdvPolicyResponse.Screening(
+                        policy.isScreeningEnabled(), policy.getScreeningOnMatch().json()),
                 BOUNDS);
     }
 
@@ -315,10 +327,37 @@ public class IdvPolicyService {
                 ATTEMPTS_MAX,
                 errors);
         Set<String> codes = documentCodes(request == null ? null : request.documentCodes(), errors);
+        PublishIdvPolicyRequest.Screening screening = request == null ? null : request.screening();
+        boolean screeningEnabled = screening != null && Boolean.TRUE.equals(screening.enabled());
+        IdentityScreeningEffect screeningOnMatch = screeningEffect(screening == null ? null : screening.onMatch(), errors);
         if (!errors.isEmpty()) {
             throw ApiException.unprocessable("validation_error", "Policy validation failed", errors);
         }
-        return new Checked(expired, attempts, ocr, liveness, faceFail, facePass, ttl, captures, livenessAttempts, codes);
+        return new Checked(
+                expired,
+                attempts,
+                ocr,
+                liveness,
+                faceFail,
+                facePass,
+                ttl,
+                captures,
+                livenessAttempts,
+                codes,
+                screeningEnabled,
+                screeningOnMatch);
+    }
+
+    private static IdentityScreeningEffect screeningEffect(String raw, List<ErrorDetail> errors) {
+        if (raw == null || raw.isBlank()) {
+            return IdentityScreeningEffect.REVIEW;
+        }
+        IdentityScreeningEffect effect = IdentityScreeningEffect.parse(raw);
+        if (effect == null) {
+            errors.add(new ErrorDetail("on_match", "invalid"));
+            return IdentityScreeningEffect.REVIEW;
+        }
+        return effect;
     }
 
     private Set<String> documentCodes(List<String> requested, List<ErrorDetail> errors) {
@@ -421,5 +460,7 @@ public class IdvPolicyService {
             int ttl,
             int captures,
             int livenessAttempts,
-            Set<String> codes) {}
+            Set<String> codes,
+            boolean screeningEnabled,
+            IdentityScreeningEffect screeningOnMatch) {}
 }

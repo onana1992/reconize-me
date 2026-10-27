@@ -18,4 +18,6 @@ public record AmlPolicyResponse(
         @JsonProperty("test_integration_id") UUID testIntegrationId,
         @JsonProperty("live_integration_id") UUID liveIntegrationId,
         boolean published,
-        @JsonProperty("published_at") Instant publishedAt) {}
+        boolean active,
+        @JsonProperty("published_at") Instant publishedAt,
+        @JsonProperty("published_by_name") String publishedByName) {}

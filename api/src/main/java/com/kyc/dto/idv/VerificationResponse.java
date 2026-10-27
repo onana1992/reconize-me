@@ -24,6 +24,7 @@ public record VerificationResponse(
         List<Signal> signals,
         @JsonProperty("extracted_identity") Map<String, Object> extractedIdentity,
         @JsonProperty("aml_screening_id") UUID amlScreeningId,
+        Screening screening,
         @JsonProperty("created_at") Instant createdAt,
         @JsonProperty("updated_at") Instant updatedAt) {
 
@@ -33,4 +34,17 @@ public record VerificationResponse(
             String email) {}
 
     public record Signal(String code, String outcome, Double score) {}
+
+    public record Screening(
+            String status,
+            String outcome,
+            @JsonProperty("failure_reason") String failureReason,
+            List<Hit> hits) {}
+
+    public record Hit(
+            String category,
+            double score,
+            @JsonProperty("listed_name") String listedName,
+            @JsonProperty("matched_name") String matchedName,
+            List<String> features) {}
 }
