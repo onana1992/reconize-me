@@ -74,7 +74,10 @@ public class IdentityScreeningService {
     }
 
     public void ensureReport(Verification verification) {
-        if (verification.getScreeningReport() != null && !verification.getScreeningReport().isBlank()) {
+        String existing = verification.getScreeningReport();
+        boolean missing = existing == null || existing.isBlank();
+        boolean thin = !missing && !existing.contains("\"subject\"");
+        if (!missing && !thin) {
             return;
         }
         if (verification.getDecision() == null || verification.getStatus() == VerificationStatus.PROCESSING) {
@@ -84,7 +87,11 @@ public class IdentityScreeningService {
         if (identity == null) {
             return;
         }
-        verification.rememberScreening(writeReport(screen(verification, identity)));
+        Ran ran = screen(verification, identity);
+        if (thin && ran.status != ScreeningStatus.COMPLETED) {
+            return;
+        }
+        verification.rememberScreening(writeReport(ran));
     }
 
     private Ran screen(Verification verification, Integration identity) {
@@ -110,13 +117,14 @@ public class IdentityScreeningService {
             return Ran.failed("aml_unavailable");
         }
         AmlPolicy lists = AmlPolicy.factory();
+        VerificationResponse.Subject screened = subjectOf(subject);
         try {
             if (!identity.isLive()) {
                 DeterministicAmlEngine.EngineResult result = engine.screen(subject, lists);
-                return Ran.completed(result.outcome(), fixtureHits(result));
+                return Ran.completed(result.outcome(), screened, fixtureHits(result));
             }
             if (!properties.opensanctions().inService()) {
-                return Ran.failed("provider_unavailable");
+                return Ran.failed("provider_unavailable", screened);
             }
             SanctionsMatchPort.MatchResult match = sanctions.match(new SanctionsMatchPort.Query(
                     displayName(subject),
@@ -127,11 +135,12 @@ public class IdentityScreeningService {
                     lists.reviewThreshold()));
             Aml2Decider.Result decided = decider.decide(subject, lists, match);
             if (decided.status() != ScreeningStatus.COMPLETED || decided.outcome() == null) {
-                return Ran.failed(decided.failureReason() == null ? "provider_unavailable" : decided.failureReason());
+                return Ran.failed(
+                        decided.failureReason() == null ? "provider_unavailable" : decided.failureReason(), screened);
             }
-            return Ran.completed(decided.outcome(), liveHits(decided.hits()));
+            return Ran.completed(decided.outcome(), screened, liveHits(decided.hits()));
         } catch (RuntimeException ex) {
-            return Ran.failed("provider_unavailable");
+            return Ran.failed("provider_unavailable", screened);
         }
     }
 
@@ -141,6 +150,7 @@ public class IdentityScreeningService {
                 ran.status == ScreeningStatus.COMPLETED ? "completed" : "failed",
                 outcome,
                 ran.failure,
+                ran.subject,
                 ran.hits);
         try {
             return objectMapper.writeValueAsString(report);
@@ -154,11 +164,17 @@ public class IdentityScreeningService {
         for (DeterministicAmlEngine.ScoredHit hit : result.hits()) {
             AmlCategory category = hit.categories().isEmpty() ? null : hit.categories().get(0);
             hits.add(new VerificationResponse.Hit(
+                    hit.person().entityId(),
                     category == null ? "sanction" : category.json(),
+                    categories(hit.categories()),
                     hit.score().doubleValue(),
                     hit.person().listedName(),
                     hit.matchedName(),
-                    hit.features()));
+                    orEmpty(hit.person().aliases()),
+                    one(hit.person().birth()),
+                    one(hit.person().nationality()),
+                    one(hit.person().dataset()),
+                    orEmpty(hit.features())));
         }
         return hits;
     }
@@ -170,11 +186,17 @@ public class IdentityScreeningService {
         }
         for (Aml2Decider.Hit hit : scored) {
             hits.add(new VerificationResponse.Hit(
+                    hit.entityId(),
                     hit.category() == null ? "sanction" : hit.category().json(),
+                    categories(hit.categories()),
                     hit.score() == null ? 0 : hit.score().doubleValue(),
                     hit.listedName(),
                     hit.matchedName(),
-                    hit.features()));
+                    orEmpty(hit.aliases()),
+                    orEmpty(hit.birthDates()),
+                    orEmpty(hit.countries()),
+                    orEmpty(hit.datasets()),
+                    orEmpty(hit.features())));
         }
         return hits;
     }
@@ -183,21 +205,33 @@ public class IdentityScreeningService {
         private final ScreeningStatus status;
         private final ScreeningOutcome outcome;
         private final String failure;
+        private final VerificationResponse.Subject subject;
         private final List<VerificationResponse.Hit> hits;
 
-        private Ran(ScreeningStatus status, ScreeningOutcome outcome, String failure, List<VerificationResponse.Hit> hits) {
+        private Ran(
+                ScreeningStatus status,
+                ScreeningOutcome outcome,
+                String failure,
+                VerificationResponse.Subject subject,
+                List<VerificationResponse.Hit> hits) {
             this.status = status;
             this.outcome = outcome;
             this.failure = failure;
+            this.subject = subject;
             this.hits = hits;
         }
 
-        private static Ran completed(ScreeningOutcome outcome, List<VerificationResponse.Hit> hits) {
-            return new Ran(ScreeningStatus.COMPLETED, outcome, null, hits);
+        private static Ran completed(
+                ScreeningOutcome outcome, VerificationResponse.Subject subject, List<VerificationResponse.Hit> hits) {
+            return new Ran(ScreeningStatus.COMPLETED, outcome, null, subject, hits);
         }
 
         private static Ran failed(String reason) {
-            return new Ran(ScreeningStatus.FAILED, null, reason, List.of());
+            return failed(reason, null);
+        }
+
+        private static Ran failed(String reason, VerificationResponse.Subject subject) {
+            return new Ran(ScreeningStatus.FAILED, null, reason, subject, List.of());
         }
     }
 
@@ -219,6 +253,38 @@ public class IdentityScreeningService {
                 ? VerificationDecision.DECLINED
                 : VerificationDecision.REVIEW;
         verification.applyScreening(decision, write(append(verification.getDecisionReasons(), reason)), now);
+    }
+
+    private static VerificationResponse.Subject subjectOf(SubjectInput subject) {
+        String birth = subject.dateOfBirth() == null ? null : subject.dateOfBirth().toString();
+        return new VerificationResponse.Subject(
+                subject.firstName(),
+                subject.middleName(),
+                subject.lastName(),
+                birth,
+                subject.nationality(),
+                subject.idNumber());
+    }
+
+    private static List<String> categories(List<AmlCategory> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return List.of();
+        }
+        return categories.stream().map(AmlCategory::json).toList();
+    }
+
+    private static List<String> one(String value) {
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        return List.of(value);
+    }
+
+    private static List<String> orEmpty(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+        return values.stream().filter(value -> value != null && !value.isBlank()).toList();
     }
 
     private static String displayName(SubjectInput subject) {

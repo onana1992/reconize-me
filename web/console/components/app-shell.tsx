@@ -6,7 +6,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { Logo, Wordmark } from "@/brand";
 import { useT } from "../i18n/client";
 import { displayName, initials, tRole } from "../lib/labels";
-import { PRODUCTS, PRODUCT_IDS } from "../lib/products";
+import { PRODUCTS, LISTED_PRODUCT_IDS } from "../lib/products";
 import { LanguageMenu } from "./language-menu";
 import { LogoutButton } from "./logout-button";
 import { NavIcon, type IconName } from "./nav-icons";
@@ -190,7 +190,7 @@ export function AppShell({
         <div className="rm-shell-backdrop" role="presentation" onClick={() => setMobileOpen(false)} />
       ) : null}
       <aside className="rm-shell-sidebar" id={navId}>
-        <Link href="/" className="rm-app-brand rm-shell-brand">
+        <Link href="/" prefetch={false} className="rm-app-brand rm-shell-brand">
           {railCollapsed ? <Logo size={24} title="Recogniz-Me" /> : <Wordmark size={24} />}
         </Link>
         <nav className="rm-shell-nav" aria-label={t("console.nav.label")}>
@@ -198,7 +198,7 @@ export function AppShell({
             <NavItem item={HOME} pathname={pathname} collapsed={railCollapsed} />
           </NavGroup>
           <NavGroup label={t("console.nav.services")} collapsed={railCollapsed}>
-            {PRODUCT_IDS.map((id) => {
+            {LISTED_PRODUCT_IDS.map((id) => {
               const product = PRODUCTS[id];
               const current = pathname === product.href || pathname.startsWith(`${product.href}/`);
               const label = t(product.sidebarKey);
@@ -206,6 +206,7 @@ export function AppShell({
                 <Link
                   key={product.id}
                   href={product.href}
+                  prefetch={false}
                   className="rm-shell-item"
                   aria-current={current ? "page" : undefined}
                   title={railCollapsed ? label : undefined}
@@ -258,6 +259,7 @@ export function AppShell({
           {email ? (
             <Link
               href="/settings/account"
+              prefetch={false}
               className="rm-shell-profile"
               title={profileName}
               aria-current={pathname.startsWith("/settings/account") ? "page" : undefined}
@@ -297,6 +299,7 @@ function NavItem({ item, pathname, collapsed }: { item: NavLink; pathname: strin
   return (
     <Link
       href={item.href}
+      prefetch={false}
       className="rm-shell-item"
       aria-current={current ? "page" : undefined}
       title={collapsed ? label : undefined}

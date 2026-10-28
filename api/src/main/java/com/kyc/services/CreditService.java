@@ -17,6 +17,7 @@ import com.kyc.ports.StripePort;
 import com.kyc.repositories.CreditAccountRepository;
 import com.kyc.repositories.CreditLedgerEntryRepository;
 import com.kyc.repositories.OrganizationRepository;
+import com.kyc.repositories.ScreeningRepository;
 import com.kyc.repositories.StripeCustomerRepository;
 import com.kyc.repositories.VerificationRepository;
 import com.kyc.security.ConsoleAuth;
@@ -47,6 +48,7 @@ public class CreditService {
     private final CreditLedgerEntryRepository ledger;
     private final StripeCustomerRepository stripeCustomers;
     private final VerificationRepository verifications;
+    private final ScreeningRepository screenings;
     private final OrganizationRepository organizations;
     private final AuditEventRepositoryAdapter audit;
     private final StripePort stripe;
@@ -57,6 +59,7 @@ public class CreditService {
             CreditLedgerEntryRepository ledger,
             StripeCustomerRepository stripeCustomers,
             VerificationRepository verifications,
+            ScreeningRepository screenings,
             OrganizationRepository organizations,
             com.kyc.repositories.AuditEventRepository auditEvents,
             StripePort stripe,
@@ -65,6 +68,7 @@ public class CreditService {
         this.ledger = ledger;
         this.stripeCustomers = stripeCustomers;
         this.verifications = verifications;
+        this.screenings = screenings;
         this.organizations = organizations;
         this.audit = new AuditEventRepositoryAdapter(auditEvents);
         this.stripe = stripe;
@@ -77,9 +81,9 @@ public class CreditService {
     }
 
     @Transactional(readOnly = true)
-    public boolean coversUnit(UUID organizationId) {
+    public boolean covers(UUID organizationId, long amountMinor) {
         long balance = accounts.findById(organizationId).map(CreditAccount::getBalanceMinor).orElse(0L);
-        return balance >= properties.billing().unitAmountMinor();
+        return balance >= amountMinor;
     }
 
     @Transactional(readOnly = true)
@@ -209,9 +213,12 @@ public class CreditService {
     }
 
     @Transactional
-    public void debitForLiveVerification(UUID organizationId, UUID verificationId, UUID actorId, String actorType) {
+    public void debitForLiveVerification(
+            UUID organizationId, UUID verificationId, boolean withScreening, UUID actorId, String actorType) {
         CreditAccount account = lockOrCreate(organizationId);
-        long unit = properties.billing().unitAmountMinor();
+        long unit = withScreening
+                ? properties.billing().identityScreeningAmountMinor()
+                : properties.billing().identityAmountMinor();
         if (account.getBalanceMinor() < unit) {
             throw ApiException.insufficientCredit();
         }
@@ -241,14 +248,14 @@ public class CreditService {
                 "credit.debited",
                 "verification",
                 verificationId,
-                "{\"amount_minor\":" + unit + ",\"product\":\"identity\"}",
+                "{\"amount_minor\":" + unit + ",\"product\":\"identity\",\"screening\":" + withScreening + "}",
                 now);
     }
 
     @Transactional
     public void debitForLiveScreening(UUID organizationId, UUID screeningId, UUID actorId, String actorType) {
         CreditAccount account = lockOrCreate(organizationId);
-        long unit = properties.billing().unitAmountMinor();
+        long unit = properties.billing().amlAmountMinor();
         if (account.getBalanceMinor() < unit) {
             throw ApiException.forbidden("insufficient_credit", "Live screening requires a credit balance");
         }
@@ -284,12 +291,44 @@ public class CreditService {
 
     private BillingResponse snapshot(UUID organizationId, String cursor, Integer limit, boolean includeLedger) {
         CreditAccount account = accounts.findById(organizationId).orElse(null);
-        long unit = properties.billing().unitAmountMinor();
+        long identityUnit = properties.billing().identityAmountMinor();
+        long identityScreeningUnit = properties.billing().identityScreeningAmountMinor();
+        long amlUnit = properties.billing().amlAmountMinor();
         long balance = account == null ? 0 : account.getBalanceMinor();
         String currency = account == null ? properties.billing().currency() : account.getCurrency();
+        long[] identityCounts = countsByMode(verifications.countByIntegrationMode(organizationId));
+        long[] amlCounts = countsByMode(screenings.countByIntegrationMode(organizationId));
+        List<BillingResponse.ProductUsage> usage = List.of(
+                new BillingResponse.ProductUsage(
+                        Enums.json(ProductCode.IDENTITY),
+                        identityCounts[0],
+                        identityCounts[1],
+                        ledger.sumDebits(organizationId, ProductCode.IDENTITY)),
+                new BillingResponse.ProductUsage(
+                        Enums.json(ProductCode.AML),
+                        amlCounts[0],
+                        amlCounts[1],
+                        ledger.sumDebits(organizationId, ProductCode.AML)));
+        BillingResponse.LedgerPage page = includeLedger
+                ? ledgerPage(organizationId, cursor, limit)
+                : new BillingResponse.LedgerPage(List.of(), null);
+        return new BillingResponse(
+                currency,
+                balance,
+                identityUnit,
+                identityUnit,
+                identityScreeningUnit,
+                amlUnit,
+                balance >= identityUnit,
+                properties.billing().packs(),
+                usage,
+                page);
+    }
+
+    private static long[] countsByMode(List<Object[]> rows) {
         long sandbox = 0;
         long live = 0;
-        for (Object[] row : verifications.countByIntegrationMode(organizationId)) {
+        for (Object[] row : rows) {
             long count = ((Number) row[1]).longValue();
             if (row[0] == IntegrationMode.LIVE || IntegrationMode.LIVE.name().equals(String.valueOf(row[0]))) {
                 live = count;
@@ -297,20 +336,7 @@ public class CreditService {
                 sandbox += count;
             }
         }
-        long debit = ledger.sumDebits(organizationId, ProductCode.IDENTITY);
-        List<BillingResponse.ProductUsage> usage = List.of(
-                new BillingResponse.ProductUsage(Enums.json(ProductCode.IDENTITY), sandbox, live, debit));
-        BillingResponse.LedgerPage page = includeLedger
-                ? ledgerPage(organizationId, cursor, limit)
-                : new BillingResponse.LedgerPage(List.of(), null);
-        return new BillingResponse(
-                currency,
-                balance,
-                unit,
-                balance >= unit,
-                properties.billing().packs(),
-                usage,
-                page);
+        return new long[] {sandbox, live};
     }
 
     private BillingResponse.LedgerPage ledgerPage(UUID organizationId, String cursor, Integer limit) {

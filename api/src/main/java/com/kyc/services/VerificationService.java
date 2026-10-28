@@ -131,11 +131,17 @@ public class VerificationService {
         String scenario = integration.isLive() ? null : sandboxScenario(metadata);
         CreateVerificationRequest.Applicant applicant = request == null ? null : request.applicant();
         UUID id = UUID.randomUUID();
-        if (integration.isLive()) {
-            creditService.debitForLiveVerification(organizationId, id, actorId, actorType);
-        }
         String token = CryptoTokens.randomHostedToken();
         IdvPolicyService.Creation policy = policies.creation(organizationId);
+        if (integration.isLive()) {
+            boolean screening = policies.applied(policy.policyId()).screeningEnabled();
+            long amount = screening
+                    ? properties.billing().identityScreeningAmountMinor()
+                    : properties.billing().identityAmountMinor();
+            if (!creditService.covers(organizationId, amount)) {
+                throw ApiException.insufficientCredit();
+            }
+        }
         Duration ttl = Duration.ofSeconds(policy.linkTtlSeconds());
         Verification verification = new Verification(
                 id,

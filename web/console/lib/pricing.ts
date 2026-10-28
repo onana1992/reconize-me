@@ -1,13 +1,13 @@
 /*
- * Organization credit is debited per live resource. Sandbox is always free.
- * Frozen M3: USD, $0.90 per live verification, packs $50–$500.
+ * Organization credit is debited when a live result is delivered. Sandbox is free.
+ * Identity $0.80, identity with screening $1.30, AML screening $0.50. Packs $50–$500.
  */
 
 export const PRICING = {
   currency: "USD",
-  identity: {
-    liveUnit: 0.9,
-  },
+  identity: 0.8,
+  identityScreening: 1.3,
+  aml: 0.5,
 } as const;
 
 /** Card top-up packs in major units (MVP). Other channels come later. */

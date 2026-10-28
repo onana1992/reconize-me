@@ -99,6 +99,7 @@ public class HostedFlowService {
     private final DocumentAnalysisStore analyses;
     private final IdvPolicyService policies;
     private final IdentityScreeningService identityScreening;
+    private final CreditService credits;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -123,7 +124,8 @@ public class HostedFlowService {
             DocumentAnalysisBuffer analysesBuffer,
             DocumentAnalysisStore analyses,
             IdvPolicyService policies,
-            IdentityScreeningService identityScreening) {
+            IdentityScreeningService identityScreening,
+            CreditService credits) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -148,6 +150,7 @@ public class HostedFlowService {
         this.analyses = analyses;
         this.policies = policies;
         this.identityScreening = identityScreening;
+        this.credits = credits;
     }
 
     @Transactional
@@ -539,6 +542,7 @@ public class HostedFlowService {
                 .findById(verification.getIntegrationId())
                 .orElseThrow(() -> ApiException.notFound("Integration not found"));
         identityScreening.apply(verification, identity, now);
+        billLiveDecision(verification, identity);
         audit(loaded, "verification.completed", "{\"decision\":\"" + Enums.json(verification.getDecision()) + "\"}", now);
         webhookService.enqueueCompleted(verification, now);
     }
@@ -791,6 +795,10 @@ public class HostedFlowService {
         if (media.countByVerificationIdAndKind(loaded.verification().getId(), item.getKind())
                 >= applied.maxCaptureAttempts()) {
             loaded.verification().exhaustCaptureAttempts(now, applied.reviewOnCaptureExhausted());
+            Integration identity = integrations
+                    .findById(loaded.verification().getIntegrationId())
+                    .orElse(null);
+            billLiveDecision(loaded.verification(), identity);
             hostedTokens.revokeByVerificationId(loaded.verification().getId());
             audit(
                     loaded,
@@ -981,6 +989,18 @@ public class HostedFlowService {
             case PROCESSING -> "wait";
             default -> "done";
         };
+    }
+
+    private void billLiveDecision(Verification verification, Integration identity) {
+        if (identity == null || !identity.isLive()) {
+            return;
+        }
+        credits.debitForLiveVerification(
+                verification.getOrganizationId(),
+                verification.getId(),
+                applied(verification).screeningEnabled(),
+                null,
+                "applicant");
     }
 
     private void audit(Loaded loaded, String action, Instant now) {

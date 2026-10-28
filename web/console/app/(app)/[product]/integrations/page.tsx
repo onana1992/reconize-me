@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { StatusBadge } from "@/brand";
 import { PageHeader } from "../../../../components/page-header";
 import { getLocale, getT } from "../../../../i18n";
-import { consoleApi, type IntegrationListItem } from "../../../../lib/api";
+import { consoleApi, type IntegrationListItem, type Me } from "../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../lib/environment";
 import { parseProduct } from "../../../../lib/parse-product";
 import { isIntegrationId, PRODUCTS } from "../../../../lib/products";
@@ -55,7 +55,11 @@ export default async function ProductIntegrationsPage({
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.integrations")}
         lead={t("console.integrations.lead")}
-        actions={canWrite ? <CreateIntegrationButton product={productId} liveUnlocked={Boolean(me.live_unlocked)} /> : null}
+        actions={
+          canWrite ? (
+            <CreateIntegrationButton product={productId} liveUnlocked={liveUnlockedFor(productId, me)} />
+          ) : null
+        }
       />
       {!list.ok ? (
         <p role="alert" className="rm-alert">
@@ -69,7 +73,7 @@ export default async function ProductIntegrationsPage({
         <ul className="rm-int-list">
           {items.map((item) => (
             <li key={item.id}>
-              <Link href={`${product.href}/integrations/${item.id}`} className="rm-int-card">
+              <Link href={`${product.href}/integrations/${item.id}`} prefetch={false} className="rm-int-card">
                 <div className="rm-int-card-copy">
                   <span className="rm-int-card-name">{item.name}</span>
                   <span className="rm-int-card-meta">{formatUtc(item.created_at, locale)}</span>
@@ -85,4 +89,12 @@ export default async function ProductIntegrationsPage({
       )}
     </main>
   );
+}
+
+function liveUnlockedFor(productId: string, me: Me): boolean {
+  const price = productId === "aml" ? me.aml_amount_minor : me.identity_amount_minor;
+  if (price == null) {
+    return Boolean(me.live_unlocked);
+  }
+  return (me.balance_minor ?? 0) >= price;
 }

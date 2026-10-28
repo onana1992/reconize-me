@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ScreeningRepository extends JpaRepository<Screening, UUID> {
 
@@ -36,4 +37,14 @@ public interface ScreeningRepository extends JpaRepository<Screening, UUID> {
             Instant createdAt,
             UUID id,
             Pageable pageable);
+
+    @Query(
+            """
+            select i.mode, count(s.id)
+            from Screening s, Integration i
+            where s.organizationId = :org
+              and i.id = s.integrationId
+            group by i.mode
+            """)
+    List<Object[]> countByIntegrationMode(@Param("org") UUID organizationId);
 }

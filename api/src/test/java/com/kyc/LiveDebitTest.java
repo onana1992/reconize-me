@@ -5,10 +5,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.kyc.entities.CreditAccount;
 import com.kyc.entities.StripeCustomer;
 import com.kyc.ports.MailPort;
+import com.kyc.repositories.CreditAccountRepository;
 import com.kyc.repositories.StripeCustomerRepository;
+import com.kyc.services.CreditService;
 import jakarta.servlet.http.Cookie;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +37,12 @@ class LiveDebitTest {
 
     @Autowired
     private StripeCustomerRepository stripeCustomers;
+
+    @Autowired
+    private CreditAccountRepository creditAccounts;
+
+    @Autowired
+    private CreditService creditService;
 
     @Test
     void testNeverDebitsLiveDebitsAndUsageMatchesBilling() throws Exception {
@@ -74,17 +85,18 @@ class LiveDebitTest {
                 .get("key")
                 .asText();
 
-        mockMvc.perform(post("/v1/verifications")
+        MvcResult created = mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + liveKey)
                         .header("Idempotency-Key", "live-debit-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn();
         mockMvc.perform(get("/v1/console/billing").cookie(owner))
-                .andExpect(jsonPath("$.balance_minor").value(4100))
+                .andExpect(jsonPath("$.balance_minor").value(5000))
                 .andExpect(jsonPath("$.usage[0].sandbox_count").value(2))
                 .andExpect(jsonPath("$.usage[0].live_count").value(1))
-                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(900));
+                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(0));
 
         mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + liveKey)
@@ -92,15 +104,21 @@ class LiveDebitTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/v1/console/billing").cookie(owner)).andExpect(jsonPath("$.balance_minor").value(4100));
+        mockMvc.perform(get("/v1/console/billing").cookie(owner)).andExpect(jsonPath("$.balance_minor").value(5000));
+
+        String token = IdvSupport.token(IdvSupport.JSON.readTree(created.getResponse().getContentAsString()));
+        decideByExhaustingCapture(token);
+        mockMvc.perform(get("/v1/console/billing").cookie(owner))
+                .andExpect(jsonPath("$.balance_minor").value(4920))
+                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(80));
 
         mockMvc.perform(get("/v1/usage").header("Authorization", "Bearer " + liveKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.balance_minor").value(4100))
+                .andExpect(jsonPath("$.balance_minor").value(4920))
                 .andExpect(jsonPath("$.usage[0].live_count").value(1))
-                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(900));
+                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(80));
         mockMvc.perform(get("/v1/usage").header("Authorization", "Bearer " + testKey))
-                .andExpect(jsonPath("$.balance_minor").value(4100));
+                .andExpect(jsonPath("$.balance_minor").value(4920));
 
         mockMvc.perform(get("/v1/usage")).andExpect(status().isUnauthorized());
 
@@ -135,14 +153,7 @@ class LiveDebitTest {
                         .getContentAsString())
                 .get("key")
                 .asText();
-        for (int i = 0; i < 5; i++) {
-            mockMvc.perform(post("/v1/verifications")
-                            .header("Authorization", "Bearer " + liveKey)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{}"))
-                    .andExpect(status().isCreated());
-        }
-        mockMvc.perform(get("/v1/console/billing").cookie(owner)).andExpect(jsonPath("$.balance_minor").value(500));
+        setBalance(owner, 50);
         mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + liveKey)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -165,7 +176,95 @@ class LiveDebitTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isCreated());
-        mockMvc.perform(get("/v1/console/billing").cookie(owner)).andExpect(jsonPath("$.balance_minor").value(500));
+        mockMvc.perform(get("/v1/console/billing").cookie(owner)).andExpect(jsonPath("$.balance_minor").value(50));
+    }
+
+    @Test
+    void identityWithScreeningDebitsOneThirtyAndAmlDebitsFifty() throws Exception {
+        Cookie owner = AccountSupport.signupVerified(mockMvc, mailPort, "debit-prices@example.com", "Price Co");
+        credit(owner, 5000);
+        enableIdentityScreening(owner);
+        String liveKey = IdvSupport.JSON
+                .readTree(mockMvc.perform(post("/v1/console/integrations")
+                                .cookie(owner)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"mode\":\"live\",\"name\":\"Production\"}"))
+                        .andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
+                .get("key")
+                .asText();
+        MvcResult created = mockMvc.perform(post("/v1/verifications")
+                        .header("Authorization", "Bearer " + liveKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String token = IdvSupport.token(IdvSupport.JSON.readTree(created.getResponse().getContentAsString()));
+        decideByExhaustingCapture(token);
+        mockMvc.perform(get("/v1/console/billing").cookie(owner))
+                .andExpect(jsonPath("$.balance_minor").value(4870))
+                .andExpect(jsonPath("$.usage[0].live_debit_minor").value(130));
+
+        UUID screeningId = UUID.randomUUID();
+        creditService.debitForLiveScreening(AccountSupport.organizationId(mockMvc, owner), screeningId, null, "system");
+        creditService.debitForLiveScreening(AccountSupport.organizationId(mockMvc, owner), screeningId, null, "system");
+        mockMvc.perform(get("/v1/console/billing").cookie(owner))
+                .andExpect(jsonPath("$.balance_minor").value(4820))
+                .andExpect(jsonPath("$.usage[1].product").value("aml"))
+                .andExpect(jsonPath("$.usage[1].live_debit_minor").value(50));
+    }
+
+    private void decideByExhaustingCapture(String token) throws Exception {
+        IdvSupport.flow(mockMvc, token);
+        IdvSupport.acceptConsent(mockMvc, token);
+        byte[] tiny = IdvSupport.tinyJpeg();
+        JsonNode done = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            done = IdvSupport.captureDocument(mockMvc, token, tiny);
+            String status = done.path("status").asText();
+            if ("approved".equals(status) || "declined".equals(status) || "review".equals(status)) {
+                return;
+            }
+        }
+        org.junit.jupiter.api.Assertions.fail("verification did not reach a decision: " + done);
+    }
+
+    private void setBalance(Cookie owner, long balance) throws Exception {
+        CreditAccount account = creditAccounts.findById(AccountSupport.organizationId(mockMvc, owner)).orElseThrow();
+        account.apply(balance - account.getBalanceMinor(), Instant.now());
+        creditAccounts.saveAndFlush(account);
+    }
+
+    private void enableIdentityScreening(Cookie owner) throws Exception {
+        String raw = mockMvc.perform(get("/v1/console/identity/policy").cookie(owner))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        JsonNode policy = IdvSupport.JSON.readTree(raw);
+        var body = IdvSupport.JSON.createObjectNode();
+        body.set("profile", policy.get("profile"));
+        var codes = body.putArray("document_codes");
+        for (JsonNode document : policy.get("documents")) {
+            if (document.path("enabled").asBoolean()) {
+                codes.add(document.path("code").asText());
+            }
+        }
+        JsonNode flow = policy.get("flow");
+        var flowBody = body.putObject("flow");
+        flowBody.put("link_ttl_seconds", flow.path("link_ttl_seconds").asInt());
+        flowBody.put("max_capture_attempts", flow.path("max_capture_attempts").asInt());
+        flowBody.put("max_liveness_attempts", flow.path("max_liveness_attempts").asInt());
+        var screening = body.putObject("screening");
+        screening.put("enabled", true);
+        screening.put("on_match", "review");
+        mockMvc.perform(post("/v1/console/identity/policy")
+                        .cookie(owner)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.toString()))
+                .andExpect(status().isCreated());
     }
 
     private void credit(Cookie owner, long pack) throws Exception {

@@ -35,16 +35,34 @@ public record VerificationResponse(
 
     public record Signal(String code, String outcome, Double score) {}
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Screening(
             String status,
             String outcome,
             @JsonProperty("failure_reason") String failureReason,
+            Subject subject,
             List<Hit> hits) {}
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record Subject(
+            @JsonProperty("first_name") String firstName,
+            @JsonProperty("middle_name") String middleName,
+            @JsonProperty("last_name") String lastName,
+            @JsonProperty("date_of_birth") String dateOfBirth,
+            String nationality,
+            @JsonProperty("id_number") String idNumber) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Hit(
+            @JsonProperty("entity_id") String entityId,
             String category,
+            List<String> categories,
             double score,
             @JsonProperty("listed_name") String listedName,
             @JsonProperty("matched_name") String matchedName,
+            List<String> aliases,
+            @JsonProperty("birth_dates") List<String> birthDates,
+            List<String> countries,
+            List<String> datasets,
             List<String> features) {}
 }

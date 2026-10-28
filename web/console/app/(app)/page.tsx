@@ -4,7 +4,7 @@ import { NavIcon } from "../../components/nav-icons";
 import { PageHeader } from "../../components/page-header";
 import { getLocale, getT } from "../../i18n";
 import { formatCount, formatMinor } from "../../lib/pricing";
-import { PRODUCTS, PRODUCT_IDS, type ProductId } from "../../lib/products";
+import { PRODUCTS, LISTED_PRODUCT_IDS, type ProductId } from "../../lib/products";
 import { requireMe } from "../../lib/session";
 
 const HOME_LEAD: Record<ProductId, "console.home.idvHomeLead" | "console.home.biometricHomeLead" | "console.home.amlHomeLead"> =
@@ -27,7 +27,7 @@ export default async function HomePage() {
   return (
     <div className="rm-page">
       <main className="rm-dash">
-        <PageHeader title={me.organization.name} lead={t("console.home.period")} />
+        <PageHeader title={me.organization.name} />
         <section className="rm-card rm-stats" aria-label={t("console.env.label")}>
           <article className="rm-stat">
             <p className="rm-eyebrow">{t("console.env.sandbox")}</p>
@@ -39,7 +39,7 @@ export default async function HomePage() {
             <p className="rm-stat-value">{liveLabel}</p>
             <p className="rm-stat-hint">{t("console.home.liveHint")}</p>
           </article>
-          <Link href="/settings/billing" className="rm-stat">
+          <Link href="/settings/billing" prefetch={false} className="rm-stat">
             <p className="rm-eyebrow">{t("console.billing.balance")}</p>
             <p className="rm-stat-value">{formatMinor(locale, balance)}</p>
             <p className="rm-stat-hint">{t("console.home.balanceHint")}</p>
@@ -48,14 +48,14 @@ export default async function HomePage() {
         <section className="rm-section">
           <h2>{t("console.home.platformTitle")}</h2>
           <ul className="rm-catalog">
-            {PRODUCT_IDS.map((id) => {
+            {LISTED_PRODUCT_IDS.map((id) => {
               const product = PRODUCTS[id];
               const detail = product.metered
                 ? t("console.home.usage").replace("{sandbox}", sandboxLabel).replace("{live}", liveLabel)
                 : t(HOME_LEAD[id]);
               return (
                 <li key={product.id}>
-                  <Link href={product.href} className="rm-catalog-item">
+                  <Link href={product.href} prefetch={false} className="rm-catalog-item">
                     <span className="rm-catalog-ico">
                       <NavIcon name={product.icon} />
                     </span>

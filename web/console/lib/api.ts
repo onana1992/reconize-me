@@ -12,6 +12,8 @@ export type Me = {
   sandbox_count?: number;
   live_count?: number;
   live_unlocked?: boolean;
+  identity_amount_minor?: number;
+  aml_amount_minor?: number;
 };
 
 export type ApiKeyItem = {
@@ -97,6 +99,9 @@ export type Billing = {
   currency: string;
   balance_minor: number;
   unit_amount_minor: number;
+  identity_amount_minor?: number;
+  identity_screening_amount_minor?: number;
+  aml_amount_minor?: number;
   live_unlocked: boolean;
   packs: number[];
   usage: BillingUsage[];
@@ -346,11 +351,25 @@ export type Verification = {
     status: string;
     outcome?: string | null;
     failure_reason?: string | null;
+    subject?: {
+      first_name?: string | null;
+      middle_name?: string | null;
+      last_name?: string | null;
+      date_of_birth?: string | null;
+      nationality?: string | null;
+      id_number?: string | null;
+    } | null;
     hits?: {
+      entity_id?: string | null;
       category: string;
+      categories?: string[] | null;
       score: number;
       listed_name?: string | null;
       matched_name?: string | null;
+      aliases?: string[] | null;
+      birth_dates?: string[] | null;
+      countries?: string[] | null;
+      datasets?: string[] | null;
       features?: string[] | null;
     }[] | null;
   } | null;

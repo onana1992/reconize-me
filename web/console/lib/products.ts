@@ -4,6 +4,9 @@ export const PRODUCT_IDS = ["identity", "biometrics", "aml"] as const;
 
 export type ProductId = (typeof PRODUCT_IDS)[number];
 
+/** Affichés dans la console. L'authentification biométrique est retirée pour l'instant. */
+export const LISTED_PRODUCT_IDS: ProductId[] = PRODUCT_IDS.filter((id) => id !== "biometrics");
+
 export type ProductTabId = "verifications" | "integrations" | "rules";
 
 export type ProductDef = {

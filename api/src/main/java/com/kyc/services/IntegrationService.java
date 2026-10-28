@@ -96,7 +96,10 @@ public class IntegrationService {
             throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
         }
         if (normalized == IntegrationMode.LIVE) {
-            if (!credits.coversUnit(principal.organizationId())) {
+            long required = productCode == ProductCode.AML
+                    ? properties.billing().amlAmountMinor()
+                    : properties.billing().identityAmountMinor();
+            if (!credits.covers(principal.organizationId(), required)) {
                 throw ApiException.forbidden("insufficient_credit", "Live integrations require a credit balance");
             }
         }

@@ -257,7 +257,7 @@ public class ScreeningService {
         if (!properties.opensanctions().inService()) {
             throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
         }
-        if (!credits.coversUnit(integration.getOrganizationId())) {
+        if (!credits.covers(integration.getOrganizationId(), properties.billing().amlAmountMinor())) {
             throw ApiException.forbidden("insufficient_credit", "Live screening requires a credit balance");
         }
     }

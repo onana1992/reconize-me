@@ -23,6 +23,7 @@ export function ProductChrome({ product, children }: { product: ProductId; child
               <Link
                 key={tab.id}
                 href={target}
+                prefetch={false}
                 className="rm-product-tab"
                 aria-current={current ? "page" : undefined}
               >

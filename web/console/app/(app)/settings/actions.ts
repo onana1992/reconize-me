@@ -4,6 +4,7 @@ import {
   consoleApi,
   type ApiResult,
   type AuditList,
+  type Billing,
   type CheckoutSession,
   type IntegrationResponse,
   type IssuedApiKey,
@@ -116,6 +117,15 @@ export async function changePasswordAction(formData: FormData): Promise<ApiResul
       new_password: String(formData.get("new_password") ?? ""),
     }),
   });
+}
+
+export async function listLedgerAction(cursor?: string, limit = 100): Promise<ApiResult<Billing>> {
+  const query = new URLSearchParams();
+  if (cursor) {
+    query.set("cursor", cursor);
+  }
+  query.set("limit", String(limit));
+  return consoleApi(`/v1/console/billing?${query.toString()}`, await sessionCookieHeader());
 }
 
 export async function createCheckoutAction(packMinor: number): Promise<ApiResult<CheckoutSession>> {
