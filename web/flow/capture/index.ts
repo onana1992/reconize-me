@@ -38,10 +38,10 @@ function assess(image: ImageData, kind: "document" | "selfie"): Assessment {
   if (mean > BRIGHT) {
     reasons.push("too_bright");
   }
-  if (contrast < MIN_CONTRAST) {
-    reasons.push(kind === "selfie" ? "face_not_framed" : "too_blurry");
-  }
   const minSharpness = kind === "selfie" ? MIN_SHARPNESS_SELFIE : MIN_SHARPNESS_DOCUMENT;
+  if (kind === "selfie" && contrast < MIN_CONTRAST) {
+    reasons.push("face_not_framed");
+  }
   if (sharpness < minSharpness) {
     reasons.push("too_blurry");
   }
@@ -67,21 +67,41 @@ function metrics(image: ImageData, kind: "document" | "selfie"): { mean: number;
     variance += d * d;
   }
   const contrast = Math.sqrt(variance / count);
-  let edge = 0;
-  let samples = 0;
-  for (let y = 1; y < height - 1; y += 1) {
-    for (let x = 1; x < width - 1; x += 1) {
-      const c = luma[y * width + x];
-      const lap =
-        Math.abs(c - luma[y * width + (x - 1)]) +
-        Math.abs(c - luma[y * width + (x + 1)]) +
-        Math.abs(c - luma[(y - 1) * width + x]) +
-        Math.abs(c - luma[(y + 1) * width + x]);
-      edge += lap / 4;
-      samples += 1;
+  return { mean, contrast, sharpness: sharpestTile(luma, width, height) };
+}
+
+/** Une carte pâle reste envoyée quand une bande, le code ou la MRZ, est nette. */
+function sharpestTile(luma: Float64Array, width: number, height: number): number {
+  const tiles = 4;
+  let best = 0;
+  const tileW = Math.max(1, Math.floor(width / tiles));
+  const tileH = Math.max(1, Math.floor(height / tiles));
+  for (let ty = 0; ty < tiles; ty += 1) {
+    const y0 = ty * tileH;
+    const y1 = ty === tiles - 1 ? height : Math.min(height, y0 + tileH);
+    for (let tx = 0; tx < tiles; tx += 1) {
+      const x0 = tx * tileW;
+      const x1 = tx === tiles - 1 ? width : Math.min(width, x0 + tileW);
+      let edge = 0;
+      let samples = 0;
+      for (let y = Math.max(1, y0); y < Math.min(height - 1, y1); y += 1) {
+        for (let x = Math.max(1, x0); x < Math.min(width - 1, x1); x += 1) {
+          const c = luma[y * width + x];
+          const lap =
+            Math.abs(c - luma[y * width + (x - 1)]) +
+            Math.abs(c - luma[y * width + (x + 1)]) +
+            Math.abs(c - luma[(y - 1) * width + x]) +
+            Math.abs(c - luma[(y + 1) * width + x]);
+          edge += lap / 4;
+          samples += 1;
+        }
+      }
+      if (samples > 0) {
+        best = Math.max(best, edge / samples);
+      }
     }
   }
-  return { mean, contrast, sharpness: samples === 0 ? 0 : edge / samples };
+  return best;
 }
 
 function sampleLuma(

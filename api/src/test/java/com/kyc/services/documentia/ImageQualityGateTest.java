@@ -56,6 +56,21 @@ class ImageQualityGateTest {
     }
 
     @Test
+    void aSharpBandOnAPaleCardIsReadable() {
+        BufferedImage image = flat(640, 480, 0xE8E4DC);
+        int step = Math.max(1, (int) Math.round(Math.min(640, 480) / 320.0));
+        for (int y = 360; y < 470; y++) {
+            for (int x = 480; x < 630; x++) {
+                if (((x / step) + (y / step)) % 2 == 0) {
+                    image.setRGB(x, y, 0x202020);
+                }
+            }
+        }
+        DocumentImageQuality quality = gate.assess(image);
+        assertTrue(quality.readable(), quality.reason());
+    }
+
+    @Test
     void flatFrameIsBlurry() {
         DocumentImageQuality quality = gate.assess(flat(640, 480, 0x808080));
         assertFalse(quality.readable());

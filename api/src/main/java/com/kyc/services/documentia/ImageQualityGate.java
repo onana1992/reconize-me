@@ -74,20 +74,40 @@ public class ImageQualityGate {
             }
         }
         double mean = sum / luma.length;
-        double edge = 0;
-        int samples = 0;
-        for (int y = 1; y < sampleHeight - 1; y++) {
-            for (int x = 1; x < sampleWidth - 1; x++) {
-                double center = luma[y * sampleWidth + x];
-                double lap = Math.abs(center - luma[y * sampleWidth + (x - 1)])
-                        + Math.abs(center - luma[y * sampleWidth + (x + 1)])
-                        + Math.abs(center - luma[(y - 1) * sampleWidth + x])
-                        + Math.abs(center - luma[(y + 1) * sampleWidth + x]);
-                edge += lap / 4;
-                samples++;
+        return new Sample(mean, sharpestTile(luma, sampleWidth, sampleHeight));
+    }
+
+    /** Le verso d'une carte est surtout pâle. La MRZ ou le code tient dans une bande : c'est elle qui compte. */
+    private static double sharpestTile(double[] luma, int width, int height) {
+        int tiles = 4;
+        double best = 0;
+        int tileW = Math.max(1, width / tiles);
+        int tileH = Math.max(1, height / tiles);
+        for (int ty = 0; ty < tiles; ty++) {
+            int y0 = ty * tileH;
+            int y1 = ty == tiles - 1 ? height : Math.min(height, y0 + tileH);
+            for (int tx = 0; tx < tiles; tx++) {
+                int x0 = tx * tileW;
+                int x1 = tx == tiles - 1 ? width : Math.min(width, x0 + tileW);
+                double edge = 0;
+                int samples = 0;
+                for (int y = Math.max(1, y0); y < Math.min(height - 1, y1); y++) {
+                    for (int x = Math.max(1, x0); x < Math.min(width - 1, x1); x++) {
+                        double center = luma[y * width + x];
+                        double lap = Math.abs(center - luma[y * width + (x - 1)])
+                                + Math.abs(center - luma[y * width + (x + 1)])
+                                + Math.abs(center - luma[(y - 1) * width + x])
+                                + Math.abs(center - luma[(y + 1) * width + x]);
+                        edge += lap / 4;
+                        samples++;
+                    }
+                }
+                if (samples > 0) {
+                    best = Math.max(best, edge / samples);
+                }
             }
         }
-        return new Sample(mean, samples == 0 ? 0 : edge / samples);
+        return best;
     }
 
     private static double luminance(int rgb) {
