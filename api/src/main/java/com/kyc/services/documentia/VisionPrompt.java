@@ -3,8 +3,15 @@ package com.kyc.services.documentia;
 import com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt;
 import com.kyc.dto.documentia.DocumentIaCatalogResponse.Schema;
 import java.util.List;
+import java.util.Set;
 
 public final class VisionPrompt {
+
+    private static final String MRZ_READING =
+            "Copy mrz as exactly three lines of 30 characters, separated by newlines. Keep every <. On the name line a round letter is O, not 0. If the last line counts 29, add one final <.";
+
+    private static final Set<String> MRZ_COPIED =
+            Set.of("lastName", "firstName", "dateOfBirth", "expirationDate", "sex", "nationality", "mrz");
 
     private VisionPrompt() {}
 
@@ -63,7 +70,10 @@ public final class VisionPrompt {
         if (schema.issuingJurisdiction() != null && !schema.issuingJurisdiction().isBlank()) {
             prompt.append("issuingJurisdiction: ").append(schema.issuingJurisdiction()).append('\n');
         }
-        if (schema.reading() != null && !schema.reading().isBlank()) {
+        boolean mrz = hasMrz(schema);
+        if (mrz) {
+            prompt.append("reading: ").append(MRZ_READING).append('\n');
+        } else if (schema.reading() != null && !schema.reading().isBlank()) {
             prompt.append("reading: ").append(schema.reading()).append('\n');
         }
         if (schema.fields() != null) {
@@ -72,12 +82,26 @@ public final class VisionPrompt {
                 prompt.append("  ")
                         .append(field.name())
                         .append(field.required() ? " required" : " optional");
-                if (field.hint() != null && !field.hint().isBlank()) {
-                    prompt.append(". ").append(field.hint());
+                if (!mrz || !MRZ_COPIED.contains(field.name())) {
+                    if (field.hint() != null && !field.hint().isBlank()) {
+                        prompt.append(". ").append(field.hint());
+                    }
                 }
                 prompt.append('\n');
             }
         }
+    }
+
+    private static boolean hasMrz(Schema schema) {
+        if (schema.fields() == null) {
+            return false;
+        }
+        for (FieldPrompt field : schema.fields()) {
+            if ("mrz".equals(field.name())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String firstSentence(String reading) {

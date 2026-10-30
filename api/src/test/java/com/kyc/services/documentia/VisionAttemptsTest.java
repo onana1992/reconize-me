@@ -102,6 +102,33 @@ class VisionAttemptsTest {
     }
 
     @Test
+    void backMrzReadingReplacesTheLongCatalogEssay() {
+        String prompt = VisionPrompt.fromCatalog(
+                List.of(new Schema(
+                        VERSION,
+                        "CANADA_PERMANENT_RESIDENT",
+                        "CA",
+                        "RESIDENCE_PERMIT",
+                        "BACK",
+                        "2015",
+                        null,
+                        "Canada permanent resident card back. Second line positions, counted from 1: 1-6 birth date. Do not take the day from the later optional date. The line ends with fillers.",
+                        List.of(
+                                new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "documentNumber", true, "the PD number printed above the machine-readable zone"),
+                                new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "expirationDate", false, "second MRZ line positions 9-14"),
+                                new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "mrz", true, "three lines of 30 characters")))),
+                "BACK");
+
+        assertTrue(prompt.contains("three lines of 30 characters"));
+        assertTrue(prompt.contains("the PD number printed above the machine-readable zone"));
+        assertFalse(prompt.contains("positions 9-14"));
+        assertFalse(prompt.contains("later optional date"));
+    }
+
+    @Test
     void secondAttemptIsUsedWhenTheFirstFails() {
         AtomicInteger calls = new AtomicInteger();
         VisionDocumentPort port = (image, mediaType, prompt) -> {
