@@ -70,11 +70,18 @@ jobs:
           set -eu
           deploy() {
             name="$1"
-            hook="$2"
-            if [ -z "$hook" ]; then
-              echo "$name : secret GitHub absent, déploiement impossible"
-              exit 1
-            fi
+            hook=$(printf '%s' "$2" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+            case "$hook" in
+              https://api.render.com/deploy/*) ;;
+              "")
+                echo "$name : secret GitHub absent, déploiement impossible"
+                exit 1
+                ;;
+              *)
+                echo "$name : le secret doit être l'URL du deploy hook, une seule ligne, commençant par https://api.render.com/deploy/"
+                exit 1
+                ;;
+            esac
             echo "$name : déploiement demandé"
             curl --silent --show-error --fail-with-body --max-time 60 -X POST "$hook"
             echo
