@@ -271,7 +271,7 @@ export function FlowClient({ token }: { token: string }) {
         return;
       }
       const canvas = document.createElement("canvas");
-      const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(video.videoWidth, video.videoHeight));
+      const scale = Math.min(1, CAPTURE_LONG_SIDE / Math.max(video.videoWidth, video.videoHeight));
       canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
       canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
       const ctx = canvas.getContext("2d");
@@ -649,6 +649,10 @@ function hintForReasons(reasons: string[]): MessageKey {
 }
 
 const SERVER_MIN_SHORT_SIDE = 720;
+/** Résolution de la photo jugée par le contrôle de netteté. */
+const CAPTURE_LONG_SIDE = 3840;
+/** Fichier envoyé à l'analyse. Le modèle ne lit pas au-delà. */
+const UPLOAD_LONG_SIDE = 1920;
 
 function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
   return new Promise((resolve, reject) => {
@@ -656,7 +660,7 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const scale = Math.min(1, PHOTO_LONG_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+      const scale = Math.min(1, CAPTURE_LONG_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
       canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
       const ctx = canvas.getContext("2d");
@@ -676,12 +680,10 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
   });
 }
 
-const PHOTO_LONG_SIDE = 3840;
-
 function highResVideo(facing: "user" | "environment"): MediaTrackConstraints {
   return {
     facingMode: { ideal: facing },
-    width: { ideal: 3840 },
+    width: { ideal: CAPTURE_LONG_SIDE },
     height: { ideal: 2160 },
   };
 }
@@ -738,7 +740,7 @@ async function raiseTrack(stream: MediaStream): Promise<void> {
     width?: { max?: number };
     height?: { max?: number };
   };
-  const width = caps.width?.max && caps.width.max > 0 ? caps.width.max : 3840;
+  const width = caps.width?.max && caps.width.max > 0 ? caps.width.max : CAPTURE_LONG_SIDE;
   const height = caps.height?.max && caps.height.max > 0 ? caps.height.max : 2160;
   const advanced: MediaTrackConstraintSet[] = focusConstraints(caps, { x: 0.5, y: 0.5 });
   try {
@@ -908,10 +910,29 @@ function frameFromCanvas(canvas: HTMLCanvasElement): Promise<{ image: ImageData;
     return Promise.reject(new Error("canvas"));
   }
   const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const upload = ensureMinShortSide(canvas, SERVER_MIN_SHORT_SIDE);
+  const upload = limitLongSide(ensureMinShortSide(canvas, SERVER_MIN_SHORT_SIDE), UPLOAD_LONG_SIDE);
   return new Promise((resolve, reject) => {
     upload.toBlob((blob) => (blob ? resolve({ image, blob }) : reject(new Error("blob"))), "image/jpeg", 0.92);
   });
+}
+
+function limitLongSide(source: HTMLCanvasElement, max: number): HTMLCanvasElement {
+  const long = Math.max(source.width, source.height);
+  if (long <= max) {
+    return source;
+  }
+  const scale = max / long;
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(source.width * scale));
+  out.height = Math.max(1, Math.round(source.height * scale));
+  const ctx = out.getContext("2d");
+  if (!ctx) {
+    return source;
+  }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, 0, 0, out.width, out.height);
+  return out;
 }
 
 function ensureMinShortSide(source: HTMLCanvasElement, min: number): HTMLCanvasElement {

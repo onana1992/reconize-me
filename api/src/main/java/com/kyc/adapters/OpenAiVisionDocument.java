@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
@@ -20,6 +22,7 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
 
     static final String DEFAULT_ENDPOINT = "https://api.openai.com/v1/chat/completions";
     static final String DEFAULT_MODEL = "gpt-4.1-mini";
+    private static final Logger log = LoggerFactory.getLogger(OpenAiVisionDocument.class);
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
     private static final String SYSTEM_PROMPT = """
             Reply with one JSON object only. Copy this shape. \
@@ -65,7 +68,12 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
         if (image == null || image.length == 0 || prompt == null || prompt.isBlank()) {
             throw new ProviderUnavailableException("vision_unavailable");
         }
-        String dataUrl = "data:" + imageType(mediaType) + ";base64," + Base64.getEncoder().encodeToString(image);
+        byte[] frame = VisionFrame.fit(image);
+        if (frame != image) {
+            log.info("document-ia vision resized bytes={} prepared={}", image.length, frame.length);
+        }
+        String type = frame == image ? imageType(mediaType) : "image/jpeg";
+        String dataUrl = "data:" + type + ";base64," + Base64.getEncoder().encodeToString(frame);
         try {
             String payload = mapper.writeValueAsString(request(prompt, dataUrl));
             String response = client.post()
