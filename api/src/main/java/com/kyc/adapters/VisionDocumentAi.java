@@ -39,13 +39,33 @@ public class VisionDocumentAi implements DocumentAiPort {
     }
 
     public DocumentLiveView analyzeCapture(byte[] documentImage, String side) {
-        DocumentLiveView view = new DocumentLiveView(lab.decideImage(documentImage, "image/jpeg", side), modelId);
+        return analyzeCapture(documentImage, side, null);
+    }
+
+    public DocumentLiveView analyzeCapture(byte[] documentImage, String side, String documentCode) {
+        DocumentLiveView view =
+                new DocumentLiveView(lab.decideImage(documentImage, "image/jpeg", side, documentCode), modelId);
         log.info(
                 "document-ia live accepted={} stoppedAt={} providerCalled={} side={}",
                 view.accepted(),
                 view.response().stoppedAt(),
                 view.response().providerCalled(),
                 side);
+        return view;
+    }
+
+    public static final String QUEBEC_BACK_BARCODE =
+            """
+            {"detection":"DOCUMENT_PRESENT","classification":{"code":"QUEBEC_DRIVER_LICENSE","version":"2024","side":"BACK","confidence":0.97},"fields":[{"field":"barcode","value":"PRESENT","confidence":0.96,"source":"VISUAL_TEXT"}]}""";
+
+    /** Verso du permis du Québec déjà identifié au recto. Le code-barres tient lieu de lecture. */
+    public DocumentLiveView acceptQuebecBack(byte[] documentImage) {
+        DocumentLiveView view = new DocumentLiveView(lab.decideSupplied(documentImage, "BACK", QUEBEC_BACK_BARCODE), "pdf417");
+        log.info(
+                "document-ia live accepted={} stoppedAt={} providerCalled={} side=BACK model=pdf417",
+                view.accepted(),
+                view.response().stoppedAt(),
+                view.response().providerCalled());
         return view;
     }
 }

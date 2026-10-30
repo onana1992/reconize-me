@@ -6,7 +6,7 @@ import com.kyc.ports.VisionDocumentPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Au plus deux appels. Le second échec distingue un fournisseur injoignable d'un JSON hors contrat. */
+/** Un fournisseur injoignable est retenté une fois. Un JSON hors contrat ne l'est pas. */
 public final class VisionAttempts {
 
     private static final Logger log = LoggerFactory.getLogger(VisionAttempts.class);
@@ -19,11 +19,22 @@ public final class VisionAttempts {
 
     public static Result call(
             VisionDocumentPort port, DocumentAnalysisParser parser, byte[] image, String mediaType, String prompt) {
+        return call(port, parser, image, mediaType, prompt, "high");
+    }
+
+    public static Result call(
+            VisionDocumentPort port,
+            DocumentAnalysisParser parser,
+            byte[] image,
+            String mediaType,
+            String prompt,
+            String detail) {
         String failureCode = "provider_unavailable";
+        String chosen = "low".equals(detail) ? "low" : "high";
         for (int attempt = 1; attempt <= 2; attempt++) {
             long start = System.nanoTime();
             try {
-                String raw = port.complete(image, mediaType, prompt);
+                String raw = port.complete(image, mediaType, prompt, chosen);
                 DocumentParse parsed = parser.parse(raw);
                 log.info(
                         "document-ia vision completed attempt={} durationMs={} code={} providerCalled=true",
@@ -38,12 +49,12 @@ public final class VisionAttempts {
                         attempt,
                         elapsed(start));
             } catch (InvalidModelJsonException e) {
-                failureCode = "invalid_model_json";
                 log.info(
                         "document-ia vision failed attempt={} durationMs={} code=invalid_model_json reason={}",
                         attempt,
                         elapsed(start),
                         e.getMessage());
+                return new Result(null, "invalid_model_json");
             }
         }
         return new Result(null, failureCode);

@@ -20,13 +20,21 @@ import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.repositories.VerificationRepository;
+import com.kyc.adapters.VisionDocumentAi;
+import com.kyc.dto.documentia.DocumentDecision;
+import com.kyc.dto.documentia.DocumentIaAnalysisResponse;
 import com.kyc.services.ApiKeyAuthenticator;
+import com.kyc.services.DocumentIaLabService;
 import com.kyc.services.documentia.SchemaRegistry;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.UUID;
 import javax.imageio.ImageIO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +71,9 @@ class DocumentIaLabTest {
 
     @Autowired
     private VerificationRepository verifications;
+
+    @Autowired
+    private DocumentIaLabService documents;
 
     @BeforeEach
     void seed() {
@@ -146,6 +157,19 @@ class DocumentIaLabTest {
                 .andExpect(jsonPath("$.providerCalled").value(false))
                 .andExpect(jsonPath("$.rawModel").value(nullValue()))
                 .andExpect(jsonPath("$.quality.reason").value("TOO_SMALL"));
+    }
+
+    @Test
+    void blurryDecideDoesNotCallVision() throws Exception {
+        mockMvc.perform(multipart("/v1/document-ia/analyze")
+                        .file(flatJpeg())
+                        .param("until", "decide")
+                        .header("Authorization", "Bearer " + LIVE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stoppedAt").value("quality"))
+                .andExpect(jsonPath("$.providerCalled").value(false))
+                .andExpect(jsonPath("$.rawModel").value(nullValue()))
+                .andExpect(jsonPath("$.quality.reason").value("IMAGE_TOO_BLURRY"));
     }
 
     @Test
@@ -388,6 +412,18 @@ class DocumentIaLabTest {
     }
 
     @Test
+    void suppliedQuebecBackIsApprovedWithoutTheModel() {
+        DocumentIaAnalysisResponse response =
+                documents.decideSupplied(new byte[] {1, 2, 3}, "BACK", VisionDocumentAi.QUEBEC_BACK_BARCODE);
+
+        assertFalse(response.providerCalled());
+        assertEquals(SchemaRegistry.QUEBEC_BACK_VERSION_ID, response.schemaVersionId());
+        DocumentDecision decision = (DocumentDecision) response.decision();
+        assertEquals("PASS", decision.issue());
+        assertEquals("APPROVED", decision.verificationDecision());
+    }
+
+    @Test
     void quebecBackFixtureIsApproved() throws Exception {
         mockMvc.perform(post("/v1/document-ia/fixtures/quebec-back")
                         .param("until", "decide")
@@ -457,6 +493,17 @@ class DocumentIaLabTest {
                 rawKey.substring(0, ApiKeyAuthenticator.PREFIX_LENGTH),
                 passwordEncoder.encode(rawKey),
                 now));
+    }
+
+    private static MockMultipartFile flatJpeg() throws Exception {
+        BufferedImage image = new BufferedImage(640, 480, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = image.createGraphics();
+        graphics.setColor(Color.GRAY);
+        graphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+        graphics.dispose();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpeg", out);
+        return new MockMultipartFile("file", "flat.jpg", MediaType.IMAGE_JPEG_VALUE, out.toByteArray());
     }
 
     private static MockMultipartFile jpeg() throws Exception {

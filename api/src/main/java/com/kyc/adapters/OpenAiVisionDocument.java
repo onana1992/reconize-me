@@ -64,6 +64,11 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
 
     @Override
     public String complete(byte[] image, String mediaType, String prompt) {
+        return complete(image, mediaType, prompt, "high");
+    }
+
+    @Override
+    public String complete(byte[] image, String mediaType, String prompt, String detail) {
         if (image == null || image.length == 0 || prompt == null || prompt.isBlank()) {
             throw new ProviderUnavailableException("vision_unavailable");
         }
@@ -74,7 +79,7 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
         String type = frame == image ? imageType(mediaType) : "image/jpeg";
         String dataUrl = "data:" + type + ";base64," + Base64.getEncoder().encodeToString(frame);
         try {
-            String payload = mapper.writeValueAsString(request(prompt, dataUrl));
+            String payload = mapper.writeValueAsString(request(prompt, dataUrl, detail));
             String response = client.post()
                     .uri(endpoint)
                     .header("Authorization", "Bearer " + apiKey)
@@ -96,7 +101,8 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
         }
     }
 
-    private Map<String, Object> request(String prompt, String dataUrl) {
+    private Map<String, Object> request(String prompt, String dataUrl, String detail) {
+        String chosen = "low".equals(detail) ? "low" : "high";
         return Map.of(
                 "model", model,
                 "temperature", 0,
@@ -106,7 +112,7 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
                         Map.of("role", "system", "content", SYSTEM_PROMPT),
                         Map.of("role", "user", "content", List.of(
                                 Map.of("type", "text", "text", prompt),
-                                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl, "detail", "high"))))));
+                                Map.of("type", "image_url", "image_url", Map.of("url", dataUrl, "detail", chosen))))));
     }
 
     private String contentOf(String response) {

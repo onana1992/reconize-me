@@ -5,6 +5,7 @@ import com.kyc.config.KycProperties;
 import com.kyc.dto.documentia.DocumentDecision;
 import com.kyc.dto.documentia.DocumentIaAnalysisResponse;
 import com.kyc.dto.documentia.DocumentIaCatalogResponse;
+import com.kyc.dto.documentia.DocumentIaCatalogResponse.Schema;
 import com.kyc.dto.documentia.DocumentImageQuality;
 import com.kyc.dto.documentia.DocumentParse;
 import com.kyc.dto.documentia.DocumentScores;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -139,18 +141,47 @@ public class DocumentIaLabService {
     }
 
     public DocumentIaAnalysisResponse decideImage(byte[] bytes, String mediaType, String captureSide) {
+        return decideImage(bytes, mediaType, captureSide, null);
+    }
+
+    public DocumentIaAnalysisResponse decideImage(
+            byte[] bytes, String mediaType, String captureSide, String documentCode) {
         if (bytes == null || bytes.length == 0) {
             throw new com.kyc.ports.ProviderUnavailableException("vision_unavailable");
         }
         String type = mediaType == null || mediaType.isBlank() ? "image/jpeg" : mediaType;
-        return run(bytes, type, "decide", captureSide);
+        return run(bytes, type, "decide", captureSide, documentCode);
+    }
+
+    /** Lecture déjà établie, sans appel au modèle. La photo a prouvé le code-barres. */
+    public DocumentIaAnalysisResponse decideSupplied(byte[] bytes, String captureSide, String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            throw new com.kyc.ports.ProviderUnavailableException("vision_unavailable");
+        }
+        try {
+            DocumentParse parsed = parser.parse(rawJson);
+            Object rawModel = objectMapper.readTree(rawJson);
+            log.info(
+                    "document-ia supplied code={} side={} bytes={} providerCalled=false",
+                    parsed.document().classification().code(),
+                    captureSide,
+                    bytes == null ? 0 : bytes.length);
+            return staged("decide", READABLE_QUALITY, rawModel, parsed, false, captureSide);
+        } catch (InvalidModelJsonException | IOException e) {
+            throw new com.kyc.ports.ProviderUnavailableException("vision_unavailable", e);
+        }
     }
 
     private DocumentIaAnalysisResponse run(byte[] bytes, String mediaType, String until) {
-        return run(bytes, mediaType, until, null);
+        return run(bytes, mediaType, until, null, null);
     }
 
     private DocumentIaAnalysisResponse run(byte[] bytes, String mediaType, String until, String captureSide) {
+        return run(bytes, mediaType, until, captureSide, null);
+    }
+
+    private DocumentIaAnalysisResponse run(
+            byte[] bytes, String mediaType, String until, String captureSide, String documentCode) {
         long start = System.nanoTime();
         DocumentImageQuality measured = qualityGate.assess(bytes);
         log.info(
@@ -158,8 +189,9 @@ public class DocumentIaLabService {
                 (System.nanoTime() - start) / 1_000_000L,
                 measured.readable(),
                 measured.reason());
-        // Le parcours live envoie quand même la photo au modèle. Le laboratoire, lui, s'arrête sur la qualité mesurée.
-        if (!measured.readable() && !wantsDecide(until)) {
+        // Une photo floue est redemandée, y compris sur le parcours live. Les autres défauts
+        // n'arrêtent que le laboratoire : la décision live les laisse au modèle.
+        if (!measured.readable() && (!wantsDecide(until) || blurry(measured))) {
             return DocumentIaAnalysisResponse.quality(measured);
         }
         DocumentImageQuality quality = measured.readable() ? measured : READABLE_QUALITY;
@@ -169,8 +201,10 @@ public class DocumentIaLabService {
         if (!wantsVision(until)) {
             return DocumentIaAnalysisResponse.quality(quality);
         }
-        String prompt = VisionPrompt.fromCatalog(registry.catalog().schemas(), captureSide);
-        VisionAttempts.Result result = VisionAttempts.call(vision, parser, bytes, mediaType, prompt);
+        List<Schema> schemas = schemasFor(documentCode);
+        String prompt = VisionPrompt.fromCatalog(schemas, captureSide);
+        String detail = VisionPrompt.imageDetail(captureSide, schemas);
+        VisionAttempts.Result result = VisionAttempts.call(vision, parser, bytes, mediaType, prompt, detail);
         VisionAttempts.Success success = result.success();
         if (success == null) {
             return visionFailure(quality, result.failureCode(), until);
@@ -181,6 +215,24 @@ public class DocumentIaLabService {
         } catch (IOException e) {
             return visionFailure(quality, "provider_unavailable", until);
         }
+    }
+
+    private static boolean blurry(DocumentImageQuality quality) {
+        return quality != null && "IMAGE_TOO_BLURRY".equals(quality.reason());
+    }
+
+    private List<Schema> schemasFor(String documentCode) {
+        List<Schema> schemas = registry.catalog().schemas();
+        if (documentCode == null || documentCode.isBlank() || schemas == null) {
+            return schemas;
+        }
+        List<Schema> matched = new ArrayList<>();
+        for (Schema schema : schemas) {
+            if (documentCode.equals(schema.code())) {
+                matched.add(schema);
+            }
+        }
+        return matched.isEmpty() ? schemas : matched;
     }
 
     private DocumentIaAnalysisResponse staged(

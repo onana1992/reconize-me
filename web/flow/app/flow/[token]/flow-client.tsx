@@ -261,9 +261,11 @@ export function FlowClient({ token }: { token: string }) {
       if (track && track.readyState === "live") {
         await focusTrack(track, { x: 0.5, y: 0.5 });
       }
-      const still = track && track.readyState === "live" ? await stillFromTrack(track) : null;
+      const still = track && track.readyState === "live" ? await canvasFromTrack(track) : null;
       if (still) {
-        await submitFrame(kind, still.image, still.blob);
+        const framed = kind === "document" ? cropDocumentGuide(still) : still;
+        const { image, blob } = await frameFromCanvas(framed, kind === "document" ? DOCUMENT_JPEG_QUALITY : 0.8);
+        await submitFrame(kind, image, blob);
         return;
       }
       if (!video || video.videoWidth === 0) {
@@ -282,7 +284,8 @@ export function FlowClient({ token }: { token: string }) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const { image, blob } = await frameFromCanvas(canvas);
+      const framed = kind === "document" ? cropDocumentGuide(canvas) : canvas;
+      const { image, blob } = await frameFromCanvas(framed, kind === "document" ? DOCUMENT_JPEG_QUALITY : 0.8);
       await submitFrame(kind, image, blob);
     } catch {
       setHint("capture.cameraError");
@@ -304,7 +307,7 @@ export function FlowClient({ token }: { token: string }) {
     capturing.current = true;
     const kind = session?.next === "capture_selfie" ? "selfie" : "document";
     try {
-      const { image, blob } = await frameFromFile(file);
+      const { image, blob } = await frameFromFile(file, kind === "document" ? DOCUMENT_JPEG_QUALITY : 0.8);
       await submitFrame(kind, image, blob);
     } catch {
       setHint("capture.decodeError");
@@ -653,8 +656,13 @@ const SERVER_MIN_SHORT_SIDE = 720;
 const CAPTURE_LONG_SIDE = 3840;
 /** Fichier envoyé à l'analyse. Le modèle ne lit pas au-delà. */
 const UPLOAD_LONG_SIDE = 1280;
+/** Même rectangle que `.rm-camera-cutout` sur un aperçu 4/3 en `object-fit: cover`. */
+const STAGE_ASPECT = 4 / 3;
+const DOCUMENT_GUIDE_WIDTH = 0.86;
+const DOCUMENT_GUIDE_ASPECT = 85 / 54;
+const DOCUMENT_JPEG_QUALITY = 0.9;
 
-function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
+function frameFromFile(file: File, quality = 0.8): Promise<{ image: ImageData; blob: Blob }> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -670,7 +678,7 @@ function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
         return;
       }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      void frameFromCanvas(canvas).then(resolve, reject);
+      void frameFromCanvas(canvas, quality).then(resolve, reject);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -694,17 +702,19 @@ async function openCaptureStream(facing: "user" | "environment"): Promise<MediaS
     await raiseTrack(stream);
     return stream;
   }
-  const currentId = stream.getVideoTracks()[0]?.getSettings().deviceId;
   const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
-  const mainRear = pickMainRear(devices, currentId);
+  const mainRear = await chooseMainRear(devices, stream);
   if (!mainRear) {
     await raiseTrack(stream);
     return stream;
   }
-  stream.getTracks().forEach((track) => track.stop());
   try {
     const rear = await navigator.mediaDevices.getUserMedia({
-      video: { ...highResVideo(facing), deviceId: { exact: mainRear } },
+      video: {
+        deviceId: { exact: mainRear },
+        width: { ideal: CAPTURE_LONG_SIDE },
+        height: { ideal: 2160 },
+      },
     });
     await raiseTrack(rear);
     return rear;
@@ -715,19 +725,111 @@ async function openCaptureStream(facing: "user" | "environment"): Promise<MediaS
   }
 }
 
-function pickMainRear(devices: MediaDeviceInfo[], currentId: string | undefined): string | undefined {
+type RearScore = {
+  deviceId: string;
+  wide: boolean;
+  index: number | null;
+  pixels: number;
+  focus: boolean;
+};
+
+/** Le capteur principal : autofocus, pas le grand-angle, identifiant 0 quand le téléphone le numérote ainsi. */
+async function chooseMainRear(devices: MediaDeviceInfo[], current: MediaStream): Promise<string | undefined> {
   if (!devices.some((device) => device.kind === "videoinput" && device.label)) {
     return undefined;
   }
-  const rear = devices.filter(
-    (device) => device.kind === "videoinput" && /back|rear|environment|arrière|arriere/i.test(device.label),
-  );
-  const main = rear.find((device) => !/ultra|wide|0\.5|depth|tele/i.test(device.label));
-  const chosen = main ?? rear[0];
-  if (!chosen || chosen.deviceId === currentId) {
+  const rear = devices.filter((device) => device.kind === "videoinput" && isRearLabel(device.label));
+  if (rear.length <= 1) {
     return undefined;
   }
-  return chosen.deviceId;
+  const currentTrack = current.getVideoTracks()[0];
+  const currentId = currentTrack?.getSettings().deviceId;
+  const currentDevice = rear.find((device) => device.deviceId === currentId);
+  const currentScore = currentTrack && currentDevice ? scoreRear(currentDevice, currentTrack) : null;
+  current.getTracks().forEach((track) => track.stop());
+  const scored: RearScore[] = [];
+  if (currentScore) {
+    scored.push(currentScore);
+  }
+  for (const device of rear) {
+    if (device.deviceId === currentId) {
+      continue;
+    }
+    const probed = await probeRear(device);
+    if (probed) {
+      scored.push(probed);
+    }
+  }
+  const pool = scored.some((item) => !item.wide) ? scored.filter((item) => !item.wide) : scored;
+  pool.sort(compareRear);
+  return pool[0]?.deviceId ?? currentId;
+}
+
+function compareRear(a: RearScore, b: RearScore): number {
+  if (a.focus !== b.focus) {
+    return a.focus ? -1 : 1;
+  }
+  if ((a.index === 0) !== (b.index === 0)) {
+    return a.index === 0 ? -1 : 1;
+  }
+  if (a.pixels !== b.pixels) {
+    return b.pixels - a.pixels;
+  }
+  return (a.index ?? 99) - (b.index ?? 99);
+}
+
+function isRearLabel(label: string): boolean {
+  if (/front|user|face|selfie/i.test(label) && !/back|rear|environment/i.test(label)) {
+    return false;
+  }
+  return /back|rear|environment|arrière|arriere/i.test(label);
+}
+
+function cameraIndex(label: string): number | null {
+  const match = label.match(/camera2\s+(\d+)/i) ?? label.match(/camera\s+(\d+)/i);
+  if (!match) {
+    return null;
+  }
+  const index = Number(match[1]);
+  return Number.isFinite(index) ? index : null;
+}
+
+function scoreRear(device: MediaDeviceInfo, track: MediaStreamTrack): RearScore {
+  const caps = track.getCapabilities?.() as
+    | (MediaTrackCapabilities & {
+        focusMode?: string[];
+        width?: { max?: number };
+        height?: { max?: number };
+      })
+    | undefined;
+  const width = caps?.width?.max ?? track.getSettings().width ?? 0;
+  const height = caps?.height?.max ?? track.getSettings().height ?? 0;
+  const focus = Boolean(caps?.focusMode?.some((mode) => mode === "continuous" || mode === "single-shot"));
+  return {
+    deviceId: device.deviceId,
+    wide: /ultra|wide|0\.5|depth|tele/i.test(device.label),
+    index: cameraIndex(device.label),
+    pixels: width * height,
+    focus,
+  };
+}
+
+async function probeRear(device: MediaDeviceInfo): Promise<RearScore | null> {
+  let stream: MediaStream | null = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: device.deviceId } },
+    });
+    const track = stream.getVideoTracks()[0];
+    if (!track) {
+      return null;
+    }
+    return scoreRear(device, track);
+  } catch {
+    return null;
+  } finally {
+    stream?.getTracks().forEach((track) => track.stop());
+  }
 }
 
 async function raiseTrack(stream: MediaStream): Promise<void> {
@@ -867,7 +969,7 @@ async function takeStill(
   return attempt(camera.takePhoto()).catch(() => null);
 }
 
-async function stillFromTrack(track: MediaStreamTrack): Promise<{ image: ImageData; blob: Blob } | null> {
+async function canvasFromTrack(track: MediaStreamTrack): Promise<HTMLCanvasElement | null> {
   const Ctor = (
     window as unknown as {
       ImageCapture?: new (media: MediaStreamTrack) => {
@@ -897,14 +999,39 @@ async function stillFromTrack(track: MediaStreamTrack): Promise<{ image: ImageDa
     if (!blob) {
       return null;
     }
-    const file = new File([blob], "capture.jpg", { type: blob.type || "image/jpeg" });
-    return await frameFromFile(file);
+    return await loadCanvas(blob);
   } catch {
     return null;
   }
 }
 
-function frameFromCanvas(canvas: HTMLCanvasElement): Promise<{ image: ImageData; blob: Blob }> {
+function loadCanvas(blob: Blob): Promise<HTMLCanvasElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, CAPTURE_LONG_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext("2d");
+      URL.revokeObjectURL(url);
+      if (!ctx) {
+        reject(new Error("canvas"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("image"));
+    };
+    img.src = url;
+  });
+}
+
+function frameFromCanvas(canvas: HTMLCanvasElement, quality = 0.8): Promise<{ image: ImageData; blob: Blob }> {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return Promise.reject(new Error("canvas"));
@@ -912,8 +1039,35 @@ function frameFromCanvas(canvas: HTMLCanvasElement): Promise<{ image: ImageData;
   const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const upload = limitLongSide(ensureMinShortSide(canvas, SERVER_MIN_SHORT_SIDE), UPLOAD_LONG_SIDE);
   return new Promise((resolve, reject) => {
-    upload.toBlob((blob) => (blob ? resolve({ image, blob }) : reject(new Error("blob"))), "image/jpeg", 0.92);
+    upload.toBlob((blob) => (blob ? resolve({ image, blob }) : reject(new Error("blob"))), "image/jpeg", quality);
   });
+}
+
+/** Le guide vu par la personne, pas le clavier autour. */
+function cropDocumentGuide(source: HTMLCanvasElement): HTMLCanvasElement {
+  const srcW = source.width;
+  const srcH = source.height;
+  if (srcW < 2 || srcH < 2) {
+    return source;
+  }
+  const srcAspect = srcW / srcH;
+  const visibleW = srcAspect > STAGE_ASPECT ? srcH * STAGE_ASPECT : srcW;
+  const visibleH = srcAspect > STAGE_ASPECT ? srcH : srcW / STAGE_ASPECT;
+  const visibleX = (srcW - visibleW) / 2;
+  const visibleY = (srcH - visibleH) / 2;
+  const cutoutW = visibleW * DOCUMENT_GUIDE_WIDTH;
+  const cutoutH = Math.min(visibleH, cutoutW / DOCUMENT_GUIDE_ASPECT);
+  const cutoutX = visibleX + (visibleW - cutoutW) / 2;
+  const cutoutY = visibleY + (visibleH - cutoutH) / 2;
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(cutoutW));
+  out.height = Math.max(1, Math.round(cutoutH));
+  const ctx = out.getContext("2d");
+  if (!ctx) {
+    return source;
+  }
+  ctx.drawImage(source, cutoutX, cutoutY, cutoutW, cutoutH, 0, 0, out.width, out.height);
+  return out;
 }
 
 function limitLongSide(source: HTMLCanvasElement, max: number): HTMLCanvasElement {

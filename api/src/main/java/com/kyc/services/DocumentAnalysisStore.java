@@ -173,6 +173,13 @@ public class DocumentAnalysisStore {
         return !registry.findActives(code).isEmpty();
     }
 
+    public String documentCode(UUID verificationId, String side) {
+        if (verificationId == null || side == null) {
+            return null;
+        }
+        return find(verificationId, side).map(this::code).orElse(null);
+    }
+
     /** Le recto et le verso d'une vérification doivent avoir le même code de pièce. */
     public boolean sameDocument(VerificationDocumentAnalysis front, VerificationDocumentAnalysis back) {
         String frontCode = code(front);

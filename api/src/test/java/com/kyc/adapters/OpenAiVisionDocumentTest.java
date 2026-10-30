@@ -74,6 +74,19 @@ class OpenAiVisionDocumentTest {
     }
 
     @Test
+    void backUsesASingleTile() throws Exception {
+        client(Duration.ofSeconds(5)).complete(IMAGE, "image/jpeg", "catalog prompt", "low");
+
+        JsonNode image = mapper.readTree(requestBody.get())
+                .get("messages")
+                .get(1)
+                .get("content")
+                .get(1)
+                .get("image_url");
+        assertEquals("low", image.get("detail").asText());
+    }
+
+    @Test
     void httpErrorDoesNotExposeTheBody() {
         status = 429;
         responseBody = "{\"error\":\"slow down\",\"echo\":\"catalog prompt\"}";

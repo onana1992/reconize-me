@@ -96,9 +96,39 @@ class VisionAttemptsTest {
                 "FRONT");
 
         assertTrue(prompt.contains("expirationDate"));
-        assertTrue(prompt.contains("code: QUEBEC_DRIVER_LICENSE side: BACK version: 2024"));
-        assertTrue(prompt.contains("reading: Quebec license back."));
+        assertTrue(prompt.contains("Capture side: FRONT"));
+        assertFalse(prompt.contains("side: BACK"));
         assertFalse(prompt.contains("PDF417"));
+        assertEquals(
+                "low",
+                VisionPrompt.imageDetail(
+                        "BACK",
+                        List.of(new Schema(
+                                VERSION,
+                                "QUEBEC_DRIVER_LICENSE",
+                                "CA",
+                                "DRIVING_LICENSE",
+                                "BACK",
+                                "2024",
+                                "QC",
+                                "Quebec license back.",
+                                List.of(new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "barcode", true, "PDF417"))))));
+        assertEquals(
+                "high",
+                VisionPrompt.imageDetail(
+                        "BACK",
+                        List.of(new Schema(
+                                VERSION,
+                                "CANADA_PERMANENT_RESIDENT",
+                                "CA",
+                                "RESIDENCE_PERMIT",
+                                "BACK",
+                                "2015",
+                                null,
+                                "Canada permanent resident card back.",
+                                List.of(new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "mrz", true, "three lines"))))));
     }
 
     @Test
@@ -158,7 +188,7 @@ class VisionAttemptsTest {
     }
 
     @Test
-    void rejectedJsonIsRetriedThenDropped() {
+    void rejectedJsonIsNotRetried() {
         AtomicInteger calls = new AtomicInteger();
         VisionDocumentPort port = (image, mediaType, prompt) -> {
             calls.incrementAndGet();
@@ -169,6 +199,6 @@ class VisionAttemptsTest {
         VisionAttempts.Result result = VisionAttempts.call(port, parser, new byte[] {1}, "image/png", "catalog");
         assertNull(result.success());
         assertEquals("invalid_model_json", result.failureCode());
-        assertEquals(2, calls.get());
+        assertEquals(1, calls.get());
     }
 }

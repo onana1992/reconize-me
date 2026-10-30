@@ -156,6 +156,30 @@ class MrzEngineTest {
     }
 
     @Test
+    void aPastDateCopiedFromTheMrzLineDoesNotExpireAValidCard() {
+        String mrz = """
+                CACANPD40779087<1113098892<<<5
+                9204096M3010219CMR<251021<01<3
+                ONANA<ONANA<<JOSEPH<JUNIOR<<<<""";
+        ParsedDocument document = text(mrz, List.of(
+                new ExtractedField("expirationDate", "2025-10-21", null, "MRZ"),
+                new ExtractedField("mrz", mrz, null, "MRZ")));
+        MrzEngine.Outcome outcome = MrzEngine.read(prCard(), document, FieldNormalizer.normalize(prCard(), document, TODAY), TODAY);
+
+        assertEquals("VALID", outcome.report().status());
+        assertEquals("2030-10-21", field(outcome, "expirationDate").normalizedValue());
+        assertFalse(outcome.validation().stream().anyMatch(issue -> "document_expired".equals(issue.code())));
+    }
+
+    @Test
+    void aValidMrzKeepsAnExpiryThatIsActuallyPast() {
+        MrzEngine.Outcome outcome = MrzEngine.read(passport(), specimenDocument(), normalize(specimenDocument()), TODAY);
+
+        assertEquals("2012-04-15", field(outcome, "expirationDate").normalizedValue());
+        assertTrue(outcome.validation().stream().anyMatch(issue -> "document_expired".equals(issue.code())));
+    }
+
+    @Test
     void aFillerThatBreaksTheCheckDigitsStaysUnavailable() {
         String mrz = """
                 CACANPD40779087<1113098892<<<5

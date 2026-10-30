@@ -27,6 +27,7 @@ import com.kyc.enums.SignalOutcome;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.enums.VerificationStatus;
 import com.kyc.adapters.AwsBiometricAi;
+import com.kyc.adapters.Pdf417Barcode;
 import com.kyc.adapters.VisionDocumentAi;
 import com.kyc.dto.documentia.DocumentDecision;
 import com.kyc.dto.documentia.DocumentImageQuality;
@@ -235,14 +236,15 @@ public class HostedFlowService {
         }
         boolean explicitBack = "back".equals(request == null ? null : request.side());
         MediaKind kind = explicitBack || backTurn(loaded.verification()) ? MediaKind.DOCUMENT_BACK : MediaKind.DOCUMENT;
-        CompleteCaptureResponse response = completeMedia(
+        ReadMedia read = completeMedia(
                 loaded, kind, request == null ? null : request.attempt(), MediaQuality::acceptableDocument);
+        CompleteCaptureResponse response = read.response();
         if (!Boolean.TRUE.equals(response.accepted())) {
             return response;
         }
         Instant now = Instant.now();
         if (kind == MediaKind.DOCUMENT || kind == MediaKind.DOCUMENT_BACK) {
-            CompleteCaptureResponse reread = rereadCapture(loaded, kind, response.attempt(), now);
+            CompleteCaptureResponse reread = rereadCapture(loaded, kind, response.attempt(), now, read.body());
             if (reread != null) {
                 return reread;
             }
@@ -298,8 +300,9 @@ public class HostedFlowService {
                 || backStillRequired(loaded.verification())) {
             throw ApiException.conflict("invalid_status", "Selfie capture is not expected");
         }
-        CompleteCaptureResponse response = completeMedia(
+        ReadMedia read = completeMedia(
                 loaded, MediaKind.SELFIE, request == null ? null : request.attempt(), MediaQuality::acceptableSelfie);
+        CompleteCaptureResponse response = read.response();
         if (!Boolean.TRUE.equals(response.accepted())) {
             return response;
         }
@@ -628,7 +631,8 @@ public class HostedFlowService {
      * un refus (photo illisible, lecture non approuvée, fournisseur) redemande la même face.
      * Le dernier essai conserve la décision réelle.
      */
-    private CompleteCaptureResponse rereadCapture(Loaded loaded, MediaKind kind, Integer attempt, Instant now) {
+    private CompleteCaptureResponse rereadCapture(
+            Loaded loaded, MediaKind kind, Integer attempt, Instant now, byte[] body) {
         if (!liveIntegration(loaded.verification()) || attempt == null || liveDocumentAi == null) {
             return null;
         }
@@ -639,9 +643,10 @@ public class HostedFlowService {
             return null;
         }
         String side = kind == MediaKind.DOCUMENT_BACK ? "BACK" : "FRONT";
+        byte[] image = body == null || body.length == 0 ? objectStorage.read(item.getObjectKey()) : body;
         try {
-            DocumentLiveView view = liveDocumentAi.analyzeCapture(objectStorage.read(item.getObjectKey()), side);
-            if (recaptureIssue(view)) {
+            DocumentLiveView view = readSide(loaded, image, side);
+            if (recaptureIssue(view) || qualityStop(view)) {
                 return rejectCapture(loaded, item, attempt, now, captureReason(view));
             }
             analyses.saveAccepted(loaded.verification().getId(), view, side, now);
@@ -664,6 +669,30 @@ public class HostedFlowService {
             log.info("document-ia capture side={} code=provider_unavailable", side);
             return retrySide(loaded, item, attempt, now, side, "provider_unavailable");
         }
+    }
+
+    private DocumentLiveView readSide(Loaded loaded, byte[] image, String side) {
+        if ("BACK".equals(side)) {
+            String code = analyses.documentCode(loaded.verification().getId(), "FRONT");
+            if (SchemaRegistry.QUEBEC_CODE.equals(code) && Pdf417Barcode.present(image)) {
+                DocumentLiveView barcode = liveDocumentAi.acceptQuebecBack(image);
+                if (approvedRead(barcode)) {
+                    log.info(
+                            "document-ia back barcode verificationId={} providerCalled=false",
+                            loaded.verification().getId());
+                    return barcode;
+                }
+            }
+            return liveDocumentAi.analyzeCapture(image, side, code);
+        }
+        return liveDocumentAi.analyzeCapture(image, side);
+    }
+
+    private static boolean approvedRead(DocumentLiveView view) {
+        return view != null
+                && view.accepted()
+                && view.response().decision() instanceof DocumentDecision decision
+                && "PASS".equals(decision.issue());
     }
 
     /** Redemande la face s'il reste un essai. Sinon laisse la décision se conclure. */
@@ -698,6 +727,10 @@ public class HostedFlowService {
     private boolean attemptsRemain(Loaded loaded, MediaKind kind) {
         return media.countByVerificationIdAndKind(loaded.verification().getId(), kind)
                 < applied(loaded.verification()).maxCaptureAttempts();
+    }
+
+    private static boolean qualityStop(DocumentLiveView view) {
+        return view != null && "quality".equals(view.response().stoppedAt());
     }
 
     private static boolean recaptureIssue(DocumentLiveView view) {
@@ -763,7 +796,9 @@ public class HostedFlowService {
         return new UploadResponse(signed.url(), objectKey, signed.expiresAt(), attempt);
     }
 
-    private CompleteCaptureResponse completeMedia(
+    private record ReadMedia(CompleteCaptureResponse response, byte[] body) {}
+
+    private ReadMedia completeMedia(
             Loaded loaded, MediaKind kind, Integer attempt, java.util.function.Predicate<byte[]> quality) {
         if (attempt == null || attempt < 1) {
             throw ApiException.validation("Invalid attempt", List.of(new ErrorDetail("attempt", "invalid")));
@@ -780,11 +815,18 @@ public class HostedFlowService {
         byte[] body = objectStorage.read(item.getObjectKey());
         Instant now = Instant.now();
         if (!quality.test(body)) {
-            return rejectCapture(loaded, item, attempt, now, MediaQuality.rejectionReason(body));
+            return new ReadMedia(rejectCapture(loaded, item, attempt, now, MediaQuality.rejectionReason(body)), null);
         }
         item.accept(MediaQuality.sniff(body), body.length);
-        return new CompleteCaptureResponse(
-                Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, false, null);
+        return new ReadMedia(
+                new CompleteCaptureResponse(
+                        Enums.json(loaded.verification().getStatus()),
+                        nextOf(loaded.verification()),
+                        true,
+                        attempt,
+                        false,
+                        null),
+                body);
     }
 
     private CompleteCaptureResponse rejectCapture(

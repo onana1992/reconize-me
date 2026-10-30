@@ -25,9 +25,7 @@ public final class VisionPrompt {
                 "Return one JSON document matching the response schema. First recognize which document this is and which side of it is shown. Compare the image with the reading of every entry below: each entry is one side of one document. Set classification.code and classification.side from the entry that matches. classification.side is required. classification.version is only the version token, such as 2024. Do not copy country, document type, side, or jurisdiction into version. Field names must be copied from the list of the chosen side:\n");
         if (schemas != null) {
             for (Schema schema : schemas) {
-                if (otherSide(captureSide, schema)) {
-                    appendBrief(prompt, schema);
-                } else {
+                if (!otherSide(captureSide, schema)) {
                     appendFull(prompt, schema);
                 }
             }
@@ -35,9 +33,26 @@ public final class VisionPrompt {
         if (captureSide != null && !captureSide.isBlank()) {
             prompt.append("\nCapture side: ").append(captureSide.trim()).append('\n');
             prompt.append(
-                    "The applicant was asked for this side. Set classification.side to the side you actually see, even when it differs. Use the field list of the side you report. An entry for the other side only gives its code and a short reading: if that is what you see, report that side and return an empty fields array.\n");
+                    "The applicant was asked for this side. Set classification.side to the side you actually see, even when it differs. If it is not this side, report that side and return an empty fields array.\n");
         }
         return prompt.toString();
+    }
+
+    /** Le verso sans MRZ tient dans une vignette. Une MRZ garde le détail haut. */
+    public static String imageDetail(String captureSide, List<Schema> schemas) {
+        if (captureSide == null || !"BACK".equalsIgnoreCase(captureSide.trim())) {
+            return "high";
+        }
+        if (schemas != null) {
+            for (Schema schema : schemas) {
+                if (schema.side() != null
+                        && captureSide.trim().equalsIgnoreCase(schema.side())
+                        && hasMrz(schema)) {
+                    return "high";
+                }
+            }
+        }
+        return "low";
     }
 
     private static boolean otherSide(String captureSide, Schema schema) {
@@ -45,20 +60,6 @@ public final class VisionPrompt {
                 && !captureSide.isBlank()
                 && schema.side() != null
                 && !captureSide.trim().equalsIgnoreCase(schema.side());
-    }
-
-    private static void appendBrief(StringBuilder prompt, Schema schema) {
-        prompt.append("code: ")
-                .append(schema.code())
-                .append(" side: ")
-                .append(schema.side())
-                .append(" version: ")
-                .append(schema.version())
-                .append('\n');
-        String brief = firstSentence(schema.reading());
-        if (brief != null) {
-            prompt.append("reading: ").append(brief).append('\n');
-        }
     }
 
     private static void appendFull(StringBuilder prompt, Schema schema) {
@@ -104,15 +105,4 @@ public final class VisionPrompt {
         return false;
     }
 
-    private static String firstSentence(String reading) {
-        if (reading == null || reading.isBlank()) {
-            return null;
-        }
-        int dot = reading.indexOf('.');
-        String sentence = (dot < 0 ? reading : reading.substring(0, dot + 1)).trim();
-        if (sentence.length() > 180) {
-            return sentence.substring(0, 177).trim() + "...";
-        }
-        return sentence;
-    }
 }

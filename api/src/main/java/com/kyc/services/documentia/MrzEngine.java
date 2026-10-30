@@ -113,6 +113,9 @@ public final class MrzEngine {
             fields.addAll(normalization.fields());
             validation.add(new ValidationIssue("L4", "mrz_check_digit_failed", "WARNING", "mrz"));
         }
+        if (reading.valid()) {
+            alignExpiry(fields, validation, reading, today);
+        }
         double score = reading.valid() && !mismatch ? 1.0 : 0.4;
         String status = !reading.valid() ? "FAILED" : mismatch ? "MISMATCH" : "VALID";
         return new Outcome(
@@ -320,6 +323,38 @@ public final class MrzEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * L'expiration du modèle est jugée avant la MRZ. Quand la MRZ valide a remplacé cette date,
+     * l'erreur document_expired suit la date MRZ, pas la première date lue.
+     */
+    private static void alignExpiry(
+            List<NormalizedField> fields, List<ValidationIssue> validation, Reading reading, LocalDate today) {
+        String iso = iso(reading.identity().expiry(), today, false);
+        if (iso == null) {
+            return;
+        }
+        boolean adopted = false;
+        for (NormalizedField field : fields) {
+            if ("expirationDate".equals(field.field()) && iso.equals(field.normalizedValue())) {
+                adopted = true;
+                break;
+            }
+        }
+        if (!adopted) {
+            return;
+        }
+        LocalDate expiry;
+        try {
+            expiry = LocalDate.parse(iso);
+        } catch (DateTimeException ex) {
+            return;
+        }
+        validation.removeIf(issue -> "document_expired".equals(issue.code()));
+        if (expiry.isBefore(today)) {
+            validation.add(new ValidationIssue("L3", "document_expired", "ERROR", "expirationDate"));
+        }
     }
 
     private static boolean nameOrDate(String field) {
