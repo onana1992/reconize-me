@@ -652,7 +652,7 @@ const SERVER_MIN_SHORT_SIDE = 720;
 /** Résolution de la photo jugée par le contrôle de netteté. */
 const CAPTURE_LONG_SIDE = 3840;
 /** Fichier envoyé à l'analyse. Le modèle ne lit pas au-delà. */
-const UPLOAD_LONG_SIDE = 1920;
+const UPLOAD_LONG_SIDE = 1280;
 
 function frameFromFile(file: File): Promise<{ image: ImageData; blob: Blob }> {
   return new Promise((resolve, reject) => {

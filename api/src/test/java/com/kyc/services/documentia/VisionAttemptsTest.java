@@ -1,6 +1,7 @@
 package com.kyc.services.documentia;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,6 +65,40 @@ class VisionAttemptsTest {
         assertTrue(prompt.contains("Expire le"));
         assertTrue(prompt.contains("reading: The left date after Valide le is dateOfIssue."));
         assertTrue(VisionPrompt.fromCatalog(List.of(), "BACK").contains("Capture side: BACK"));
+    }
+
+    @Test
+    void frontCaptureKeepsTheOtherSideShort() {
+        String prompt = VisionPrompt.fromCatalog(
+                List.of(
+                        new Schema(
+                                VERSION,
+                                "QUEBEC_DRIVER_LICENSE",
+                                "CA",
+                                "DRIVING_LICENSE",
+                                "FRONT",
+                                "2024",
+                                "QC",
+                                "Quebec license front.",
+                                List.of(new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "expirationDate", true, "Expire le"))),
+                        new Schema(
+                                UUID.randomUUID(),
+                                "QUEBEC_DRIVER_LICENSE",
+                                "CA",
+                                "DRIVING_LICENSE",
+                                "BACK",
+                                "2024",
+                                "QC",
+                                "Quebec license back. The long barcode instructions are not needed to notice this side.",
+                                List.of(new com.kyc.dto.documentia.DocumentIaCatalogResponse.FieldPrompt(
+                                        "barcode", true, "PDF417 at the upper left")))),
+                "FRONT");
+
+        assertTrue(prompt.contains("expirationDate"));
+        assertTrue(prompt.contains("code: QUEBEC_DRIVER_LICENSE side: BACK version: 2024"));
+        assertTrue(prompt.contains("reading: Quebec license back."));
+        assertFalse(prompt.contains("PDF417"));
     }
 
     @Test

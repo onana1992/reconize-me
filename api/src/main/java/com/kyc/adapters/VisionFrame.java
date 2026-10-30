@@ -13,18 +13,22 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 
 /**
- * Le modèle vision réduit déjà une photo dont le petit côté dépasse 768 px.
- * Une capture 4K ne lui donne rien de plus : elle allonge seulement l'envoi.
+ * Le modèle vision ramène le petit côté à 768 px avant de lire.
+ * Au-delà de {@link #MAX_LONG_SIDE}, les pixels supplémentaires n'ajoutent que du temps d'envoi.
  */
 final class VisionFrame {
 
-    static final int MAX_LONG_SIDE = 1920;
-    private static final float JPEG_QUALITY = 0.85f;
+    static final int MAX_LONG_SIDE = 1280;
+    private static final float JPEG_QUALITY = 0.8f;
 
     private VisionFrame() {}
 
     static byte[] fit(byte[] image) {
         if (image == null || image.length == 0) {
+            return image;
+        }
+        int[] stored = jpegSize(image);
+        if (stored != null && Math.max(stored[0], stored[1]) <= MAX_LONG_SIDE) {
             return image;
         }
         BufferedImage decoded;
@@ -127,6 +131,41 @@ final class VisionFrame {
         } finally {
             writer.dispose();
         }
+    }
+
+    /** Largeur et hauteur stockées, sans décoder les pixels. {@code null} si ce n'est pas un JPEG lisible. */
+    private static int[] jpegSize(byte[] jpeg) {
+        if (jpeg.length < 4 || (jpeg[0] & 0xFF) != 0xFF || (jpeg[1] & 0xFF) != 0xD8) {
+            return null;
+        }
+        int index = 2;
+        while (index + 9 < jpeg.length) {
+            if ((jpeg[index] & 0xFF) != 0xFF) {
+                return null;
+            }
+            int marker = jpeg[index + 1] & 0xFF;
+            if (marker == 0xD9 || marker == 0xDA) {
+                return null;
+            }
+            if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD8)) {
+                index += 2;
+                continue;
+            }
+            int length = ((jpeg[index + 2] & 0xFF) << 8) | (jpeg[index + 3] & 0xFF);
+            if (length < 2 || index + 2 + length > jpeg.length) {
+                return null;
+            }
+            if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) || (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
+                int height = ((jpeg[index + 5] & 0xFF) << 8) | (jpeg[index + 6] & 0xFF);
+                int width = ((jpeg[index + 7] & 0xFF) << 8) | (jpeg[index + 8] & 0xFF);
+                if (width <= 0 || height <= 0) {
+                    return null;
+                }
+                return new int[] {width, height};
+            }
+            index += 2 + length;
+        }
+        return null;
     }
 
     /** 1 si le fichier n'est pas un JPEG ou n'a pas de balise d'orientation. */
