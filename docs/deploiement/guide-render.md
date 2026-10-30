@@ -30,7 +30,7 @@ Quatre services, tous dans la région **Ohio**, proche de Neon (`us-east-2`).
 
 La base PostgreSQL reste sur **Neon**. Render ne crée pas de Postgres. Le disque Render est éphémère : les images passent par **S3**, pas par `./data/media`.
 
-`autoDeploy` est désactivé. Un push sur `master` ne met rien en production tant que la CI n’est pas verte. Le workflow appelle alors le deploy hook de chaque service.
+`autoDeploy` est désactivé. Render ne publie pas à la réception d’un push. Seul le workflow GitHub Actions lance les quatre services, après une CI verte, sur un push de `master` et sur une pull request vers `master`.
 
 ## 2. Prérequis
 
@@ -115,7 +115,7 @@ GitHub → dépôt → **Settings → Secrets and variables → Actions** :
 | `RENDER_DEPLOY_HOOK_FLOW` | `recogniz-me-flow` |
 | `RENDER_DEPLOY_HOOK_SITE` | `recogniz-me-site` |
 
-Un secret absent n’échoue pas le workflow : ce service est ignoré et le journal l’indique. Tant que les quatre secrets sont vides, la CI passe et rien n’est redéployé.
+Ce sont les seuls déclencheurs. Un secret absent fait échouer le job : rien n’est publié, et le journal nomme le service manquant.
 
 ## 7. Ce que fait le workflow
 
@@ -125,9 +125,9 @@ Sur chaque pull request vers `master`, et sur chaque push de `master` :
 
 1. **API** — Java 17, `mvn -B test` dans `api/`.
 2. **Web** — Node 22, `npm ci` puis `npm run build` pour `console`, `flow` et `site`.
-3. **Déploiement** — seulement sur un push de `master`, et seulement si les deux jobs précédents sont verts. Un `POST` part vers chaque deploy hook.
+3. **Déploiement** — sur un push de `master` et sur une pull request vers `master`, si les deux jobs précédents sont verts. Un `POST` part vers chaque deploy hook.
 
-Render rebuild alors depuis `master`. Le déploiement Render n’est pas le jar produit par Actions : Actions sert de barrière. L’API est construite par `api/Dockerfile` (Render n’a pas de runtime Java). Les fronts suivent les commandes de `render.yaml`.
+Render rebuild le service depuis sa branche `master`. Le déploiement n’est pas le jar produit par Actions. L’API est construite par `api/Dockerfile` (Render n’a pas de runtime Java). Les fronts suivent les commandes de `render.yaml`. Le hook republie cette branche : une pull request encore ouverte relance la construction de `master`, elle ne publie pas le commit de la pull request tant qu’il n’est pas fusionné.
 
 Pour relancer un déploiement sans nouveau commit : GitHub → Actions → **CI/CD** → **Run workflow** n’est pas exposé. Faire un push sur `master`, ou appeler le hook à la main.
 

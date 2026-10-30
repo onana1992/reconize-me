@@ -1,6 +1,6 @@
 # Blueprint Render. Branche le dépôt, puis Dashboard → New → Blueprint.
 # Les secrets (sync: false) se saisissent dans le dashboard, jamais dans git.
-# autoDeploy: false — seul le workflow GitHub Actions déploie, après la CI.
+# autoDeploy: false — Render ne déploie pas tout seul. Seul GitHub Actions appelle les hooks.
 
 services:
   - type: keyvalue

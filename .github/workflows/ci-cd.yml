@@ -57,7 +57,7 @@ jobs:
   deploy:
     name: Déployer sur Render
     needs: [api, web]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Déclencher les déploiements
@@ -72,8 +72,8 @@ jobs:
             name="$1"
             hook="$2"
             if [ -z "$hook" ]; then
-              echo "$name : secret absent, déploiement ignoré"
-              return 0
+              echo "$name : secret GitHub absent, déploiement impossible"
+              exit 1
             fi
             echo "$name : déploiement demandé"
             curl --silent --show-error --fail-with-body --max-time 60 -X POST "$hook"
