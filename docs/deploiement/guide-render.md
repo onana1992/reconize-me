@@ -22,7 +22,7 @@ Quatre services, tous dans la région **Ohio**, proche de Neon (`us-east-2`).
 
 | Service | Rôle | Dossier | Santé |
 |---|---|---|---|
-| `recogniz-me-api` | API Spring Boot 3, Java 17 | `api/` | `GET /actuator/health` |
+| `recogniz-me-api` | API Spring Boot 3, image Docker Java 17 | `api/Dockerfile` | `GET /actuator/health` |
 | `recogniz-me-console` | Console Next.js | `web/console` | page d’accueil |
 | `recogniz-me-flow` | Parcours hébergé Next.js | `web/flow` | page d’accueil |
 | `recogniz-me-site` | Site public Next.js | `web/site` | page d’accueil |
@@ -127,7 +127,7 @@ Sur chaque pull request vers `master`, et sur chaque push de `master` :
 2. **Web** — Node 22, `npm ci` puis `npm run build` pour `console`, `flow` et `site`.
 3. **Déploiement** — seulement sur un push de `master`, et seulement si les deux jobs précédents sont verts. Un `POST` part vers chaque deploy hook.
 
-Render rebuild alors depuis `master`. Le déploiement Render n’est pas le jar produit par Actions : Actions sert de barrière. Les commandes de build sont celles de `render.yaml`.
+Render rebuild alors depuis `master`. Le déploiement Render n’est pas le jar produit par Actions : Actions sert de barrière. L’API est construite par `api/Dockerfile` (Render n’a pas de runtime Java). Les fronts suivent les commandes de `render.yaml`.
 
 Pour relancer un déploiement sans nouveau commit : GitHub → Actions → **CI/CD** → **Run workflow** n’est pas exposé. Faire un push sur `master`, ou appeler le hook à la main.
 
@@ -154,6 +154,7 @@ Pour relancer un déploiement sans nouveau commit : GitHub → Actions → **CI/
 | `prepared statement does not exist` | L’URL JDBC pointe vers l’hôte `-pooler`. Utiliser l’hôte direct. |
 | Health check `DOWN` | Neon ou Redis injoignable, ou `SPRING_DATA_REDIS_URL` vide alors que `KYC_REDIS_ENABLED=true`. |
 | La console appelle `127.0.0.1:8080` | `API_BASE_URL` n’était pas défini au build. Corriger la variable, puis redéployer la console et le flow. |
+| `invalid runtime java` | Le Blueprint utilisait `runtime: java`, refusé par Render. L’API est en `runtime: docker` via `api/Dockerfile`. |
 | Port déjà pris dans les logs Render | Le process n’écoute pas `$PORT`. L’API doit garder `server.port=${PORT:8080}`. Les fronts démarrent avec `npx next start --hostname 0.0.0.0 --port $PORT`. |
 | La CI est verte mais rien ne change en ligne | Les secrets `RENDER_DEPLOY_HOOK_*` ne sont pas dans GitHub, ou `autoDeploy` a été remis sur true et un ancien déploiement a écrasé le suivant. |
 | Flyway refuse une nouvelle migration | Le SQL est encore du MySQL (`DATETIME`, `LONGTEXT`, `MODIFY COLUMN`). L’écrire en PostgreSQL. |
