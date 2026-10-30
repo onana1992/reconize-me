@@ -200,6 +200,15 @@ final class IdvSupport {
         return JSON.readTree(complete.getResponse().getContentAsString());
     }
 
+    /** Les premiers essais redemandent la photo. Le dernier conserve la décision. */
+    static JsonNode captureUntilDecision(MockMvc mockMvc, String token) throws Exception {
+        JsonNode done = captureDocument(mockMvc, token, sharpPng());
+        for (int attempt = 1; attempt < 5 && "recapture_requested".equals(done.path("status").asText()); attempt++) {
+            done = captureDocument(mockMvc, token, sharpPng());
+        }
+        return done;
+    }
+
     static JsonNode captureDocumentBack(MockMvc mockMvc, String token, byte[] jpeg) throws Exception {
         return captureDocument(mockMvc, token, jpeg);
     }

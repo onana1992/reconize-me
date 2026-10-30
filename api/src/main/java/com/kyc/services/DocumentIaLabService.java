@@ -158,7 +158,10 @@ public class DocumentIaLabService {
                 (System.nanoTime() - start) / 1_000_000L,
                 measured.readable(),
                 measured.reason());
-        // Provisoire : une photo floue ou mal éclairée continue vers le modèle.
+        // Le parcours live envoie quand même la photo au modèle. Le laboratoire, lui, s'arrête sur la qualité mesurée.
+        if (!measured.readable() && !wantsDecide(until)) {
+            return DocumentIaAnalysisResponse.quality(measured);
+        }
         DocumentImageQuality quality = measured.readable() ? measured : READABLE_QUALITY;
         if (!measured.readable()) {
             log.info("document-ia quality bypassed reason={}", measured.reason());
