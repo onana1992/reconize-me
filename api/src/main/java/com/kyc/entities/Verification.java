@@ -9,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
@@ -62,7 +64,8 @@ public class Verification {
     @Column(name = "applicant_email")
     private String applicantEmail;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "text")
     private String metadata;
 
     @Column(name = "hosted_token_hash", nullable = false, length = 64)
@@ -75,7 +78,8 @@ public class Verification {
     @Column(length = 32)
     private VerificationDecision decision;
 
-    @Column(name = "decision_reasons")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "decision_reasons", columnDefinition = "text")
     private String decisionReasons;
 
     @Column(name = "rules_version")
@@ -90,13 +94,15 @@ public class Verification {
     @Column(name = "sandbox_scenario")
     private String sandboxScenario;
 
-    @Column(name = "extracted_identity", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "extracted_identity", columnDefinition = "text")
     private String extractedIdentity;
 
     @Column(name = "aml_screening_id")
     private UUID amlScreeningId;
 
-    @Column(name = "screening_report", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "screening_report", columnDefinition = "text")
     private String screeningReport;
 
     @Column(name = "document_back_required", nullable = false)

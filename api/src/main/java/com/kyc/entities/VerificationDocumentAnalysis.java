@@ -4,8 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -36,32 +37,32 @@ public class VerificationDocumentAnalysis {
     @Column(name = "model_id", nullable = false, length = 64)
     private String modelId;
 
-    @Lob
-    @Column(name = "detection_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "detection_json", columnDefinition = "text")
     private String detectionJson;
 
-    @Lob
-    @Column(name = "classification_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "classification_json", columnDefinition = "text")
     private String classificationJson;
 
-    @Lob
-    @Column(name = "fields_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "fields_json", columnDefinition = "text")
     private String fieldsJson;
 
-    @Lob
-    @Column(name = "mrz_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "mrz_json", columnDefinition = "text")
     private String mrzJson;
 
-    @Lob
-    @Column(name = "validation_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "validation_json", columnDefinition = "text")
     private String validationJson;
 
-    @Lob
-    @Column(name = "indicators_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "indicators_json", columnDefinition = "text")
     private String indicatorsJson;
 
-    @Lob
-    @Column(name = "scores_json", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "scores_json", columnDefinition = "text")
     private String scoresJson;
 
     @Column(name = "created_at", nullable = false)

@@ -7,8 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -63,8 +64,8 @@ public class Screening {
     @Column(name = "match_algorithm", length = 32)
     private String matchAlgorithm;
 
-    @Lob
-    @Column(name = "provider_response", columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "provider_response", columnDefinition = "text")
     private String providerResponse;
 
     @Column(name = "subject_type", nullable = false, length = 16)

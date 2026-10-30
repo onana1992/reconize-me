@@ -9,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -45,22 +47,28 @@ public class ScreeningHit {
     @Column(name = "listed_name", nullable = false, length = 256)
     private String listedName;
 
-    @Column(name = "aliases_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "aliases_json", columnDefinition = "text")
     private String aliasesJson;
 
-    @Column(name = "birth_dates_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "birth_dates_json", columnDefinition = "text")
     private String birthDatesJson;
 
-    @Column(name = "countries_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "countries_json", columnDefinition = "text")
     private String countriesJson;
 
-    @Column(name = "datasets_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "datasets_json", columnDefinition = "text")
     private String datasetsJson;
 
-    @Column(name = "features_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "features_json", columnDefinition = "text")
     private String featuresJson;
 
-    @Column(name = "provider_features_json", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "provider_features_json", columnDefinition = "text")
     private String providerFeaturesJson;
 
     @Enumerated(EnumType.STRING)

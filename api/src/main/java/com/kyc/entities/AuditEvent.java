@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -41,7 +43,8 @@ public class AuditEvent {
     @Column(name = "resource_id", nullable = false)
     private UUID resourceId;
 
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(nullable = false, columnDefinition = "text")
     private String payload;
 
     @Column(name = "ip_address", length = 45)

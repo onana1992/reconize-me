@@ -7,8 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -43,8 +44,8 @@ public class WebhookDelivery {
     @Column(name = "decision_fingerprint", nullable = false, length = 64)
     private String decisionFingerprint;
 
-    @Lob
-    @Column(name = "payload_json", nullable = false, columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "payload_json", nullable = false, columnDefinition = "text")
     private String payloadJson;
 
     @Column(name = "payload_hash", nullable = false, length = 64)

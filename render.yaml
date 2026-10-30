@@ -1,0 +1,159 @@
+# Blueprint Render. Branche le dépôt, puis Dashboard → New → Blueprint.
+# Les secrets (sync: false) se saisissent dans le dashboard, jamais dans git.
+# autoDeploy: false — seul le workflow GitHub Actions déploie, après la CI.
+
+services:
+  - type: keyvalue
+    name: recogniz-me-redis
+    region: ohio
+    ipAllowList: []
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+  - type: web
+    name: recogniz-me-api
+    runtime: java
+    region: ohio
+    branch: master
+    rootDir: api
+    autoDeploy: false
+    buildCommand: mvn -B -DskipTests clean package
+    startCommand: java -jar target/recogniz-me-0.1.0-SNAPSHOT.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"
+      - key: KYC_REDIS_ENABLED
+        value: "true"
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          name: recogniz-me-redis
+          type: keyvalue
+          property: connectionString
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: KYC_IP_HASH_PEPPER
+        sync: false
+      - key: KYC_SESSION_COOKIE_SECURE
+        value: "true"
+      - key: KYC_PUBLIC_API_BASE_URL
+        value: https://recogniz-me-api.onrender.com
+      - key: KYC_PUBLIC_CONSOLE_BASE_URL
+        value: https://recogniz-me-console.onrender.com
+      - key: KYC_PUBLIC_FLOW_BASE_URL
+        value: https://recogniz-me-flow.onrender.com
+      - key: KYC_CORS_ALLOWED_ORIGIN_PATTERNS
+        value: https://recogniz-me-console.onrender.com,https://recogniz-me-flow.onrender.com,https://recogniz-me-site.onrender.com
+      - key: KYC_SMTP_HOST
+        sync: false
+      - key: KYC_SMTP_PORT
+        value: "587"
+      - key: KYC_SMTP_USER
+        sync: false
+      - key: KYC_SMTP_PASSWORD
+        sync: false
+      - key: KYC_MAIL_FROM
+        sync: false
+      - key: KYC_STRIPE_MODE
+        value: stripe
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: KYC_AWS_ENABLED
+        value: "true"
+      - key: KYC_AWS_REGION
+        value: us-east-1
+      - key: KYC_AWS_S3_ENABLED
+        value: "true"
+      - key: KYC_AWS_S3_BUCKET
+        sync: false
+      - key: KYC_AWS_S3_KEY_PREFIX
+        value: kyc/
+      - key: KYC_AWS_S3_ACCESS_KEY_ID
+        sync: false
+      - key: KYC_AWS_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: KYC_AWS_S3_REGION
+        value: us-east-1
+      - key: KYC_AWS_TEXTRACT_ACCESS_KEY_ID
+        sync: false
+      - key: KYC_AWS_TEXTRACT_SECRET_ACCESS_KEY
+        sync: false
+      - key: KYC_AWS_TEXTRACT_REGION
+        value: us-east-1
+      - key: KYC_AWS_REKOGNITION_ACCESS_KEY_ID
+        sync: false
+      - key: KYC_AWS_REKOGNITION_SECRET_ACCESS_KEY
+        sync: false
+      - key: KYC_AWS_REKOGNITION_REGION
+        value: us-east-1
+      - key: KYC_AWS_LIVENESS_ROLE_ARN
+        sync: false
+      - key: KYC_DOCUMENT_IA_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: KYC_OPENSANCTIONS_ENABLED
+        value: "true"
+      - key: OPENSANCTIONS_API_KEY
+        sync: false
+
+  - type: web
+    name: recogniz-me-console
+    runtime: node
+    region: ohio
+    branch: master
+    rootDir: web/console
+    autoDeploy: false
+    buildCommand: npm ci && npm run build
+    startCommand: npx next start --hostname 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_BASE_URL
+        value: https://recogniz-me-api.onrender.com
+
+  - type: web
+    name: recogniz-me-flow
+    runtime: node
+    region: ohio
+    branch: master
+    rootDir: web/flow
+    autoDeploy: false
+    buildCommand: npm ci && npm run build
+    startCommand: npx next start --hostname 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_BASE_URL
+        value: https://recogniz-me-api.onrender.com
+
+  - type: web
+    name: recogniz-me-site
+    runtime: node
+    region: ohio
+    branch: master
+    rootDir: web/site
+    autoDeploy: false
+    buildCommand: npm ci && npm run build
+    startCommand: npx next start --hostname 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://recogniz-me-site.onrender.com
+      - key: NEXT_PUBLIC_SITE_INDEXABLE
+        value: "false"
+      - key: NEXT_PUBLIC_CONSOLE_URL
+        value: https://recogniz-me-console.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        value: https://recogniz-me-api.onrender.com
+      - key: NEXT_PUBLIC_CONTACT_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_PRIVACY_EMAIL
+        sync: false

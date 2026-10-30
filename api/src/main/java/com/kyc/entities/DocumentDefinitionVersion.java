@@ -6,8 +6,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
@@ -36,8 +37,8 @@ public class DocumentDefinitionVersion {
     @Column(nullable = false, length = 16)
     private SchemaStatus status;
 
-    @Lob
-    @Column(name = "schema_json", nullable = false, columnDefinition = "LONGTEXT")
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(name = "schema_json", nullable = false, columnDefinition = "text")
     private String schemaJson;
 
     @Column(name = "activated_at")

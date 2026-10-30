@@ -1,0 +1,85 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Compiler et tester
+        run: mvn -B test
+
+  web:
+    name: Web ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [console, flow, site]
+    defaults:
+      run:
+        working-directory: web/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/${{ matrix.app }}/package-lock.json
+      - name: Installer
+        run: npm ci
+      - name: Builder
+        run: npm run build
+        env:
+          API_BASE_URL: https://recogniz-me-api.onrender.com
+          NEXT_PUBLIC_SITE_URL: https://recogniz-me-site.onrender.com
+          NEXT_PUBLIC_CONSOLE_URL: https://recogniz-me-console.onrender.com
+          NEXT_PUBLIC_API_URL: https://recogniz-me-api.onrender.com
+          NEXT_PUBLIC_SITE_INDEXABLE: "false"
+
+  deploy:
+    name: Déployer sur Render
+    needs: [api, web]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déclencher les déploiements
+        env:
+          HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+          HOOK_CONSOLE: ${{ secrets.RENDER_DEPLOY_HOOK_CONSOLE }}
+          HOOK_FLOW: ${{ secrets.RENDER_DEPLOY_HOOK_FLOW }}
+          HOOK_SITE: ${{ secrets.RENDER_DEPLOY_HOOK_SITE }}
+        run: |
+          set -eu
+          deploy() {
+            name="$1"
+            hook="$2"
+            if [ -z "$hook" ]; then
+              echo "$name : secret absent, déploiement ignoré"
+              return 0
+            fi
+            echo "$name : déploiement demandé"
+            curl --silent --show-error --fail-with-body --max-time 60 -X POST "$hook"
+            echo
+          }
+          deploy "API" "$HOOK_API"
+          deploy "Console" "$HOOK_CONSOLE"
+          deploy "Flow" "$HOOK_FLOW"
+          deploy "Site" "$HOOK_SITE"
