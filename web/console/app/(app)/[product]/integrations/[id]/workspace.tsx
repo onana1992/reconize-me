@@ -4,7 +4,7 @@ import { BackLink } from "../../../../../components/back-link";
 import { getLocale, getT } from "../../../../../i18n";
 import type { IntegrationResponse } from "../../../../../lib/api";
 import { integrationModeTone, tIntegrationMode } from "../../../../../lib/environment";
-import { PRODUCTS, type ProductId } from "../../../../../lib/products";
+import { PRODUCTS, visibleIntegrationTabs, type ProductId } from "../../../../../lib/products";
 import { formatUtc } from "../../../../../lib/status";
 import { IntegrationTabs } from "./integration-tabs";
 
@@ -45,7 +45,11 @@ export async function IntegrationWorkspace({
           </div>
         </header>
       </div>
-      <IntegrationTabs product={productId} id={integration.id} />
+      <IntegrationTabs
+        product={productId}
+        id={integration.id}
+        tabs={visibleIntegrationTabs(productId, integration.mode).map((tab) => tab.id)}
+      />
       <div className="rm-int-body">{children}</div>
     </div>
   );

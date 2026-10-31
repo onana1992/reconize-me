@@ -11,19 +11,18 @@ import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
         name = "aml_policies",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uq_aml_policies_org_version", columnNames = {"organization_id", "version"}),
+            @UniqueConstraint(
+                    name = "uq_aml_policies_integration_version",
+                    columnNames = {"integration_id", "version"}),
             @UniqueConstraint(name = "uq_aml_policies_active", columnNames = "active_marker")
         })
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AmlPolicyEntity {
 
     @Id
@@ -31,6 +30,9 @@ public class AmlPolicyEntity {
 
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
+
+    @Column(name = "integration_id")
+    private UUID integrationId;
 
     @Column(nullable = false)
     private int version;
@@ -69,9 +71,12 @@ public class AmlPolicyEntity {
     @Column(name = "published_by", nullable = false)
     private UUID publishedBy;
 
+    protected AmlPolicyEntity() {}
+
     public AmlPolicyEntity(
             UUID id,
             UUID organizationId,
+            UUID integrationId,
             int version,
             BigDecimal reviewThreshold,
             BigDecimal confirmThreshold,
@@ -84,9 +89,10 @@ public class AmlPolicyEntity {
             Instant publishedAt) {
         this.id = id;
         this.organizationId = organizationId;
+        this.integrationId = integrationId;
         this.version = version;
         this.active = true;
-        this.activeMarker = organizationId.toString();
+        this.activeMarker = integrationId.toString();
         this.reviewThreshold = reviewThreshold;
         this.confirmThreshold = confirmThreshold;
         this.categories = categories;

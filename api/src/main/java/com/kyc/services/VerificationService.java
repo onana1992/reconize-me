@@ -132,7 +132,7 @@ public class VerificationService {
         CreateVerificationRequest.Applicant applicant = request == null ? null : request.applicant();
         UUID id = UUID.randomUUID();
         String token = CryptoTokens.randomHostedToken();
-        IdvPolicyService.Creation policy = policies.creation(organizationId);
+        IdvPolicyService.Creation policy = policies.creation(integration);
         if (integration.isLive()) {
             boolean screening = policies.applied(policy.policyId()).screeningEnabled();
             long amount = screening

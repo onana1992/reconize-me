@@ -3674,6 +3674,24 @@ a.rm-idv-row:focus-visible {
   gap: var(--rm-space-5);
 }
 
+.rm-rules-integration {
+  display: grid;
+  gap: var(--rm-space-2);
+  max-width: 28rem;
+  font-size: var(--rm-text-sm);
+  color: var(--rm-text);
+}
+
+.rm-rules-integration select {
+  width: 100%;
+  padding: var(--rm-space-2) var(--rm-space-3);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  background: var(--rm-surface);
+  color: var(--rm-text);
+  font: inherit;
+}
+
 .rm-rules-status {
   display: flex;
   align-items: center;

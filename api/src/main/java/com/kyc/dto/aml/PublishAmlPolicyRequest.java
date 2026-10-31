@@ -12,4 +12,5 @@ public record PublishAmlPolicyRequest(
         @JsonProperty("attach_to_identity") boolean attachToIdentity,
         @JsonProperty("on_match") String onMatch,
         @JsonProperty("test_integration_id") UUID testIntegrationId,
-        @JsonProperty("live_integration_id") UUID liveIntegrationId) {}
+        @JsonProperty("live_integration_id") UUID liveIntegrationId,
+        @JsonProperty("integration_id") UUID integrationId) {}

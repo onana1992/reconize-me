@@ -4,6 +4,7 @@ import { consoleApi, type IdvPolicy } from "../../../../lib/api";
 import { sessionCookieHeader } from "../../../../lib/session";
 
 export async function publishPolicyAction(body: {
+  integration_id: string;
   profile: IdvPolicy["profile"];
   document_codes: string[];
   flow: {

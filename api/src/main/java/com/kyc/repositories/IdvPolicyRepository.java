@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface IdvPolicyRepository extends JpaRepository<IdvPolicy, UUID> {
 
-    Optional<IdvPolicy> findByOrganizationIdAndActiveTrue(UUID organizationId);
+    Optional<IdvPolicy> findByIntegrationIdAndActiveTrue(UUID integrationId);
 
-    List<IdvPolicy> findByOrganizationIdOrderByVersionDesc(UUID organizationId);
+    List<IdvPolicy> findByIntegrationIdOrderByVersionDesc(UUID integrationId);
+
+    Optional<IdvPolicy> findTopByIntegrationIdOrderByVersionDesc(UUID integrationId);
 }

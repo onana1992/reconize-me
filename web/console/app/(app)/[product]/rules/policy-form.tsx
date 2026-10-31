@@ -27,11 +27,13 @@ type Draft = {
 };
 
 export function PolicyForm({
+  integrationId,
   policy,
   versions,
   canWrite,
   locale,
 }: {
+  integrationId: string;
   policy: IdvPolicy;
   versions: IdvPolicyVersions["versions"];
   canWrite: boolean;
@@ -78,6 +80,7 @@ export function PolicyForm({
     setError(null);
     setNotice(null);
     const result = await publishPolicyAction({
+      integration_id: integrationId,
       profile: {
         expired_outcome: draft.expired,
         attempts_outcome: draft.attempts,

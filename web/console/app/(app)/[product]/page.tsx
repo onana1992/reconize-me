@@ -67,10 +67,6 @@ export default async function ProductOverviewPage({
             <h3>{t("console.product.tab.integrations")}</h3>
             <p>{t("console.product.integrationsLead")}</p>
           </Link>
-          <Link href={productTabHref(productId, "rules")} className="rm-card rm-link-card">
-            <h3>{t("console.product.tab.rules")}</h3>
-            <p>{t("console.product.settingsLead")}</p>
-          </Link>
         </div>
       </section>
     </main>

@@ -10,11 +10,13 @@ import com.kyc.security.Permission;
 import com.kyc.services.IdvPolicyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,17 +31,17 @@ public class ConsoleIdentityPolicyController {
     }
 
     @GetMapping
-    @Operation(summary = "Politique IDV effective")
-    public IdvPolicyResponse get() {
+    @Operation(summary = "Politique IDV effective d'une intégration de production")
+    public IdvPolicyResponse get(@RequestParam("integration_id") UUID integrationId) {
         ConsolePrincipal principal = CurrentConsole.require();
-        return policies.effective(principal.organizationId());
+        return policies.effective(principal.organizationId(), integrationId);
     }
 
     @GetMapping("/versions")
-    @Operation(summary = "Versions publiées de la politique IDV")
-    public IdvPolicyVersionList versions() {
+    @Operation(summary = "Versions publiées de la politique IDV d'une intégration de production")
+    public IdvPolicyVersionList versions(@RequestParam("integration_id") UUID integrationId) {
         ConsolePrincipal principal = CurrentConsole.require();
-        return policies.versions(principal.organizationId());
+        return policies.versions(principal.organizationId(), integrationId);
     }
 
     @PostMapping

@@ -7,7 +7,7 @@ export type ProductId = (typeof PRODUCT_IDS)[number];
 /** Affichés dans la console. L'authentification biométrique est retirée pour l'instant. */
 export const LISTED_PRODUCT_IDS: ProductId[] = PRODUCT_IDS.filter((id) => id !== "biometrics");
 
-export type ProductTabId = "verifications" | "integrations" | "rules";
+export type ProductTabId = "verifications" | "integrations";
 
 export type ProductDef = {
   id: ProductId;
@@ -66,7 +66,6 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
 export const PRODUCT_TABS: { id: ProductTabId; path: string; labelKey: `console.product.tab.${ProductTabId}` }[] = [
   { id: "verifications", path: "", labelKey: "console.product.tab.verifications" },
   { id: "integrations", path: "/integrations", labelKey: "console.product.tab.integrations" },
-  { id: "rules", path: "/rules", labelKey: "console.product.tab.rules" },
 ];
 
 export function isProductId(value: string): value is ProductId {
@@ -92,7 +91,7 @@ export function isIntegrationId(value: string): boolean {
   return UUID.test(value);
 }
 
-export type IntegrationTabId = "install" | "keys" | "settings";
+export type IntegrationTabId = "install" | "keys" | "settings" | "rules";
 
 export const INTEGRATION_TABS: {
   id: IntegrationTabId;
@@ -102,7 +101,20 @@ export const INTEGRATION_TABS: {
   { id: "install", path: "", labelKey: "console.integrations.tab.install" },
   { id: "keys", path: "/keys", labelKey: "console.integrations.tab.keys" },
   { id: "settings", path: "/settings", labelKey: "console.integrations.tab.settings" },
+  { id: "rules", path: "/rules", labelKey: "console.integrations.tab.rules" },
 ];
+
+export function visibleIntegrationTabs(product: ProductId, mode: string) {
+  return INTEGRATION_TABS.filter((tab) => {
+    if (product === "aml" && tab.id === "settings") {
+      return false;
+    }
+    if (tab.id === "rules" && mode !== "live") {
+      return false;
+    }
+    return true;
+  });
+}
 
 export function integrationWorkspaceId(pathname: string, product: ProductId): string | null {
   const prefix = `${PRODUCTS[product].href}/integrations/`;

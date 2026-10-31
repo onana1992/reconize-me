@@ -183,18 +183,16 @@ class LiveDebitTest {
     void identityWithScreeningDebitsOneThirtyAndAmlDebitsFifty() throws Exception {
         Cookie owner = AccountSupport.signupVerified(mockMvc, mailPort, "debit-prices@example.com", "Price Co");
         credit(owner, 5000);
-        enableIdentityScreening(owner);
-        String liveKey = IdvSupport.JSON
-                .readTree(mockMvc.perform(post("/v1/console/integrations")
-                                .cookie(owner)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"mode\":\"live\",\"name\":\"Production\"}"))
-                        .andExpect(status().isCreated())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString())
-                .get("key")
-                .asText();
+        JsonNode live = IdvSupport.JSON.readTree(mockMvc.perform(post("/v1/console/integrations")
+                        .cookie(owner)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"mode\":\"live\",\"name\":\"Production\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
+        enableIdentityScreening(owner, UUID.fromString(live.get("id").asText()));
+        String liveKey = live.get("key").asText();
         MvcResult created = mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + liveKey)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -237,14 +235,17 @@ class LiveDebitTest {
         creditAccounts.saveAndFlush(account);
     }
 
-    private void enableIdentityScreening(Cookie owner) throws Exception {
-        String raw = mockMvc.perform(get("/v1/console/identity/policy").cookie(owner))
+    private void enableIdentityScreening(Cookie owner, UUID integrationId) throws Exception {
+        String raw = mockMvc.perform(get("/v1/console/identity/policy")
+                        .param("integration_id", integrationId.toString())
+                        .cookie(owner))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         JsonNode policy = IdvSupport.JSON.readTree(raw);
         var body = IdvSupport.JSON.createObjectNode();
+        body.put("integration_id", integrationId.toString());
         body.set("profile", policy.get("profile"));
         var codes = body.putArray("document_codes");
         for (JsonNode document : policy.get("documents")) {

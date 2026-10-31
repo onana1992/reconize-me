@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AmlPolicyRepository extends JpaRepository<AmlPolicyEntity, UUID> {
 
-    Optional<AmlPolicyEntity> findByOrganizationIdAndActiveTrue(UUID organizationId);
+    Optional<AmlPolicyEntity> findByIntegrationIdAndActiveTrue(UUID integrationId);
 
-    List<AmlPolicyEntity> findByOrganizationIdOrderByVersionDesc(UUID organizationId);
+    List<AmlPolicyEntity> findByIntegrationIdOrderByVersionDesc(UUID integrationId);
 
-    Optional<AmlPolicyEntity> findTopByOrganizationIdOrderByVersionDesc(UUID organizationId);
+    Optional<AmlPolicyEntity> findTopByIntegrationIdOrderByVersionDesc(UUID integrationId);
+
+    List<AmlPolicyEntity> findByOrganizationIdAndActiveTrueAndAttachToIdentityTrueOrderByPublishedAtDesc(
+            UUID organizationId);
 }

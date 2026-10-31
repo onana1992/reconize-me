@@ -17,11 +17,13 @@ type Draft = {
 };
 
 export function AmlPolicyForm({
+  integrationId,
   policy,
   versions,
   canWrite,
   locale,
 }: {
+  integrationId: string;
   policy: AmlPolicy;
   versions: AmlPolicy[];
   canWrite: boolean;
@@ -72,6 +74,7 @@ export function AmlPolicyForm({
     setError(null);
     setNotice(null);
     const body = new FormData();
+    body.set("integration_id", integrationId);
     body.set("review_threshold", draft.review);
     body.set("confirm_threshold", draft.confirm);
     body.set("on_match", policy.on_match);

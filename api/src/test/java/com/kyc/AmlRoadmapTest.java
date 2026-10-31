@@ -272,8 +272,15 @@ class AmlRoadmapTest {
     }
 
     @Test
-    void publishingALowerReviewThresholdAffectsOnlyTheNextScreening() throws Exception {
+    void productionPolicyDoesNotChangeSandboxScreening() throws Exception {
         Issued aml = amlKey("aml-policy@example.com", "Aml Policy");
+        Integration live = integrations.save(new Integration(
+                UUID.randomUUID(),
+                aml.organizationId(),
+                ProductCode.AML,
+                IntegrationMode.LIVE,
+                "Production lists",
+                Instant.now()));
         MvcResult first = postScreening(aml.key(), ivanPartialBody(), null);
         assertEquals("clear", IdvSupport.JSON.readTree(first.getResponse().getContentAsString()).get("outcome").asText());
         String firstId = IdvSupport.JSON.readTree(first.getResponse().getContentAsString()).get("id").asText();
@@ -298,23 +305,35 @@ class AmlRoadmapTest {
                         .cookie(aml.owner())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"review_threshold":0.50,"confirm_threshold":0.95,"categories":["sanction","pep","rca","debarment"],"attach_to_identity":false,"on_match":"review"}
-                                """))
+                                {"integration_id":"%s","review_threshold":0.50,"confirm_threshold":0.95,"categories":["sanction","pep","rca","debarment"],"attach_to_identity":false,"on_match":"review"}
+                                """.formatted(live.getId())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.version").value("aml-policy-1"));
 
         MvcResult second = postScreening(aml.key(), ivanPartialBody(), null);
-        assertEquals("potential_match", IdvSupport.JSON.readTree(second.getResponse().getContentAsString()).get("outcome").asText());
+        assertEquals("clear", IdvSupport.JSON.readTree(second.getResponse().getContentAsString()).get("outcome").asText());
         mockMvc.perform(get("/v1/screenings/" + firstId).header("Authorization", "Bearer " + aml.key()))
                 .andExpect(jsonPath("$.outcome").value("clear"))
                 .andExpect(jsonPath("$.policy_version").value("aml-policy-0"));
+        mockMvc.perform(get("/v1/console/aml/policy")
+                        .param("integration_id", live.getId().toString())
+                        .cookie(aml.owner()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value("aml-policy-1"));
     }
 
     @Test
-    void identityScreeningReviewsNoraWithoutAnAmlDossier() throws Exception {
+    void sandboxFlowIgnoresProductionIdentityRules() throws Exception {
         assertThrows(IllegalStateException.class, () -> sanctionsMatch.match(null));
         Issued aml = amlKey("aml-attach@example.com", "Aml Attach");
-        enableIdentityScreening(aml.owner());
+        Integration live = integrations.save(new Integration(
+                UUID.randomUUID(),
+                aml.organizationId(),
+                ProductCode.IDENTITY,
+                IntegrationMode.LIVE,
+                "Production",
+                Instant.now()));
+        enableIdentityScreening(aml.owner(), live.getId());
 
         var created = IdvSupport.create(
                 mockMvc,
@@ -326,15 +345,13 @@ class AmlRoadmapTest {
         IdvSupport.acceptConsent(mockMvc, token);
         IdvSupport.captureDocument(mockMvc, token, IdvSupport.goodJpeg());
         var done = IdvSupport.captureSelfie(mockMvc, token, IdvSupport.goodJpeg());
-        assertEquals("review", done.path("status").asText());
+        assertEquals("approved", done.path("status").asText());
 
         mockMvc.perform(get("/v1/verifications/" + verificationId).header("Authorization", "Bearer " + aml.identityKey()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.decision").value("review"))
-                .andExpect(jsonPath("$.decision_reasons[?(@ == 'aml_potential_match')]").exists())
-                .andExpect(jsonPath("$.aml_screening_id").doesNotExist())
-                .andExpect(jsonPath("$.screening.outcome").value("potential_match"))
-                .andExpect(jsonPath("$.screening.hits[0].listed_name").exists());
+                .andExpect(jsonPath("$.decision").value("approved"))
+                .andExpect(jsonPath("$.screening").doesNotExist())
+                .andExpect(jsonPath("$.policy_version").doesNotExist());
         assertEquals(0, count(aml.organizationId(), null));
     }
 
@@ -364,9 +381,12 @@ class AmlRoadmapTest {
                 "idv-1",
                 "{\"first_name\":\"Nora\",\"last_name\":\"Potentialexample\",\"birth_date\":\"1982-11-03\",\"document_country\":\"FR\"}",
                 now);
+        Integration lists = integrations.save(new Integration(
+                UUID.randomUUID(), orgId, ProductCode.AML, IntegrationMode.LIVE, "Lists", now));
         policies.save(new com.kyc.entities.AmlPolicyEntity(
                 UUID.randomUUID(),
                 orgId,
+                lists.getId(),
                 1,
                 new java.math.BigDecimal("0.700"),
                 new java.math.BigDecimal("0.950"),
@@ -435,14 +455,17 @@ class AmlRoadmapTest {
                 .size();
     }
 
-    private void enableIdentityScreening(Cookie owner) throws Exception {
-        String raw = mockMvc.perform(get("/v1/console/identity/policy").cookie(owner))
+    private void enableIdentityScreening(Cookie owner, UUID integrationId) throws Exception {
+        String raw = mockMvc.perform(get("/v1/console/identity/policy")
+                        .param("integration_id", integrationId.toString())
+                        .cookie(owner))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         var policy = IdvSupport.JSON.readTree(raw);
         var body = IdvSupport.JSON.createObjectNode();
+        body.put("integration_id", integrationId.toString());
         body.set("profile", policy.get("profile"));
         var codes = body.putArray("document_codes");
         for (var document : policy.get("documents")) {

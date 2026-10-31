@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,9 +32,9 @@ public class ConsoleAmlPolicyController {
     }
 
     @GetMapping
-    public AmlPolicyResponse get() {
+    public AmlPolicyResponse get(@RequestParam("integration_id") java.util.UUID integrationId) {
         var principal = CurrentConsole.require();
-        var rows = policies.versions(principal.organizationId());
+        var rows = policies.versions(principal.organizationId(), integrationId);
         if (rows.isEmpty()) {
             return response(AmlPolicy.factory(), false, null);
         }
@@ -41,9 +42,9 @@ public class ConsoleAmlPolicyController {
     }
 
     @GetMapping("/versions")
-    public AmlPolicyVersionList versions() {
+    public AmlPolicyVersionList versions(@RequestParam("integration_id") java.util.UUID integrationId) {
         var principal = CurrentConsole.require();
-        List<AmlPolicyResponse> rows = policies.versions(principal.organizationId()).stream()
+        List<AmlPolicyResponse> rows = policies.versions(principal.organizationId(), integrationId).stream()
                 .map(row -> response(AmlPolicyService.toPolicy(row), true, row))
                 .toList();
         return new AmlPolicyVersionList(rows);
@@ -66,6 +67,7 @@ public class ConsoleAmlPolicyController {
                 principal.organizationId(),
                 principal.userId(),
                 new AmlPolicyService.PublishCommand(
+                        body.integrationId(),
                         body.reviewThreshold(),
                         body.confirmThreshold(),
                         body.categories(),

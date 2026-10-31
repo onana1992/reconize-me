@@ -12,7 +12,6 @@ import com.kyc.enums.ProductCode;
 import com.kyc.enums.ScreeningOutcome;
 import com.kyc.enums.ScreeningStatus;
 import com.kyc.enums.VerificationDecision;
-import com.kyc.repositories.IntegrationRepository;
 import com.kyc.services.ScreeningService;
 import com.kyc.web.ApiException;
 import java.time.Instant;
@@ -29,26 +28,24 @@ public class AmlAttachmentService {
 
     private final AmlPolicyService policies;
     private final ScreeningService screenings;
-    private final IntegrationRepository integrations;
     private final ObjectMapper objectMapper;
     private final KycProperties properties;
 
     public AmlAttachmentService(
             AmlPolicyService policies,
             ScreeningService screenings,
-            IntegrationRepository integrations,
             ObjectMapper objectMapper,
             KycProperties properties) {
         this.policies = policies;
         this.screenings = screenings;
-        this.integrations = integrations;
         this.objectMapper = objectMapper;
         this.properties = properties;
     }
 
     public void attach(Verification verification, Integration identity, Instant now) {
-        AmlPolicy policy = policies.effective(verification.getOrganizationId());
-        if (!policy.attachToIdentity()) {
+        AmlPolicyService.Attachment attached = policies.attachment(identity);
+        AmlPolicy policy = attached.policy();
+        if (!policy.attachToIdentity() || attached.integration() == null) {
             return;
         }
         boolean live = identity.isLive();
@@ -56,19 +53,9 @@ public class AmlAttachmentService {
             unavailable(verification, now);
             return;
         }
-        java.util.UUID integrationId = live ? policy.liveIntegrationId() : policy.testIntegrationId();
-        if (policy.onMatch() != AmlOnMatch.IGNORE && integrationId == null) {
-            unavailable(verification, now);
-            return;
-        }
-        if (integrationId == null) {
-            return;
-        }
-        Integration aml = integrations
-                .findByIdAndOrganizationId(integrationId, verification.getOrganizationId())
-                .orElse(null);
-        boolean wrongMode = aml != null && aml.isLive() != live;
-        if (aml == null || aml.getProduct() != ProductCode.AML || wrongMode) {
+        Integration aml = attached.integration();
+        boolean wrongMode = aml.isLive() != live;
+        if (aml.getProduct() != ProductCode.AML || wrongMode) {
             if (policy.onMatch() != AmlOnMatch.IGNORE) {
                 unavailable(verification, now);
             }

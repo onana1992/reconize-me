@@ -55,6 +55,7 @@ export async function publishAmlPolicyAction(formData: FormData): Promise<ApiRes
       categories,
       attach_to_identity: formData.get("attach_to_identity") === "on",
       on_match: String(formData.get("on_match") ?? "review"),
+      integration_id: optionalId(formData.get("integration_id")),
       test_integration_id: optionalId(formData.get("test_integration_id")),
       live_integration_id: optionalId(formData.get("live_integration_id")),
     }),

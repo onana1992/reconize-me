@@ -8,12 +8,15 @@ import com.kyc.dto.idv.PublishIdvPolicyRequest;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.IdvPolicy;
 import com.kyc.entities.IdvPolicyDocument;
+import com.kyc.entities.Integration;
 import com.kyc.entities.User;
 import com.kyc.enums.IdentityScreeningEffect;
+import com.kyc.enums.ProductCode;
 import com.kyc.enums.VerificationDecision;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.IdvPolicyDocumentRepository;
 import com.kyc.repositories.IdvPolicyRepository;
+import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.UserRepository;
 import com.kyc.services.IdvDecisionEngine.DecisionProfile;
 import com.kyc.services.documentia.SchemaRegistry;
@@ -62,6 +65,7 @@ public class IdvPolicyService {
 
     private final IdvPolicyRepository policies;
     private final IdvPolicyDocumentRepository documents;
+    private final IntegrationRepository integrations;
     private final SchemaRegistry registry;
     private final AuditEventRepository auditEvents;
     private final UserRepository users;
@@ -70,12 +74,14 @@ public class IdvPolicyService {
     public IdvPolicyService(
             IdvPolicyRepository policies,
             IdvPolicyDocumentRepository documents,
+            IntegrationRepository integrations,
             SchemaRegistry registry,
             AuditEventRepository auditEvents,
             UserRepository users,
             KycProperties properties) {
         this.policies = policies;
         this.documents = documents;
+        this.integrations = integrations;
         this.registry = registry;
         this.auditEvents = auditEvents;
         this.users = users;
@@ -94,25 +100,30 @@ public class IdvPolicyService {
             IdentityScreeningEffect screeningOnMatch) {}
 
     @Transactional(readOnly = true)
-    public IdvPolicyResponse effective(UUID organizationId) {
+    public IdvPolicyResponse effective(UUID organizationId, UUID integrationId) {
+        Integration integration = requireLive(organizationId, integrationId);
         return policies
-                .findByOrganizationIdAndActiveTrue(organizationId)
+                .findByIntegrationIdAndActiveTrue(integration.getId())
                 .map(policy -> toResponse(policy, codesOf(policy.getId())))
                 .orElseGet(this::platformResponse);
     }
 
     @Transactional(readOnly = true)
-    public IdvPolicyVersionList versions(UUID organizationId) {
-        List<IdvPolicyVersionList.Item> items = policies.findByOrganizationIdOrderByVersionDesc(organizationId).stream()
+    public IdvPolicyVersionList versions(UUID organizationId, UUID integrationId) {
+        Integration integration = requireLive(organizationId, integrationId);
+        List<IdvPolicyVersionList.Item> items = policies.findByIntegrationIdOrderByVersionDesc(integration.getId()).stream()
                 .map(policy -> new IdvPolicyVersionList.Item(policy.getVersion(), policy.getPublishedAt(), policy.isActive()))
                 .toList();
         return new IdvPolicyVersionList(items);
     }
 
     @Transactional(readOnly = true)
-    public Creation creation(UUID organizationId) {
+    public Creation creation(Integration integration) {
+        if (integration == null || !integration.isLive() || integration.getProduct() != ProductCode.IDENTITY) {
+            return new Creation(properties.hostedUrlTtlSeconds(), null, null);
+        }
         return policies
-                .findByOrganizationIdAndActiveTrue(organizationId)
+                .findByIntegrationIdAndActiveTrue(integration.getId())
                 .map(policy -> new Creation(policy.getLinkTtlSeconds(), policy.getId(), policy.getVersion()))
                 .orElseGet(() -> new Creation(properties.hostedUrlTtlSeconds(), null, null));
     }
@@ -128,8 +139,12 @@ public class IdvPolicyService {
     @Transactional
     public IdvPolicyResponse publish(UUID organizationId, UUID userId, PublishIdvPolicyRequest request) {
         Checked checked = check(request);
-        Optional<IdvPolicy> current = policies.findByOrganizationIdAndActiveTrue(organizationId);
-        int next = current.map(policy -> policy.getVersion() + 1).orElse(1);
+        Integration integration = requireLive(organizationId, request == null ? null : request.integrationId());
+        Optional<IdvPolicy> current = policies.findByIntegrationIdAndActiveTrue(integration.getId());
+        int next = policies
+                .findTopByIntegrationIdOrderByVersionDesc(integration.getId())
+                .map(policy -> policy.getVersion() + 1)
+                .orElse(1);
         if (current.isPresent()) {
             current.get().retire();
             policies.saveAndFlush(current.get());
@@ -138,6 +153,7 @@ public class IdvPolicyService {
         IdvPolicy policy = new IdvPolicy(
                 UUID.randomUUID(),
                 organizationId,
+                integration.getId(),
                 next,
                 checked.expired(),
                 checked.attempts(),
@@ -163,7 +179,7 @@ public class IdvPolicyService {
                 "idv.policy.published",
                 "idv_policy",
                 policy.getId(),
-                "{\"version\":" + next + "}",
+                "{\"version\":" + next + ",\"integration_id\":\"" + integration.getId() + "\"}",
                 now));
         return toResponse(policy, checked.codes());
     }
@@ -290,6 +306,22 @@ public class IdvPolicyService {
             codes.add(document.code());
         }
         return codes;
+    }
+
+    private Integration requireLive(UUID organizationId, UUID integrationId) {
+        if (integrationId == null) {
+            throw ApiException.validation(
+                    "integration_id is required", List.of(new ErrorDetail("integration_id", "required")));
+        }
+        Integration integration = integrations
+                .findByIdAndOrganizationId(integrationId, organizationId)
+                .orElseThrow(() -> ApiException.validation(
+                        "Integration not found", List.of(new ErrorDetail("integration_id", "invalid"))));
+        if (integration.getProduct() != ProductCode.IDENTITY || !integration.isLive()) {
+            throw ApiException.validation(
+                    "Production integration required", List.of(new ErrorDetail("integration_id", "invalid")));
+        }
+        return integration;
     }
 
     private Checked check(PublishIdvPolicyRequest request) {

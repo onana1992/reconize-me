@@ -2,12 +2,14 @@ package com.kyc.dto.idv;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.UUID;
 
 public record PublishIdvPolicyRequest(
         Profile profile,
         @JsonProperty("document_codes") List<String> documentCodes,
         Flow flow,
-        Screening screening) {
+        Screening screening,
+        @JsonProperty("integration_id") UUID integrationId) {
 
     public record Profile(
             @JsonProperty("expired_outcome") String expiredOutcome,

@@ -115,7 +115,7 @@ public class ScreeningService {
             }
         }
         ParsedRequest parsed = parse(request);
-        AmlPolicy policy = policies.effective(integration.getOrganizationId());
+        AmlPolicy policy = policies.effective(integration);
         Instant now = Instant.now();
         Screening screening = integration.isLive()
                 ? persistLive(integration, parsed, policy, now)
@@ -233,7 +233,7 @@ public class ScreeningService {
     public Screening createForVerification(Integration amlIntegration, UUID verificationId, ParsedRequest parsed) {
         requireAml(amlIntegration);
         requireLiveReady(amlIntegration);
-        AmlPolicy policy = policies.effective(amlIntegration.getOrganizationId());
+        AmlPolicy policy = policies.effective(amlIntegration);
         Instant now = Instant.now();
         ParsedRequest linked = new ParsedRequest(
                 parsed.input(), parsed.country(), parsed.idType(), parsed.externalId(), verificationId);

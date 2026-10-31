@@ -59,15 +59,43 @@ public class AmlPolicyService {
     }
 
     @Transactional(readOnly = true)
-    public AmlPolicy effective(UUID organizationId) {
-        return policies.findByOrganizationIdAndActiveTrue(organizationId)
+    public AmlPolicy effective(Integration integration) {
+        if (integration == null || !integration.isLive() || integration.getProduct() != ProductCode.AML) {
+            return AmlPolicy.factory();
+        }
+        return policies.findByIntegrationIdAndActiveTrue(integration.getId())
                 .map(AmlPolicyService::toPolicy)
                 .orElseGet(AmlPolicy::factory);
     }
 
+    public record Attachment(AmlPolicy policy, Integration integration) {}
+
     @Transactional(readOnly = true)
-    public List<AmlPolicyEntity> versions(UUID organizationId) {
-        return policies.findByOrganizationIdOrderByVersionDesc(organizationId);
+    public Attachment attachment(Integration identity) {
+        if (identity == null) {
+            return new Attachment(AmlPolicy.factory(), null);
+        }
+        for (AmlPolicyEntity row : policies
+                .findByOrganizationIdAndActiveTrueAndAttachToIdentityTrueOrderByPublishedAtDesc(
+                        identity.getOrganizationId())) {
+            if (row.getIntegrationId() == null) {
+                continue;
+            }
+            Integration aml = integrations
+                    .findByIdAndOrganizationId(row.getIntegrationId(), identity.getOrganizationId())
+                    .orElse(null);
+            if (aml == null || aml.getProduct() != ProductCode.AML || aml.isLive() != identity.isLive()) {
+                continue;
+            }
+            return new Attachment(toPolicy(row), aml);
+        }
+        return new Attachment(AmlPolicy.factory(), null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AmlPolicyEntity> versions(UUID organizationId, UUID integrationId) {
+        Integration integration = requireLive(organizationId, integrationId);
+        return policies.findByIntegrationIdOrderByVersionDesc(integration.getId());
     }
 
     @Transactional
@@ -90,10 +118,11 @@ public class AmlPolicyService {
         AmlOnMatch onMatch = command.onMatch() == null ? AmlOnMatch.REVIEW : command.onMatch();
         UUID testIntegration = integration(organizationId, command.testIntegrationId(), IntegrationMode.TEST);
         UUID liveIntegration = integration(organizationId, command.liveIntegrationId(), IntegrationMode.LIVE);
-        int next = policies.findTopByOrganizationIdOrderByVersionDesc(organizationId)
+        Integration owner = requireLive(organizationId, command.integrationId());
+        int next = policies.findTopByIntegrationIdOrderByVersionDesc(owner.getId())
                 .map(row -> row.getVersion() + 1)
                 .orElse(1);
-        policies.findByOrganizationIdAndActiveTrue(organizationId).ifPresent(current -> {
+        policies.findByIntegrationIdAndActiveTrue(owner.getId()).ifPresent(current -> {
             current.retire();
             policies.saveAndFlush(current);
         });
@@ -101,6 +130,7 @@ public class AmlPolicyService {
         AmlPolicyEntity saved = policies.save(new AmlPolicyEntity(
                 UUID.randomUUID(),
                 organizationId,
+                owner.getId(),
                 next,
                 review,
                 confirm,
@@ -118,7 +148,7 @@ public class AmlPolicyService {
                 "aml_policy.published",
                 "aml_policy",
                 saved.getId(),
-                "{\"version\":" + next + "}",
+                "{\"version\":" + next + ",\"integration_id\":\"" + owner.getId() + "\"}",
                 now));
         return saved;
     }
@@ -133,6 +163,22 @@ public class AmlPolicyService {
                 row.getOnMatch(),
                 row.getTestIntegrationId(),
                 row.getLiveIntegrationId());
+    }
+
+    private Integration requireLive(UUID organizationId, UUID integrationId) {
+        if (integrationId == null) {
+            throw ApiException.validation(
+                    "integration_id is required", List.of(new ErrorDetail("integration_id", "required")));
+        }
+        Integration integration = integrations
+                .findByIdAndOrganizationId(integrationId, organizationId)
+                .orElseThrow(() -> ApiException.validation(
+                        "Integration not found", List.of(new ErrorDetail("integration_id", "invalid"))));
+        if (integration.getProduct() != ProductCode.AML || integration.getMode() != IntegrationMode.LIVE) {
+            throw ApiException.validation(
+                    "Production integration required", List.of(new ErrorDetail("integration_id", "invalid")));
+        }
+        return integration;
     }
 
     private UUID integration(UUID organizationId, UUID id, IntegrationMode mode) {
@@ -193,6 +239,7 @@ public class AmlPolicyService {
     }
 
     public record PublishCommand(
+            UUID integrationId,
             BigDecimal reviewThreshold,
             BigDecimal confirmThreshold,
             List<String> categories,
