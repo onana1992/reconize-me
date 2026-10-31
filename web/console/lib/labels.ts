@@ -88,6 +88,46 @@ export function tAuditAction(t: Translate, action: string): string {
       return t("console.activity.actionCreditDebited");
     case "credit.topup_ignored":
       return t("console.activity.actionCreditTopupIgnored");
+    case "verification.created":
+      return t("console.activity.actionVerificationCreated");
+    case "verification.cancelled":
+      return t("console.activity.actionVerificationCancelled");
+    case "verification.reviewed":
+      return t("console.activity.actionVerificationReviewed");
+    case "verification.completed":
+      return t("console.activity.actionVerificationCompleted");
+    case "verification.declined":
+      return t("console.activity.actionVerificationDeclined");
+    case "verification.expired":
+      return t("console.activity.actionVerificationExpired");
+    case "hosted_link.issued":
+      return t("console.activity.actionLinkIssued");
+    case "hosted_link.opened":
+      return t("console.activity.actionLinkOpened");
+    case "consent.accepted":
+      return t("console.activity.actionConsentAccepted");
+    case "consent.declined":
+      return t("console.activity.actionConsentDeclined");
+    case "screening.created":
+      return t("console.activity.actionScreeningCreated");
+    case "screening.failed":
+      return t("console.activity.actionScreeningFailed");
+    case "screening.disposition_set":
+      return t("console.activity.actionScreeningDisposition");
+    case "idv.policy.published":
+      return t("console.activity.actionIdvPolicyPublished");
+    case "aml_policy.published":
+      return t("console.activity.actionAmlPolicyPublished");
+    case "webhook.upserted":
+      return t("console.activity.actionWebhookSaved");
+    case "webhook.deleted":
+      return t("console.activity.actionWebhookDeleted");
+    case "webhook.rotated":
+      return t("console.activity.actionWebhookRotated");
+    case "webhook.delivered":
+      return t("console.activity.actionWebhookDelivered");
+    case "webhook.failed":
+      return t("console.activity.actionWebhookFailed");
     case "user.login_failed":
       return t("console.activity.actionLoginFailed");
     case "user.registered":
@@ -113,6 +153,18 @@ export function tResourceType(t: Translate, type: string): string {
       return t("console.activity.resourceCredit");
     case "organization":
       return t("console.activity.resourceOrg");
+    case "verification":
+      return t("console.activity.resourceVerification");
+    case "idv_policy":
+      return t("console.activity.resourceIdvPolicy");
+    case "aml_policy":
+      return t("console.activity.resourceAmlPolicy");
+    case "screening":
+      return t("console.activity.resourceScreening");
+    case "webhook_endpoint":
+      return t("console.activity.resourceWebhook");
+    case "webhook_delivery":
+      return t("console.activity.resourceWebhookDelivery");
     default:
       return type;
   }
@@ -132,4 +184,24 @@ export const AUDIT_FILTERS = [
   "user.login_failed",
   "user.registered",
   "user.email_verified",
+  "verification.created",
+  "verification.cancelled",
+  "verification.reviewed",
+  "verification.completed",
+  "verification.declined",
+  "verification.expired",
+  "hosted_link.issued",
+  "hosted_link.opened",
+  "consent.accepted",
+  "consent.declined",
+  "screening.created",
+  "screening.failed",
+  "screening.disposition_set",
+  "idv.policy.published",
+  "aml_policy.published",
+  "webhook.upserted",
+  "webhook.deleted",
+  "webhook.rotated",
+  "webhook.delivered",
+  "webhook.failed",
 ] as const;

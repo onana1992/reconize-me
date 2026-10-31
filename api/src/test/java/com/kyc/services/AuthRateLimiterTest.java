@@ -75,6 +75,7 @@ class AuthRateLimiterTest {
                         new KycProperties.Aws.Textract("", "", ""),
                         new KycProperties.Aws.Rekognition("", "", "")),
                 new KycProperties.DocumentIa(false),
-                new KycProperties.OpenSanctions(false, ""));
+                new KycProperties.OpenSanctions(false, ""),
+                new KycProperties.AuditRetention(12));
     }
 }

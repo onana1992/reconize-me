@@ -11,16 +11,14 @@ const PAGE_SIZES = [10, 25, 50] as const;
 
 type Props = {
   initialEvents: AuditEvent[];
-  initialCursor: string | null;
   emails: Record<string, string>;
 };
 
-export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
+export function ActivityTable({ initialEvents, emails }: Props) {
   const t = useT();
   const locale = useLocale();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [events, setEvents] = useState(initialEvents);
-  const [cursor, setCursor] = useState(initialCursor);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -125,24 +123,7 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
       return;
     }
     setEvents(result.data.events);
-    setCursor(result.data.next_cursor);
     setPage(1);
-  }
-
-  async function loadMore() {
-    if (!cursor) {
-      return;
-    }
-    setPending(true);
-    setError(null);
-    const result = await listAuditAction(actionFilter || undefined, cursor, 100);
-    setPending(false);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    setEvents((current) => mergeEvents(current, result.data.events));
-    setCursor(result.data.next_cursor);
   }
 
   function clearFilters() {
@@ -325,11 +306,6 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
             {t("console.activity.clear")}
           </button>
         ) : null}
-        {cursor ? (
-          <button type="button" data-variant="secondary" onClick={() => void loadMore()} disabled={pending}>
-            {pending ? t("console.activity.loading") : t("console.activity.loadMore")}
-          </button>
-        ) : null}
       </div>
       <dialog
         ref={dialogRef}
@@ -416,17 +392,6 @@ export function ActivityTable({ initialEvents, initialCursor, emails }: Props) {
       </dialog>
     </div>
   );
-}
-
-function mergeEvents(current: AuditEvent[], incoming: AuditEvent[]): AuditEvent[] {
-  const seen = new Set(current.map((event) => event.id));
-  const next = [...current];
-  for (const event of incoming) {
-    if (!seen.has(event.id)) {
-      next.push(event);
-    }
-  }
-  return next;
 }
 
 function payloadSummary(

@@ -97,6 +97,8 @@ services:
         sync: false
       - key: KYC_OPENSANCTIONS_ENABLED
         value: "true"
+      - key: KYC_AUDIT_RETENTION_MONTHS
+        value: "12"
       - key: OPENSANCTIONS_API_KEY
         sync: false
 

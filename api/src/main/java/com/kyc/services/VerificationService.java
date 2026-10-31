@@ -320,7 +320,7 @@ public class VerificationService {
                 signalItems.isEmpty() ? null : signalItems,
                 extracted,
                 verification.getAmlScreeningId(),
-                parseScreening(verification.getScreeningReport()),
+                screeningOf(verification),
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
     }
@@ -424,6 +424,17 @@ public class VerificationService {
         } catch (JsonProcessingException e) {
             throw ApiException.validation("Invalid JSON", List.of());
         }
+    }
+
+    private VerificationResponse.Screening screeningOf(Verification verification) {
+        String json = verification.getScreeningReport();
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        if (!policies.applied(verification.getPolicyId()).screeningEnabled()) {
+            return null;
+        }
+        return parseScreening(json);
     }
 
     private VerificationResponse.Screening parseScreening(String json) {

@@ -12,9 +12,7 @@ import com.kyc.enums.IdentityScreeningEffect;
 import com.kyc.enums.ScreeningOutcome;
 import com.kyc.enums.ScreeningStatus;
 import com.kyc.enums.VerificationDecision;
-import com.kyc.enums.VerificationStatus;
 import com.kyc.ports.SanctionsMatchPort;
-import com.kyc.repositories.IntegrationRepository;
 import com.kyc.services.aml.Aml2Decider;
 import com.kyc.services.aml.AmlPolicy;
 import com.kyc.services.aml.DeterministicAmlEngine;
@@ -37,7 +35,6 @@ public class IdentityScreeningService {
     private final DeterministicAmlEngine engine;
     private final SanctionsMatchPort sanctions;
     private final Aml2Decider decider;
-    private final IntegrationRepository integrations;
     private final KycProperties properties;
     private final ObjectMapper objectMapper;
 
@@ -46,14 +43,12 @@ public class IdentityScreeningService {
             DeterministicAmlEngine engine,
             SanctionsMatchPort sanctions,
             Aml2Decider decider,
-            IntegrationRepository integrations,
             KycProperties properties,
             ObjectMapper objectMapper) {
         this.policies = policies;
         this.engine = engine;
         this.sanctions = sanctions;
         this.decider = decider;
-        this.integrations = integrations;
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
@@ -61,6 +56,9 @@ public class IdentityScreeningService {
     public void apply(Verification verification, Integration identity, Instant now) {
         IdvPolicyService.Applied applied = policies.applied(verification.getPolicyId());
         if (!applied.screeningEnabled()) {
+            if (verification.getScreeningReport() != null) {
+                verification.rememberScreening(null);
+            }
             return;
         }
         IdentityScreeningEffect effect = applied.screeningOnMatch();
@@ -73,25 +71,14 @@ public class IdentityScreeningService {
         constrain(verification, effect, ran.outcome, now);
     }
 
+    /** Drops a report stored by mistake. Reading a verification never calls screening. */
     public void ensureReport(Verification verification) {
-        String existing = verification.getScreeningReport();
-        boolean missing = existing == null || existing.isBlank();
-        boolean thin = !missing && !existing.contains("\"subject\"");
-        if (!missing && !thin) {
+        if (policies.applied(verification.getPolicyId()).screeningEnabled()) {
             return;
         }
-        if (verification.getDecision() == null || verification.getStatus() == VerificationStatus.PROCESSING) {
-            return;
+        if (verification.getScreeningReport() != null) {
+            verification.rememberScreening(null);
         }
-        Integration identity = integrations.findById(verification.getIntegrationId()).orElse(null);
-        if (identity == null) {
-            return;
-        }
-        Ran ran = screen(verification, identity);
-        if (thin && ran.status != ScreeningStatus.COMPLETED) {
-            return;
-        }
-        verification.rememberScreening(writeReport(ran));
     }
 
     private Ran screen(Verification verification, Integration identity) {

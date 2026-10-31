@@ -26,7 +26,7 @@ export default async function ActivityPage() {
   }
 
   return (
-    <main>
+    <main className="rm-activity">
       <PageHeader eyebrow={t("console.settings.label")} title={t("console.nav.activity")} lead={t("console.activity.lead")} />
       {!canRead ? (
         <p role="alert" className="rm-alert">
@@ -37,11 +37,7 @@ export default async function ActivityPage() {
           {audit?.message ?? t("console.activity.loadError")}
         </p>
       ) : (
-        <ActivityTable
-          initialEvents={audit.data.events}
-          initialCursor={audit.data.next_cursor}
-          emails={emails}
-        />
+        <ActivityTable initialEvents={audit.data.events} emails={emails} />
       )}
     </main>
   );

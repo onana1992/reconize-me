@@ -1445,6 +1445,10 @@ a.rm-back:hover {
   min-height: 0;
 }
 
+.rm-activity > .rm-rich-table .rm-table-wrap {
+  max-height: none;
+}
+
 .rm-rich-table .rm-table-wrap {
   max-height: min(40rem, calc(100dvh - 16rem));
 }
@@ -1484,9 +1488,9 @@ a.rm-back:hover {
 
 .rm-int-cell {
   display: inline-flex;
-  align-items: center;
-  gap: var(--rm-space-2);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--rm-space-1);
 }
 
 .rm-rich-table-foot {
