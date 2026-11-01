@@ -249,9 +249,7 @@ export function ActivityTable({ initialEvents, emails }: Props) {
                   <td>{row.actorLabel}</td>
                   <td>{row.whenLabel}</td>
                   <td>{row.actionLabel}</td>
-                  <td>
-                    <code>{row.resourceLabel}</code>
-                  </td>
+                  <td>{tResourceType(t, row.event.resource_type)}</td>
                   <td>
                     <code>{row.ipLabel}</code>
                   </td>
