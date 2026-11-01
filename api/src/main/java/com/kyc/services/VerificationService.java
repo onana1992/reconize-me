@@ -113,13 +113,19 @@ public class VerificationService {
             validateIdempotencyKey(idempotencyKey);
             var existing = idempotencyKeys.findByOrganizationIdAndKey(organizationId, idempotencyKey);
             if (existing.isPresent()) {
-                if (!existing.get().getRequestHash().equals(bodyHash)) {
-                    throw ApiException.conflict("idempotency_key_conflict", "Idempotency key reused with a different body");
+                IdempotencyKey stored = existing.get();
+                if (idempotencyActive(stored.getCreatedAt(), now)) {
+                    if (!stored.getRequestHash().equals(bodyHash)) {
+                        throw ApiException.conflict(
+                                "idempotency_key_conflict", "Idempotency key reused with a different body");
+                    }
+                    Verification replay = verifications
+                            .findByIdAndOrganizationId(stored.getVerificationId(), organizationId)
+                            .orElseThrow(() -> ApiException.notFound("Verification not found"));
+                    return ResponseEntity.ok(toResponse(replay, true));
                 }
-                Verification replay = verifications
-                        .findByIdAndOrganizationId(existing.get().getVerificationId(), organizationId)
-                        .orElseThrow(() -> ApiException.notFound("Verification not found"));
-                return ResponseEntity.ok(toResponse(replay, true));
+                idempotencyKeys.delete(stored);
+                idempotencyKeys.flush();
             }
         }
         String externalId = blankToNull(request == null ? null : request.externalId());
@@ -394,6 +400,10 @@ public class VerificationService {
             }
         }
         return "approved";
+    }
+
+    private boolean idempotencyActive(Instant createdAt, Instant now) {
+        return createdAt.plus(Duration.ofHours(properties.idempotencyTtlHours())).isAfter(now);
     }
 
     private static void validateIdempotencyKey(String key) {

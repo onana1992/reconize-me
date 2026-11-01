@@ -1,6 +1,6 @@
 "use client";
 
-// https://js.recogniz.me/v1/plugin.js
+// En production le script est servi par l'API : {API_BASE}/v1/plugin.js
 // Chargé localement dans layout.tsx (/recogniz-me.js).
 // Votre bouton. Le libellé et le style restent dans votre interface.
 

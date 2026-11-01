@@ -76,6 +76,8 @@ export function InstallGuide({
     mode,
     t("console.integrations.install.buttonComment"),
     t("console.integrations.install.buttonLabel"),
+    `${apiBase}/v1/plugin.js`,
+    t("console.integrations.install.pluginLoadError"),
   );
 
   const fields: { label: string; name: string; required: boolean }[] = [

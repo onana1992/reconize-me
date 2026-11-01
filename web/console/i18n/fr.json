@@ -503,7 +503,8 @@
         "browserLabel": "Client",
         "keysLink": "La clé API est dans l’onglet Clés API.",
         "buttonComment": "Votre bouton. Le libellé et le style restent dans votre interface.",
-        "buttonLabel": "Vérifier l’identité"
+        "buttonLabel": "Vérifier l’identité",
+        "pluginLoadError": "Plugin Recogniz-Me introuvable"
       },
       "keysLeadTest": "Une seule clé ky_test_ active. Après révocation, vous pouvez en émettre une nouvelle. Le secret reste copiable ici.",
       "keysLeadLive": "Une seule clé ky_live_ active. Après révocation, vous pouvez en émettre une nouvelle. Chaque ressource débite le crédit d’organisation. Le secret reste copiable ici."

@@ -1,5 +1,8 @@
 const API_BASE = process.env.API_BASE_URL ?? "http://127.0.0.1:8080";
 
+/** URL publique copiée dans les extraits d'installation. */
+export const DEPLOYED_API_URL = "https://recogniz-me-api.onrender.com";
+
 export type Me = {
   email: string;
   first_name?: string | null;

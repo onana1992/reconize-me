@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { API_BASE } from "../../../../../lib/api";
+import { DEPLOYED_API_URL } from "../../../../../lib/api";
 import { parseProduct } from "../../../../../lib/parse-product";
 import { integrationTabHref } from "../../../../../lib/products";
 import { loadIntegration } from "../load";
@@ -20,7 +20,7 @@ export default async function IntegrationInstallPage({
     notFound();
   }
   const integration = result.data;
-  const apiBase = API_BASE.replace(/\/$/, "");
+  const apiBase = DEPLOYED_API_URL;
   const keyPrefix = integration.mode === "live" ? "ky_live_…" : "ky_test_…";
 
   if (productId === "aml") {

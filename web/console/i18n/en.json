@@ -503,7 +503,8 @@
         "browserLabel": "Client",
         "keysLink": "The API key is on the API keys tab.",
         "buttonComment": "Your button. The label and the style stay in your interface.",
-        "buttonLabel": "Verify identity"
+        "buttonLabel": "Verify identity",
+        "pluginLoadError": "Recogniz-Me plugin failed to load"
       },
       "keysLeadTest": "One active ky_test_ key. After revocation, you can issue a new one. The secret stays available to copy here.",
       "keysLeadLive": "One active ky_live_ key. After revocation, you can issue a new one. Each resource debits organization credit. The secret stays available to copy here."

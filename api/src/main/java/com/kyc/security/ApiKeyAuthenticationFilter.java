@@ -27,6 +27,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             "/v1/console/**",
             "/v1/flow/**",
             "/v1/objects",
+            "/v1/plugin.js",
             "/v1/webhooks/stripe",
             "/swagger-ui.html",
             "/swagger-ui/**",

@@ -33,6 +33,7 @@ import com.kyc.services.aml.SubjectParser;
 import com.kyc.web.ApiException;
 import com.kyc.web.ErrorDetail;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,21 +103,26 @@ public class ScreeningService {
         requireLiveReady(integration);
         long started = System.nanoTime();
         String bodyHash = CryptoTokens.sha256Hex(write(request));
+        Instant now = Instant.now();
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             validateIdempotencyKey(idempotencyKey);
             var existing = idempotency.findByOrganizationIdAndKey(integration.getOrganizationId(), idempotencyKey);
             if (existing.isPresent()) {
-                if (!existing.get().getRequestHash().equals(bodyHash)) {
-                    throw ApiException.conflict(
-                            "idempotency_key_conflict", "Idempotency key reused with a different body");
+                ScreeningIdempotencyKey stored = existing.get();
+                if (stored.getCreatedAt().plus(Duration.ofHours(properties.idempotencyTtlHours())).isAfter(now)) {
+                    if (!stored.getRequestHash().equals(bodyHash)) {
+                        throw ApiException.conflict(
+                                "idempotency_key_conflict", "Idempotency key reused with a different body");
+                    }
+                    Screening replay = require(integration, stored.getScreeningId());
+                    return ResponseEntity.ok(toResponse(replay, true));
                 }
-                Screening replay = require(integration, existing.get().getScreeningId());
-                return ResponseEntity.ok(toResponse(replay, true));
+                idempotency.delete(stored);
+                idempotency.flush();
             }
         }
         ParsedRequest parsed = parse(request);
         AmlPolicy policy = policies.effective(integration);
-        Instant now = Instant.now();
         Screening screening = integration.isLive()
                 ? persistLive(integration, parsed, policy, now)
                 : persist(integration, parsed, policy, engine.screen(parsed.input(), policy), now);
