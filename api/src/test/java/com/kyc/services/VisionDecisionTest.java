@@ -51,11 +51,11 @@ class VisionDecisionTest {
     }
 
     @Test
-    void unknownCodeIsReview() {
+    void unknownCodeIsDeclined() {
         var verdict = engine.decideVision(null, facts(true, null, false, true, false, false, false, false, "REVIEW", false, false));
 
-        assertEquals("REVIEW", verdict.issue());
-        assertEquals(VerificationDecision.REVIEW, verdict.result().decision());
+        assertEquals("REJECT", verdict.issue());
+        assertEquals(VerificationDecision.DECLINED, verdict.result().decision());
         assertEquals(ListOf("DOCUMENT_UNKNOWN"), verdict.result().reasons());
     }
 

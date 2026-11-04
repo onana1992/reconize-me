@@ -170,7 +170,7 @@
     "done": "Thank you, you’re done",
     "doneLead": "Your information has been sent. You can close this page.",
     "unknown": "Unknown document",
-    "unknownLead": "This document does not match any document in the registry. The verification stops here.",
+    "unknownLead": "This document is not accepted by the company. The verification is declined.",
     "expired": "Expired document",
     "expiredLead": "This document’s date is past. The verification stops here.",
     "unsupported": "Document not accepted",

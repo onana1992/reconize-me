@@ -170,7 +170,7 @@
     "done": "Merci, c’est terminé",
     "doneLead": "Vos informations ont été transmises. Vous pouvez fermer cette page.",
     "unknown": "Document inconnu",
-    "unknownLead": "Cette pièce ne correspond à aucun document du registre. La vérification s’arrête ici.",
+    "unknownLead": "Cette pièce n’est pas acceptée par l’entreprise. La vérification est refusée.",
     "expired": "Document expiré",
     "expiredLead": "La date de cette pièce est dépassée. La vérification s’arrête ici.",
     "unsupported": "Document non accepté",

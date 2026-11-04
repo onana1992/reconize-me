@@ -62,7 +62,7 @@ class UnsupportedLiveTest {
         IdvSupport.flow(mockMvc, token);
         IdvSupport.acceptConsent(mockMvc, token);
         var done = IdvSupport.captureUntilDecision(mockMvc, token);
-        assertEquals("review", done.path("status").asText());
+        assertEquals("declined", done.path("status").asText());
         assertEquals("done", done.path("next").asText());
         assertEquals("DOCUMENT_UNKNOWN", done.path("reason").asText());
         assertEquals(0, COMPARE_CALLS.get());
@@ -70,7 +70,7 @@ class UnsupportedLiveTest {
 
         mockMvc.perform(get("/v1/verifications/" + id).header("Authorization", "Bearer " + KEY))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.decision").value("review"))
+                .andExpect(jsonPath("$.decision").value("declined"))
                 .andExpect(jsonPath("$.rules_version").value("vision-1"))
                 .andExpect(jsonPath("$.decision_reasons[0]").value("DOCUMENT_UNKNOWN"));
     }

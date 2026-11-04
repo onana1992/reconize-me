@@ -451,14 +451,14 @@ class DocumentIaLabTest {
     }
 
     @Test
-    void unknownCodeIsReviewNotDeclined() throws Exception {
+    void unknownCodeIsDeclined() throws Exception {
         mockMvc.perform(post("/v1/document-ia/fixtures/unknown-code")
                         .param("until", "decide")
                         .header("Authorization", "Bearer " + TEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.providerCalled").value(false))
-                .andExpect(jsonPath("$.decision.issue").value("REVIEW"))
-                .andExpect(jsonPath("$.decision.verificationDecision").value("REVIEW"))
+                .andExpect(jsonPath("$.decision.issue").value("REJECT"))
+                .andExpect(jsonPath("$.decision.verificationDecision").value("DECLINED"))
                 .andExpect(jsonPath("$.decision.reasons[0]").value("DOCUMENT_UNKNOWN"))
                 .andExpect(jsonPath("$.scores.documentTypeScore").value(0.0));
     }

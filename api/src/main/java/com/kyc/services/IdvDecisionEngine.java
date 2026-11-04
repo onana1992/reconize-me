@@ -227,7 +227,7 @@ public class IdvDecisionEngine {
             reasons.add("document_expired");
         }
         if (facts.unknown()) {
-            issue = issue == null ? "REVIEW" : issue;
+            issue = issue == null ? "REJECT" : issue;
             reasons.add("DOCUMENT_UNKNOWN");
         }
         if (outsideCorridor) {
