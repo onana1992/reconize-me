@@ -250,7 +250,11 @@ public class HostedFlowService {
                 return reread;
             }
         }
-        if (kind == MediaKind.DOCUMENT && askForBack(loaded)) {
+        if (kind == MediaKind.DOCUMENT && unknownFront(loaded)) {
+            if (finishDocumentBeforeFace(loaded, now)) {
+                return closedCapture(loaded, response.attempt());
+            }
+        } else if (kind == MediaKind.DOCUMENT && askForBack(loaded)) {
             loaded.verification().requireDocumentBack(now);
             return captured(loaded, response.attempt());
         }
@@ -620,11 +624,21 @@ public class HostedFlowService {
         }
         IdvDecisionEngine.Result result =
                 analyses.replay(saved.get(), schemas, engine, applied.profile(), applied.acceptedCodes());
-        if (result == null || result.decision() != VerificationDecision.APPROVED) {
+        if (result == null || result.decision() != VerificationDecision.APPROVED || unknownFront(loaded)) {
             return false;
         }
         Object code = result.extractedIdentity() == null ? null : result.extractedIdentity().get("document_code");
         return code instanceof String value && schemas.hasActiveSide(value, "BACK");
+    }
+
+    /** Un recto non reconnu termine la vérification. Le verso n'est pas demandé. */
+    private boolean unknownFront(Loaded loaded) {
+        if (!recognizedDocument(loaded.verification().getId(), "FRONT")) {
+            return analyses.find(loaded.verification().getId(), "FRONT").isPresent();
+        }
+        IdvDecisionEngine.Result result = storedOrUnavailable(
+                loaded.verification().getId(), "FRONT", applied(loaded.verification()));
+        return result.reasons() != null && result.reasons().contains("DOCUMENT_UNKNOWN");
     }
 
     /**
@@ -660,7 +674,9 @@ public class HostedFlowService {
                     .find(loaded.verification().getId(), side)
                     .map(row -> analyses.replay(row, schemas, engine, applied.profile(), applied.acceptedCodes()))
                     .orElse(null);
-            if (result != null && !recognizedDocument(loaded.verification().getId(), side)) {
+            if (result != null && "FRONT".equals(side)
+                    && (!recognizedDocument(loaded.verification().getId(), side)
+                            || (result.reasons() != null && result.reasons().contains("DOCUMENT_UNKNOWN")))) {
                 return null;
             }
             if (result != null && result.decision() != VerificationDecision.APPROVED) {
