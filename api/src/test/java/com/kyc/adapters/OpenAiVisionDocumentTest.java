@@ -64,6 +64,7 @@ class OpenAiVisionDocumentTest {
         assertEquals("json_object", body.get("response_format").get("type").asText());
         String system = body.get("messages").get(0).get("content").asText();
         assertTrue(system.contains("\"detection\":\"DOCUMENT_PRESENT\""));
+        assertTrue(system.contains("or UNKNOWN"));
         assertTrue(system.contains("\"fields\":["));
         assertEquals("catalog prompt", body.get("messages").get(1).get("content").get(0).get("text").asText());
         JsonNode image = body.get("messages").get(1).get("content").get(1).get("image_url");

@@ -22,7 +22,7 @@ public final class VisionPrompt {
     public static String fromCatalog(List<Schema> schemas, String captureSide) {
         StringBuilder prompt = new StringBuilder();
         prompt.append(
-                "Return one JSON document matching the response schema. First recognize which document this is and which side of it is shown. Compare the image with the reading of every entry below: each entry is one side of one document. Set classification.code and classification.side from the entry that matches. classification.side is required. classification.version is only the version token, such as 2024. Do not copy country, document type, side, or jurisdiction into version. Field names must be copied from the list of the chosen side:\n");
+                "Return one JSON document matching the response schema. First decide whether the image is one of the documents below. Each entry is one side of one document. Assign its code only when the printed title and issuer are those of that entry. Do not choose the nearest entry. A name, a date, or a plastic card is not enough. A hospital card, a university card, a health card, or any other card is not a catalog document: set classification.code to UNKNOWN, classification.confidence to 0, and fields to an empty array. classification.side is FRONT or BACK for a catalog document, and UNKNOWN otherwise. classification.version is only the version token, such as 2024. Do not copy country, document type, side, or jurisdiction into version. Field names must be copied from the list of the chosen side:\n");
         if (schemas != null) {
             for (Schema schema : schemas) {
                 if (!otherSide(captureSide, schema)) {

@@ -1,20 +1,21 @@
 "use client";
 
-// En production le script est servi par l'API : {API_BASE}/v1/plugin.js
-// Chargé localement dans layout.tsx (/recogniz-me.js).
-// Votre bouton. Le libellé et le style restent dans votre interface.
+// https://recogniz-me-api.onrender.com/v1/plugin.js
+// Chargé dans layout.tsx. Le libellé et le style restent dans cette application.
 
 declare global {
-  var RecognizMe: {
-    open: (options: {
-      mode: "redirect" | "incontext";
-      endpoint: string;
-      externalId?: string;
-      firstName?: string;
-      lastName?: string;
-      email?: string;
-    }) => Promise<void>;
-  };
+  interface Window {
+    RecognizMe: {
+      open: (options: {
+        mode: "redirect" | "incontext";
+        endpoint: string;
+        externalId?: string;
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+      }) => Promise<void>;
+    };
+  }
 }
 
 type Props = {
@@ -28,7 +29,7 @@ type Props = {
 
 export function Verify({ mode, externalId, firstName, lastName, email, onError }: Props) {
   function verify() {
-    RecognizMe.open({
+    window.RecognizMe.open({
       mode,
       endpoint: "/api/verifications",
       externalId,

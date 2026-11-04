@@ -28,8 +28,9 @@ public class OpenAiVisionDocument implements VisionDocumentPort {
             Reply with one JSON object only. Copy this shape. \
             detection is required and is one of NO_DOCUMENT, DOCUMENT_PRESENT, PARTIALLY_VISIBLE, \
             CROPPED, MULTIPLE_DOCUMENTS, TOO_SMALL, UNREADABLE. \
-            classification.code is the code value from the catalog. classification.version is only the version value, such as 2024. \
-            classification.side is required and is FRONT or BACK: the side of the card visible in the image, recognized from its layout. \
+            classification.code is either a code copied from the catalog or UNKNOWN. Use UNKNOWN when the image is not that exact document. Do not pick the closest catalog code. \
+            classification.version is only the version value, such as 2024, or null when the code is UNKNOWN. \
+            classification.side is required and is FRONT or BACK for a catalog document, or UNKNOWN when the code is UNKNOWN. \
             classification.confidence is required and is a number from 0 to 1. \
             fields is an array. Each item has field, value as a string, confidence as a number from 0 to 1, \
             and source VISUAL_TEXT, MRZ, or VISUAL_AND_MRZ. The field name must be copied from the catalog line for the chosen code and side. Do not rename a printed label. Do not compute check digits. Follow the reading of the chosen entry for that side. \

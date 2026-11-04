@@ -11,4 +11,5 @@ public record FlowSessionResponse(
         String status,
         @JsonProperty("consent_text_version") String consentTextVersion,
         @JsonProperty("expires_at") Instant expiresAt,
-        String next) {}
+        String next,
+        String reason) {}

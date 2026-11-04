@@ -64,6 +64,7 @@ class UnsupportedLiveTest {
         var done = IdvSupport.captureUntilDecision(mockMvc, token);
         assertEquals("review", done.path("status").asText());
         assertEquals("done", done.path("next").asText());
+        assertEquals("DOCUMENT_UNKNOWN", done.path("reason").asText());
         assertEquals(0, COMPARE_CALLS.get());
         assertEquals(0, LIVENESS_CALLS.get());
 

@@ -83,6 +83,7 @@ public class SchemaRegistry implements SchemaCatalog {
               "version": "2015",
               "side": "FRONT",
               "mrzFormat": "NONE",
+              "reading": "Canada permanent resident card front, issued by the Government of Canada. The printed title is Permanent Resident Card or Carte de résident permanent. Use CANADA_PERMANENT_RESIDENT only when that title is visible. A hospital card, a university card, a health card, or any other card is not this document.",
               "fields": [
                 {"name": "lastName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "surname on the Name/Nom line; it may contain two words"},
                 {"name": "firstName", "type": "NAME", "required": true, "normalizer": "ICAO_NAME", "hint": "given names on the line under the surname"},

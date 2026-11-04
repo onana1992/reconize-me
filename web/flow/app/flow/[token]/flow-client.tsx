@@ -28,6 +28,7 @@ type Session = {
   consent_text_version: string;
   expires_at: string;
   next: string;
+  reason?: string;
 };
 
 type CaptureNext = "capture_document" | "capture_document_back" | "capture_selfie";
@@ -234,7 +235,14 @@ export function FlowClient({ token }: { token: string }) {
         stopCamera();
       }
       setSession((current) =>
-        current ? { ...current, status: result.status, next: result.next } : current,
+        current
+          ? {
+              ...current,
+              status: result.status,
+              next: result.next,
+              reason: result.next === "done" ? result.reason : undefined,
+            }
+          : current,
       );
     } catch {
       setError("network");
@@ -384,10 +392,11 @@ export function FlowClient({ token }: { token: string }) {
     );
   }
 
-  if (session.status === "declined") {
+  const failure = terminalFailure(session.status, session.reason);
+  if (failure) {
     return (
       <FlowShell step="done">
-        <StateScreen tone="neutral" icon={<ShieldIcon size={30} />} title={t("outcome.closed")} lead={t("outcome.closedLead")} />
+        <StateScreen tone="neutral" icon={failure.icon} title={t(failure.title)} lead={t(failure.lead)} />
       </FlowShell>
     );
   }
@@ -397,6 +406,49 @@ export function FlowClient({ token }: { token: string }) {
       <StateScreen tone="success" title={t("outcome.done")} lead={t("outcome.doneLead")} />
     </FlowShell>
   );
+}
+
+function terminalFailure(
+  status: string,
+  reason?: string,
+): { icon: React.ReactNode; title: MessageKey; lead: MessageKey } | null {
+  if (status !== "review" && status !== "declined" && status !== "expired" && status !== "cancelled") {
+    return null;
+  }
+  switch (reason) {
+    case "DOCUMENT_UNKNOWN":
+      return { icon: <IdCardIcon size={30} />, title: "outcome.unknown", lead: "outcome.unknownLead" };
+    case "document_expired":
+      return { icon: <ClockIcon size={30} />, title: "outcome.expired", lead: "outcome.expiredLead" };
+    case "unsupported_document":
+      return { icon: <IdCardIcon size={30} />, title: "outcome.unsupported", lead: "outcome.unsupportedLead" };
+    case "capture_attempts_exceeded":
+      return { icon: <IdCardIcon size={30} />, title: "outcome.attempts", lead: "outcome.attemptsLead" };
+    case "liveness_fail":
+      return { icon: <FaceIcon size={30} />, title: "outcome.liveness", lead: "outcome.livenessLead" };
+    case "face_match_fail":
+      return { icon: <FaceIcon size={30} />, title: "outcome.face", lead: "outcome.faceLead" };
+    case "provider_unavailable":
+      return { icon: <WifiOffIcon size={30} />, title: "outcome.provider", lead: "outcome.providerLead" };
+    case "consent_declined":
+      return { icon: <ShieldIcon size={30} />, title: "outcome.declined", lead: "outcome.declinedLead" };
+    case "MISSING_REQUIRED_FIELD":
+    case "LOW_OCR_CONFIDENCE":
+    case "LOW_CONFIDENCE":
+    case "MRZ_MISMATCH":
+    case "SUSPICIOUS_INDICATOR":
+    case "DOCUMENT_SIDE_MISMATCH":
+    case "DOCUMENT_MISMATCH":
+      return { icon: <IdCardIcon size={30} />, title: "outcome.unreadable", lead: "outcome.unreadableLead" };
+    default:
+      if (status === "expired") {
+        return { icon: <ClockIcon size={30} />, title: "errors.expired", lead: "errors.expiredLead" };
+      }
+      if (status === "cancelled") {
+        return { icon: <ShieldIcon size={30} />, title: "outcome.closed", lead: "outcome.closedLead" };
+      }
+      return { icon: <ShieldIcon size={30} />, title: "outcome.failed", lead: "outcome.failedLead" };
+  }
 }
 
 function stepFor(next: CaptureNext): FlowStep {

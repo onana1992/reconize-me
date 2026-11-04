@@ -1,6 +1,7 @@
 package com.kyc.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.config.KycProperties;
 import com.kyc.dto.idv.CompleteCaptureResponse;
@@ -264,7 +265,7 @@ public class HostedFlowService {
                 }
             }
             if (finishDocumentBeforeFace(loaded, now)) {
-                return captured(loaded, response.attempt());
+                return closedCapture(loaded, response.attempt());
             }
             loaded.verification().markSelfie(now);
             return captured(loaded, response.attempt());
@@ -309,7 +310,7 @@ public class HostedFlowService {
         Instant now = Instant.now();
         loaded.verification().markProcessing(now);
         decide(loaded, now);
-        return captured(loaded, response.attempt());
+        return finished(loaded, response.attempt());
     }
 
     @Transactional
@@ -630,6 +631,7 @@ public class HostedFlowService {
      * Relit la capture déjà acceptée par la garde fichier. Tant qu'il reste des essais,
      * un refus (photo illisible, lecture non approuvée, fournisseur) redemande la même face.
      * Le dernier essai conserve la décision réelle.
+     * Une pièce absente du registre s'arrête tout de suite : document inconnu, sans nouvel essai.
      */
     private CompleteCaptureResponse rereadCapture(
             Loaded loaded, MediaKind kind, Integer attempt, Instant now, byte[] body) {
@@ -658,6 +660,9 @@ public class HostedFlowService {
                     .find(loaded.verification().getId(), side)
                     .map(row -> analyses.replay(row, schemas, engine, applied.profile(), applied.acceptedCodes()))
                     .orElse(null);
+            if (result != null && !recognizedDocument(loaded.verification().getId(), side)) {
+                return null;
+            }
             if (result != null && result.decision() != VerificationDecision.APPROVED) {
                 String reason = result.reasons() == null || result.reasons().isEmpty()
                         ? "LOW_CONFIDENCE"
@@ -865,6 +870,44 @@ public class HostedFlowService {
                 Enums.json(loaded.verification().getStatus()), nextOf(loaded.verification()), true, attempt, null, null);
     }
 
+    /** Décision déjà posée. Le motif d'échec est renvoyé au parcours. */
+    private CompleteCaptureResponse closedCapture(Loaded loaded, Integer attempt) {
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()),
+                nextOf(loaded.verification()),
+                true,
+                attempt,
+                null,
+                failureReason(loaded.verification()));
+    }
+
+    /** Code actif du registre. Une confiance basse sur un code connu reste une pièce reconnue. */
+    private boolean recognizedDocument(UUID verificationId, String side) {
+        String code = analyses.documentCode(verificationId, side);
+        return code != null && !code.isBlank() && !"UNKNOWN".equals(code) && !schemas.findActives(code).isEmpty();
+    }
+
+    /** Premier motif lorsqu'une décision autre qu'approuvée est posée. */
+    private String failureReason(Verification verification) {
+        if (verification.getDecision() == VerificationDecision.APPROVED) {
+            return null;
+        }
+        return firstDecisionReason(verification);
+    }
+
+    private String firstDecisionReason(Verification verification) {
+        String raw = verification.getDecisionReasons();
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            List<String> reasons = objectMapper.readValue(raw, new TypeReference<>() {});
+            return reasons == null || reasons.isEmpty() ? null : reasons.get(0);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
     private void discardRejectedObject(String objectKey) {
         try {
             objectStorage.delete(objectKey);
@@ -926,7 +969,8 @@ public class HostedFlowService {
                 Enums.json(verification.getStatus()),
                 properties.consentTextVersion(),
                 verification.getHostedExpiresAt(),
-                nextOf(verification));
+                nextOf(verification),
+                failureReason(verification));
     }
 
     private void requireLive(Loaded loaded) {
@@ -1004,7 +1048,13 @@ public class HostedFlowService {
     }
 
     private CompleteCaptureResponse finished(Loaded loaded, Integer attempt) {
-        return captured(loaded, attempt);
+        return new CompleteCaptureResponse(
+                Enums.json(loaded.verification().getStatus()),
+                nextOf(loaded.verification()),
+                true,
+                attempt,
+                null,
+                failureReason(loaded.verification()));
     }
 
     private boolean liveIntegration(Verification verification) {

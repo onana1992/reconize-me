@@ -58,6 +58,8 @@ class VisionAttemptsTest {
                         null,
                         null,
                         List.of())));
+        assertTrue(prompt.contains("UNKNOWN"));
+        assertTrue(prompt.contains("Do not choose the nearest entry."));
         assertTrue(prompt.contains("QUEBEC_DRIVER_LICENSE"));
         assertTrue(prompt.contains("CAMEROON_NATIONAL_ID"));
         assertTrue(prompt.contains("2016"));

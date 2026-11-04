@@ -10,7 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        <Script src="/recogniz-me.js" strategy="beforeInteractive" />
+        <Script src="https://recogniz-me-api.onrender.com/v1/plugin.js" strategy="beforeInteractive" />
         {children}
       </body>
     </html>
