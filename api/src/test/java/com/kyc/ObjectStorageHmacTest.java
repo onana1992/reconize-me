@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kyc.adapters.FilesystemObjectStorage;
+import com.kyc.config.AntiSpoof;
 import com.kyc.config.KycProperties;
 import com.kyc.ports.ObjectStoragePort;
 import java.nio.file.Path;
@@ -74,7 +75,8 @@ class ObjectStorageHmacTest {
                         new KycProperties.Aws.Rekognition("", "", "")),
                 new KycProperties.DocumentIa(false),
                 new KycProperties.OpenSanctions(false, ""),
-                new KycProperties.AuditRetention(12));
+                new KycProperties.AuditRetention(12),
+                new AntiSpoof(false, "http://127.0.0.1:8090", "", 2500, 0.80, 0.55, ""));
     }
 
     private static String value(String query, String name) {

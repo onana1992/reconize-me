@@ -251,7 +251,7 @@ Toute incohérence devra générer un signal de risque.
 
 Ce moteur constitue une partie importante de la propriété intellectuelle du projet. Il est un **modèle (ou un ensemble de modèles) propriétaire** dès le premier pipeline d’analyse, pas une couche de règles visuelles « en attendant SageMaker ». Les contrôles déterministes (checksums MRZ, dates) restent des **signaux** à côté du modèle, pas le moteur d’authenticité.
 
-Le contrat d’implémentation de l’anti-spoofing (service Python, cinq alertes, décision laissée au moteur de règles) est dans [`Authenticite/specification-anti-spoofing.md`](./Authenticite/specification-anti-spoofing.md). Le champ `status` ci-dessous est la décision Java, pas une sortie du service.
+Le contrat d’implémentation de l’anti-spoofing (service Python, cinq alertes, décision laissée au moteur de règles) est dans [`Authenticite/specification-anti-spoofing.md`](./Authenticite/specification-anti-spoofing.md). La lecture pédagogique (cas d’utilisation, parcours, règles, tests, déploiement) est dans [`Authenticite/specification-detaillee-anti-spoofing.md`](./Authenticite/specification-detaillee-anti-spoofing.md). L’ordre de construction (Swagger avant le flow) est dans [`Authenticite/roadmap-implementation-anti-spoofing.md`](./Authenticite/roadmap-implementation-anti-spoofing.md). Le champ `status` ci-dessous est la décision Java, pas une sortie du service.
 
 Il devra analyser :
 

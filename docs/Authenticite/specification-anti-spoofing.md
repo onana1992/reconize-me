@@ -5,6 +5,8 @@
 **Version du document :** 1.0  
 **Date :** 5 novembre 2026  
 **Statut :** spécification d’implémentation — le service n’existe pas encore  
+**Lecture pédagogique :** [`specification-detaillee-anti-spoofing.md`](./specification-detaillee-anti-spoofing.md) — cas d’utilisation, parcours, règles, tests, déploiement. En cas de contradiction, le présent contrat gagne.  
+**Ordre de construction :** [`roadmap-implementation-anti-spoofing.md`](./roadmap-implementation-anti-spoofing.md) — Swagger du service, puis banc de l’API, puis le flow.  
 **Documents liés :**
 
 - [`../cahier-des-charges.md`](../cahier-des-charges.md) §10 à §13 — place du moteur, dataset, annotation
@@ -498,12 +500,4 @@ Le bac à sable et le live désactivé ne dépendent pas de la santé du service
 
 ## 15. Ordre de construction
 
-| Étape | Livrable | Preuve |
-|---|---|---|
-| 1 | Port, stub, table, `applyAuthenticity`, scénarios bac à sable, drapeau à faux | Tests Java du §11. Aucun processus Python requis. |
-| 2 | Service Python, contrat, cinq détecteurs, tests synthétiques, image Docker | `GET /health` et les cas du §10. |
-| 3 | `HttpDocumentAuthenticity` branché hors production, drapeau vrai sur un jeu interne | Un JPEG stocké réel du flux, pas la copie `VisionFrame`, revient avec cinq alertes. |
-| 4 | Jeu du §12 et `fusion-1.json` calibré | Rapport de rappel et de faux positifs par alerte. |
-| 5 | Ouverture du refus, alerte par alerte, via `decline-codes` | Seulement les alertes qui tiennent le critère. |
-
-L’étape 1 peut partir sans modèle. Elle ne change pas la décision live : le signal reste `authenticity_stub_pass`.
+L’ordre est celui de [`roadmap-implementation-anti-spoofing.md`](./roadmap-implementation-anti-spoofing.md). Le service est d’abord visible dans son Swagger, puis dans le banc Swagger de l’API. Le flow de vérification n’est branché qu’au palier S8. Jusque-là, le signal live reste `authenticity_stub_pass`.

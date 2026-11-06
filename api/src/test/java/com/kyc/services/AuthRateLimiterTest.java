@@ -3,6 +3,7 @@ package com.kyc.services;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.kyc.config.AntiSpoof;
 import com.kyc.config.KycProperties;
 import com.kyc.web.ApiException;
 import org.junit.jupiter.api.Test;
@@ -76,6 +77,7 @@ class AuthRateLimiterTest {
                         new KycProperties.Aws.Rekognition("", "", "")),
                 new KycProperties.DocumentIa(false),
                 new KycProperties.OpenSanctions(false, ""),
-                new KycProperties.AuditRetention(12));
+                new KycProperties.AuditRetention(12),
+                new AntiSpoof(false, "http://127.0.0.1:8090", "", 2500, 0.80, 0.55, ""));
     }
 }

@@ -21,7 +21,8 @@ public record KycProperties(
         @DefaultValue Aws aws,
         @DefaultValue DocumentIa documentIa,
         @DefaultValue OpenSanctions opensanctions,
-        @DefaultValue AuditRetention audit) {
+        @DefaultValue AuditRetention audit,
+        @DefaultValue AntiSpoof antiSpoof) {
 
     public record Mail(
             @DefaultValue("log") String mode,

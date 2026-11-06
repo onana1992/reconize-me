@@ -1,3 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
 # Java / Maven
 api/**/target/
 api/**/.classpath

@@ -6,6 +6,7 @@ SaaS de vérification d’identité (document + liveness + face match). Une iden
 
 ```
 api/                  # Spring Boot unique (pom.xml) → :8080 — voir api/README.md
+services/anti-spoof   # Authenticité documentaire (Python) → :8090
 web/console           # Back-office client (session) → :3000
 web/site              # Vitrine publique, FR + EN, SSG → :3002
 packages/brand        # Charte M0 — tokens CSS, logo, badges (@kyc/brand)
@@ -21,6 +22,7 @@ Le produit Identity & Document Verification (hosted flow `:3001`, sessions, cons
 - Maven 3.9
 - Node 22
 - Docker
+- Python 3.12 (service anti-spoof)
 
 ## Démarrage local
 
@@ -30,6 +32,18 @@ cd api && mvn spring-boot:run
 ```
 
 Health : `GET http://localhost:8080/v1/health`
+
+Anti-spoof, palier de forme (Python 3.12). Copier `services/anti-spoof/.env.example` vers `.env`, puis y mettre le jeton. `ANTI_SPOOF_DOCS=true` allume Swagger.
+
+```bash
+cd services/anti-spoof
+python -m venv .venv
+.venv/Scripts/python -m pip install -e ".[dev]"   # Windows
+# source .venv/bin/activate && pip install -e ".[dev]"
+.venv/Scripts/python -m app.main
+```
+
+Swagger : `http://localhost:8090/docs`. Authorize : coller le jeton, sans le mot Bearer. `POST /v1/analyze-upload`.
 
 Front :
 

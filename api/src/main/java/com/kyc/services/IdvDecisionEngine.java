@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class IdvDecisionEngine {
 
@@ -16,6 +17,9 @@ public class IdvDecisionEngine {
     public static final String LIVE_RULES_VERSION = "m5-1";
     public static final String VISION_RULES_VERSION = "vision-1";
     public static final String BIO_RULES_VERSION = "bio-1";
+    public static final String AUTH_RULES_VERSION = "auth-1";
+    public static final double AUTH_REVIEW_AT = 0.55;
+    public static final double AUTH_DECLINE_AT = 0.80;
     public static final double LOW_OCR_CONFIDENCE = 0.70;
 
     public static final double FACE_MATCH_FAIL = 0.75;
@@ -346,6 +350,78 @@ public class IdvDecisionEngine {
                 "FR",
                 "document_number",
                 "XX0000000");
+    }
+
+    private static final Map<String, String> ALERT_SIGNAL = Map.of(
+            "splicing", "splicing_detected",
+            "text_alteration", "text_alteration_suspected",
+            "compression_inconsistency", "compression_inconsistency",
+            "screen_replay", "screen_replay_detected",
+            "printed_copy", "printed_copy_detected");
+
+    public record AlertScore(String code, Double score) {}
+
+    public record AuthenticityFacts(boolean forensicUsable, Double authenticityScore, List<AlertScore> alerts) {}
+
+    public record AuthenticityPolicy(double reviewAt, double declineAt, Set<String> declineCodes) {
+        public static AuthenticityPolicy platform() {
+            return new AuthenticityPolicy(AUTH_REVIEW_AT, AUTH_DECLINE_AT, Set.of());
+        }
+    }
+
+    public record AuthenticityVerdict(String issue, String rulesVersion, List<String> reasons, List<Signal> signals) {}
+
+    public AuthenticityVerdict authenticityUnavailable() {
+        return new AuthenticityVerdict(
+                "REVIEW",
+                AUTH_RULES_VERSION,
+                List.of("authenticity_unavailable"),
+                List.of(new Signal("authenticity_unavailable", SignalOutcome.UNAVAILABLE, null)));
+    }
+
+    /**
+     * Seuils auth-1. Un score fort ne refuse que si son code est ouvert dans {@code decline-codes}.
+     */
+    public AuthenticityVerdict applyAuthenticity(AuthenticityFacts facts, AuthenticityPolicy policy) {
+        AuthenticityPolicy bounds = policy == null ? AuthenticityPolicy.platform() : policy;
+        if (facts == null || !facts.forensicUsable()) {
+            return new AuthenticityVerdict(
+                    "REVIEW",
+                    AUTH_RULES_VERSION,
+                    List.of("authenticity_inconclusive"),
+                    List.of(new Signal("authenticity_inconclusive", SignalOutcome.UNAVAILABLE, null)));
+        }
+        Set<String> open = bounds.declineCodes() == null ? Set.of() : bounds.declineCodes();
+        List<Signal> signals = new ArrayList<>();
+        String declineReason = null;
+        double declineScore = Double.NEGATIVE_INFINITY;
+        List<AlertScore> alerts = facts.alerts() == null ? List.of() : facts.alerts();
+        for (AlertScore alert : alerts) {
+            if (alert.score() == null || alert.score() < bounds.reviewAt()) {
+                continue;
+            }
+            String signal = ALERT_SIGNAL.get(alert.code());
+            if (signal == null) {
+                continue;
+            }
+            signals.add(new Signal(signal, SignalOutcome.FAIL, alert.score()));
+            if (alert.score() >= bounds.declineAt() && open.contains(alert.code()) && alert.score() > declineScore) {
+                declineScore = alert.score();
+                declineReason = signal;
+            }
+        }
+        if (declineReason != null) {
+            return new AuthenticityVerdict("REJECT", AUTH_RULES_VERSION, List.of(declineReason), List.copyOf(signals));
+        }
+        if (!signals.isEmpty()) {
+            return new AuthenticityVerdict(
+                    "REVIEW", AUTH_RULES_VERSION, List.of("tampering_suspected"), List.copyOf(signals));
+        }
+        return new AuthenticityVerdict(
+                "PASS",
+                AUTH_RULES_VERSION,
+                List.of(),
+                List.of(new Signal("document_authentic", SignalOutcome.PASS, facts.authenticityScore())));
     }
 
     private static Map<String, Object> noraIdentity() {
