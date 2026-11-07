@@ -379,6 +379,21 @@ export type Verification = {
   rules_version?: string | null;
   policy_version?: number | null;
   signals?: { code: string; outcome: string; score?: number | null }[] | null;
+  authenticity?: {
+    side: string;
+    engine_version?: string | null;
+    fusion_version?: string | null;
+    forensic_usable?: boolean | null;
+    authenticity_score?: number | null;
+    tampering_score?: number | null;
+    presentation_score?: number | null;
+    alerts?: {
+      code: string;
+      family?: string | null;
+      score?: number | null;
+      regions?: { name?: string; box?: number[]; score?: number }[] | null;
+    }[] | null;
+  }[] | null;
   extracted_identity?: {
     first_name?: string;
     last_name?: string;

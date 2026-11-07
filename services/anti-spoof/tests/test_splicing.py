@@ -74,6 +74,29 @@ def test_pasted_texture_raises_splicing_only() -> None:
     assert max(_iou(region["box"], box) for region in splicing["regions"]) > 0.3
 
 
+def _photographed_card() -> bytes:
+    """Carte imprimée posée sur une feuille : contours et aplats, pas un collage."""
+    rng = np.random.default_rng(7)
+    sheet = 214 + rng.normal(0, 1.4, (960, 1280))
+    card = np.full((520, 820), 232.0, dtype=np.float32)
+    card += rng.normal(0, 1.2, card.shape)
+    rows, cols = np.mgrid[0:240, 0:180]
+    card[40:280, 36:216] = 90 + 50 * np.sin(cols / 6.0) + 35 * np.sin(rows / 9.0)
+    for top in (310, 350, 390, 430):
+        card[top : top + 14, 36:560] = 48
+    canvas = np.stack([sheet, sheet * 0.99, sheet * 0.97], axis=2)
+    top, left = 180, 220
+    canvas[top : top + card.shape[0], left : left + card.shape[1]] = card[..., None]
+    return _save(canvas, quality=82)
+
+
+def test_photographed_card_is_not_spliced() -> None:
+    encoded = base64.b64encode(_photographed_card()).decode("ascii")
+    response = client.post("/v1/analyze", json=body(image_base64=encoded), headers=AUTH)
+    assert response.status_code == 200
+    assert _alert(response.json(), "splicing")["score"] < 0.55
+
+
 def test_uniform_card_stays_under_review() -> None:
     encoded = base64.b64encode(_uniform()).decode("ascii")
     response = client.post("/v1/analyze", json=body(image_base64=encoded), headers=AUTH)

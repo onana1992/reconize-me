@@ -2970,9 +2970,29 @@ a.rm-idv-row:focus-visible {
   gap: var(--rm-space-2) var(--rm-space-4);
 }
 
+.rm-vcase-auth {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--rm-space-5);
+  align-items: start;
+}
+
+.rm-vcase-auth[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+
+.rm-vcase-auth h3 {
+  margin-top: 0;
+}
+
+.rm-vcase-auth .rm-vcase-checks {
+  margin-top: var(--rm-space-4);
+}
+
 @media (max-width: 64rem) {
   .rm-vcase-grid,
-  .rm-vcase-session {
+  .rm-vcase-session,
+  .rm-vcase-auth {
     grid-template-columns: 1fr;
   }
 }

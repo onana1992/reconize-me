@@ -5,6 +5,7 @@ import java.util.Set;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 public record AntiSpoof(
+        @DefaultValue("false") boolean enabled,
         @DefaultValue("false") boolean labEnabled,
         @DefaultValue("http://127.0.0.1:8090") String baseUrl,
         @DefaultValue("") String token,

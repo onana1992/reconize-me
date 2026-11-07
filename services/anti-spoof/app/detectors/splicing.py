@@ -17,6 +17,9 @@ _RESIDUAL_BLOCK = 32
 _COPY_BLOCK = 16
 _COPY_STRIDE = 8
 _COPY_MIN_SHIFT = 80.0
+# Une copie forme un bloc. Des correspondances éparpillées sur le cadre n'en sont pas.
+_COPY_DENSITY = 0.05
+_FLAT_EDGE = 8.0
 _PORTRAIT_WEIGHT = 1.4
 
 
@@ -110,6 +113,11 @@ def _internal_copy(
     count = len(origins)
     if count < 6 or count > 0.45 * rows * cols:
         return 0.0, None
+    origin_rows = [point[0] for point in origins]
+    origin_cols = [point[1] for point in origins]
+    span = (max(origin_rows) - min(origin_rows) + 1) * (max(origin_cols) - min(origin_cols) + 1)
+    if count / span < _COPY_DENSITY:
+        return 0.0, None
     score = float(np.clip((count - 6) / 16.0, 0.0, 1.0))
     score = _boost(score, origins, stride, gray.shape, portrait)
     mask = np.zeros((rows, cols), dtype=bool)
@@ -125,6 +133,7 @@ def _noise_residual(
 ) -> tuple[float, Zone | None]:
     """Résidu passe-haut. Une zone connexe, pas un pixel isolé, et pas toute l'image."""
     residual = gray - gaussian_filter(gray, sigma=1.2)
+    edge = np.hypot(*np.gradient(gray))
     block = _RESIDUAL_BLOCK
     rows, cols, blocks = _tiles(residual, block)
     if rows < 4 or cols < 4:
@@ -152,12 +161,33 @@ def _noise_residual(
             if any(_inside(point, portrait) for point in centers):
                 weighted *= _PORTRAIT_WEIGHT
         score = float(np.clip((float(weighted) - 8.0) / 18.0, 0.0, 1.0))
+        # Un glyphe ou un portrait imprimé est un contour. Le bruit de collage reste hors du contour.
+        score *= _flat_share(residual, edge, component, block)
         if score > best_score:
             best_score = score
             best_mask = component
     if best_mask is None or best_score <= 0:
         return 0.0, None
     return best_score, _zone_from_mask(best_mask, block, gray.shape, best_score, portrait)
+
+
+def _flat_share(residual: np.ndarray, edge: np.ndarray, component: np.ndarray, block: int) -> float:
+    """Part du résidu qui survit hors des contours. Un contour imprimé vaut peu."""
+    smooth_values: list[float] = []
+    full_values: list[float] = []
+    for row, col in zip(*np.nonzero(component), strict=True):
+        tile = residual[row * block : (row + 1) * block, col * block : (col + 1) * block]
+        tile_edge = edge[row * block : (row + 1) * block, col * block : (col + 1) * block]
+        full_values.append(float(tile.std()))
+        flat = tile[tile_edge < _FLAT_EDGE]
+        if flat.size >= 16:
+            smooth_values.append(float(flat.std()))
+    if not full_values or not smooth_values:
+        return 0.0
+    full = float(np.mean(full_values))
+    if full < 1.0:
+        return 0.0
+    return float(np.clip(float(np.median(smooth_values)) / full, 0.0, 1.0))
 
 
 def _paste_boundary(

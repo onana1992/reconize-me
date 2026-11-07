@@ -70,6 +70,12 @@ public class IdvDecisionEngine {
             case "expired" -> declined("document_expired");
             case "liveness_fail" -> declined("liveness_fail");
             case "mismatch" -> declined("face_match_fail");
+            case "splicing" -> declined("splicing_detected");
+            case "text_alteration" -> declined("text_alteration_suspected");
+            case "compression" -> declined("compression_inconsistency");
+            case "screen_replay" -> declined("screen_replay_detected");
+            case "printed" -> declined("printed_copy_detected");
+            case "authenticity_review" -> review("tampering_suspected");
             case "screening_nora" -> new Result(
                     VerificationDecision.APPROVED,
                     List.of("liveness_pass", "face_match_pass"),
@@ -422,6 +428,99 @@ public class IdvDecisionEngine {
                 AUTH_RULES_VERSION,
                 List.of(),
                 List.of(new Signal("document_authentic", SignalOutcome.PASS, facts.authenticityScore())));
+    }
+
+    /**
+     * Vision (ou biométrie) d'abord. Un refus de lecture reste un refus de lecture.
+     * Authenticity REJECT/REVIEW ne peut que durcir une décision encore ouverte.
+     */
+    public Result mergeAuthenticity(Result document, AuthenticityVerdict authenticity) {
+        if (document == null) {
+            return authenticity == null
+                    ? new Result(VerificationDecision.REVIEW, List.of(), List.of(), Map.of())
+                    : new Result(
+                            "REJECT".equals(authenticity.issue())
+                                    ? VerificationDecision.DECLINED
+                                    : VerificationDecision.REVIEW,
+                            authenticity.reasons(),
+                            authenticity.signals(),
+                            Map.of());
+        }
+        if (authenticity == null) {
+            return document;
+        }
+        List<Signal> signals = new ArrayList<>();
+        if (document.signals() != null) {
+            signals.addAll(document.signals());
+        }
+        if (authenticity.signals() != null) {
+            signals.addAll(authenticity.signals());
+        }
+        if (document.decision() == VerificationDecision.DECLINED) {
+            return new Result(
+                    document.decision(), document.reasons(), List.copyOf(signals), document.extractedIdentity());
+        }
+        if ("REJECT".equals(authenticity.issue())) {
+            return new Result(
+                    VerificationDecision.DECLINED,
+                    authenticity.reasons(),
+                    List.copyOf(signals),
+                    document.extractedIdentity());
+        }
+        if ("REVIEW".equals(authenticity.issue())) {
+            List<String> reasons = document.decision() == VerificationDecision.APPROVED
+                            || document.decision() == null
+                    ? authenticity.reasons()
+                    : document.reasons();
+            return new Result(
+                    VerificationDecision.REVIEW, reasons, List.copyOf(signals), document.extractedIdentity());
+        }
+        return new Result(
+                document.decision(), document.reasons(), List.copyOf(signals), document.extractedIdentity());
+    }
+
+    public Result withStubAuthenticity(Result document) {
+        if (document == null) {
+            return new Result(
+                    VerificationDecision.REVIEW,
+                    List.of(),
+                    List.of(new Signal("authenticity_stub_pass", SignalOutcome.PASS, null)),
+                    Map.of());
+        }
+        List<Signal> signals = new ArrayList<>();
+        if (document.signals() != null) {
+            signals.addAll(document.signals());
+        }
+        boolean present = signals.stream()
+                .anyMatch(signal -> "authenticity_stub_pass".equals(signal.code())
+                        || "document_authentic".equals(signal.code()));
+        if (!present) {
+            signals.add(new Signal("authenticity_stub_pass", SignalOutcome.PASS, null));
+        }
+        return new Result(
+                document.decision(), document.reasons(), List.copyOf(signals), document.extractedIdentity());
+    }
+
+    static int authenticityRank(AuthenticityVerdict verdict) {
+        if (verdict == null || verdict.issue() == null) {
+            return 0;
+        }
+        return switch (verdict.issue()) {
+            case "REJECT" -> 3;
+            case "REVIEW" -> 2;
+            case "PASS" -> 1;
+            default -> 0;
+        };
+    }
+
+    public AuthenticityVerdict worseAuthenticity(AuthenticityVerdict left, AuthenticityVerdict right) {
+        if (left == null) {
+            return right;
+        }
+        if (right == null) {
+            return left;
+        }
+        return authenticityRank(right) > authenticityRank(left) ? right : left;
     }
 
     private static Map<String, Object> noraIdentity() {

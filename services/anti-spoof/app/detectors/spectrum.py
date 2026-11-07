@@ -86,6 +86,56 @@ def peaks_of(pixels: np.ndarray, period_max: float = 28.0) -> list[Peak]:
     return found
 
 
+# Une cellule de dalle remplit le carreau (aplatissement ~1,5 à 4).
+# Un point d'encre est une impulsion : le plancher reste sous la photo d'impression.
+_DOT_KURTOSIS = 5.2
+
+
+def impulsive(residue: np.ndarray) -> bool:
+    """Résidu clairsemé. Une cellule d'écran, pleine, reste en dessous."""
+    flat = residue.astype(np.float64).ravel()
+    flat = flat - float(flat.mean())
+    std = float(flat.std())
+    if std < 1.0:
+        return False
+    return float(np.mean(flat**4) / std**4) >= _DOT_KURTOSIS
+
+
+def halftone_residue(residue: np.ndarray) -> bool:
+    """Trame 2D : un pic sur la diagonale et sur les deux axes.
+
+    Une grille à une seule direction ne passe pas. Une cellule de dalle et
+    une trame de points passent toutes les deux : ``impulsive`` les sépare.
+    ``residue`` est déjà passe-haut.
+    """
+    if residue.shape[0] < 48 or residue.shape[1] < 48:
+        return False
+    centered = residue - float(residue.mean())
+    if float(centered.std()) < 1.0:
+        return False
+    window = np.outer(np.hanning(centered.shape[0]), np.hanning(centered.shape[1]))
+    spectrum = np.fft.rfft2(centered * window)
+    corr = np.fft.irfft2(np.abs(spectrum) ** 2, s=centered.shape)
+    corr = corr / (corr[0, 0] + 1e-9)
+    last = min(22, corr.shape[0] - 2, corr.shape[1] - 2)
+    for lag in range(5, last + 1):
+        value = float(corr[lag, lag])
+        axial = min(float(corr[lag, 0]), float(corr[0, lag]))
+        if value < 0.20 or axial < 0.20:
+            continue
+        if value < corr[lag - 1, lag] or value < corr[lag + 1, lag]:
+            continue
+        if value < corr[lag, lag - 1] or value < corr[lag, lag + 1]:
+            continue
+        return True
+    return False
+
+
+def dot_residue(residue: np.ndarray) -> bool:
+    """Rosace de points d'encre. La cellule pleine d'une dalle ne compte pas."""
+    return halftone_residue(residue) and impulsive(residue)
+
+
 def grain_of(pixels: np.ndarray) -> float:
     """Variance lisse, hors contours. Seul, le score plafonne sous 0,80.
 

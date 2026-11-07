@@ -585,6 +585,32 @@
       },
       "issuingCountry": "Issuing country",
       "documentNumberLabel": "Document number",
+      "authenticityTitle": "Document authenticity",
+      "authenticityLead": "The service measures each side. Below 0.55 an alert is ignored. From 0.55 to 0.80 it sends the case to review. From 0.80 it is strong.",
+      "authenticityFront": "Front",
+      "authenticityBack": "Back",
+      "authenticityUnusable": "This image could not be measured.",
+      "authenticityScore": "Authenticity score",
+      "tamperingScore": "Tampering",
+      "presentationScore": "Presentation",
+      "engineVersion": "Engine",
+      "authenticityAlerts": {
+        "splicing": "Splicing",
+        "text_alteration": "Text alteration",
+        "compression_inconsistency": "Compression inconsistency",
+        "screen_replay": "Screen replay",
+        "printed_copy": "Printed copy"
+      },
+      "authenticityFamilies": {
+        "digital_forgery": "Digital forgery",
+        "presentation_spoof": "Presentation"
+      },
+      "authenticityBands": {
+        "clear": "Ignored",
+        "review": "Review",
+        "strong": "Strong",
+        "none": "Not measured"
+      },
       "checksTitle": "Checks",
       "checksLine": "Checks passed: {passed} of {total}.",
       "noChecks": "Checks appear once the captures are analysed.",

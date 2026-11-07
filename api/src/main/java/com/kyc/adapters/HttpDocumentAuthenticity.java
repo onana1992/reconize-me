@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kyc.config.KycProperties;
 import com.kyc.ports.DocumentAuthenticityPort;
+import com.kyc.ports.DocumentAuthenticityPort.AuthenticityRequest;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -43,21 +44,36 @@ public class HttpDocumentAuthenticity implements DocumentAuthenticityPort {
 
     @Override
     public JsonNode analyze(byte[] jpeg) {
+        return analyze(jpeg, null);
+    }
+
+    @Override
+    public JsonNode analyze(byte[] jpeg, AuthenticityRequest request) {
         ObjectNode body = mapper.createObjectNode();
         body.put("request_id", UUID.randomUUID().toString());
-        body.put("verification_id", UUID.randomUUID().toString());
-        body.put("side", "FRONT");
+        UUID verificationId = request == null || request.verificationId() == null
+                ? UUID.randomUUID()
+                : request.verificationId();
+        body.put("verification_id", verificationId.toString());
+        String side = request == null || request.side() == null || request.side().isBlank()
+                ? "FRONT"
+                : request.side();
+        body.put("side", side);
         body.put("media_type", "image/jpeg");
         body.put("image_base64", Base64.getEncoder().encodeToString(jpeg));
+        if (request != null && request.documentCode() != null && !request.documentCode().isBlank()) {
+            ObjectNode hints = body.putObject("hints");
+            hints.put("document_code", request.documentCode());
+        }
         try {
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + "/v1/analyze"))
                     .timeout(timeout)
                     .header("Authorization", "Bearer " + token)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
                     .build();
-            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            HttpResponse<byte[]> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() != 200) {
                 throw new AuthenticityUnavailable("status");
             }

@@ -2,6 +2,7 @@ package com.kyc.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyc.config.KycProperties;
 import com.kyc.dto.idv.CreateVerificationRequest;
@@ -12,6 +13,7 @@ import com.kyc.entities.AuditEvent;
 import com.kyc.entities.IdempotencyKey;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Verification;
+import com.kyc.entities.VerificationAuthenticityAssessment;
 import com.kyc.entities.VerificationMedia;
 import com.kyc.enums.Enums;
 import com.kyc.enums.IntegrationMode;
@@ -67,6 +69,7 @@ public class VerificationService {
     private final WebhookService webhookService;
     private final IdvPolicyService policies;
     private final IdentityScreeningService identityScreening;
+    private final AuthenticityAssessmentStore authenticityAssessments;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -82,7 +85,8 @@ public class VerificationService {
             CreditService creditService,
             WebhookService webhookService,
             IdvPolicyService policies,
-            IdentityScreeningService identityScreening) {
+            IdentityScreeningService identityScreening,
+            AuthenticityAssessmentStore authenticityAssessments) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -97,6 +101,7 @@ public class VerificationService {
         this.webhookService = webhookService;
         this.policies = policies;
         this.identityScreening = identityScreening;
+        this.authenticityAssessments = authenticityAssessments;
     }
 
     @Transactional
@@ -300,12 +305,19 @@ public class VerificationService {
         }
         List<VerificationResponse.Signal> signalItems = List.of();
         Map<String, Object> extracted = null;
+        List<VerificationResponse.AuthenticityFace> authenticityItems = null;
         if (detail) {
             signalItems = signals.findByVerificationIdOrderByCreatedAtAsc(verification.getId()).stream()
                     .map(item -> new VerificationResponse.Signal(
                             item.getCode(), Enums.json(item.getOutcome()), item.getScore()))
                     .toList();
             extracted = parseMap(verification.getExtractedIdentity());
+            authenticityItems = authenticityAssessments.findAll(verification.getId()).stream()
+                    .map(this::toAuthenticityFace)
+                    .toList();
+            if (authenticityItems.isEmpty()) {
+                authenticityItems = null;
+            }
         }
         return new VerificationResponse(
                 verification.getId(),
@@ -327,8 +339,29 @@ public class VerificationService {
                 extracted,
                 verification.getAmlScreeningId(),
                 screeningOf(verification),
+                authenticityItems,
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
+    }
+
+    private VerificationResponse.AuthenticityFace toAuthenticityFace(VerificationAuthenticityAssessment row) {
+        JsonNode alerts = null;
+        if (row.getAlertsJson() != null && !row.getAlertsJson().isBlank()) {
+            try {
+                alerts = objectMapper.readTree(row.getAlertsJson());
+            } catch (JsonProcessingException e) {
+                alerts = null;
+            }
+        }
+        return new VerificationResponse.AuthenticityFace(
+                row.getSide(),
+                row.getEngineVersion(),
+                row.getFusionVersion(),
+                row.isForensicUsable(),
+                row.getAuthenticityScore(),
+                row.getTamperingScore(),
+                row.getPresentationScore(),
+                alerts);
     }
 
     private Map<UUID, Integration> loadIntegrations(List<Verification> page) {

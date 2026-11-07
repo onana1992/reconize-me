@@ -2,7 +2,10 @@ package com.kyc.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kyc.adapters.AuthenticityUnavailable;
+import com.kyc.adapters.StubDocumentAuthenticity;
 import com.kyc.config.KycProperties;
 import com.kyc.dto.idv.CompleteCaptureResponse;
 import com.kyc.dto.idv.CompleteUploadRequest;
@@ -38,6 +41,8 @@ import com.kyc.ports.FaceLivenessClient;
 import com.kyc.ports.FaceLivenessClient.LivenessResult;
 import com.kyc.ports.LivenessCredentialPort;
 import com.kyc.ports.HostedTokenStore;
+import com.kyc.ports.DocumentAuthenticityPort;
+import com.kyc.ports.DocumentAuthenticityPort.AuthenticityRequest;
 import com.kyc.ports.ObjectStoragePort;
 import com.kyc.ports.ProviderUnavailableException;
 import com.kyc.services.documentia.DocumentLiveView;
@@ -59,6 +64,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -102,6 +110,8 @@ public class HostedFlowService {
     private final IdvPolicyService policies;
     private final IdentityScreeningService identityScreening;
     private final CreditService credits;
+    private final DocumentAuthenticityPort authenticity;
+    private final AuthenticityAssessmentStore authenticityAssessments;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -127,7 +137,9 @@ public class HostedFlowService {
             DocumentAnalysisStore analyses,
             IdvPolicyService policies,
             IdentityScreeningService identityScreening,
-            CreditService credits) {
+            CreditService credits,
+            DocumentAuthenticityPort authenticity,
+            AuthenticityAssessmentStore authenticityAssessments) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -153,6 +165,8 @@ public class HostedFlowService {
         this.policies = policies;
         this.identityScreening = identityScreening;
         this.credits = credits;
+        this.authenticity = authenticity;
+        this.authenticityAssessments = authenticityAssessments;
     }
 
     @Transactional
@@ -391,7 +405,11 @@ public class HostedFlowService {
         try {
             result = faceLiveness.getResults(check.getSessionId());
         } catch (ProviderUnavailableException e) {
-            commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
+            commit(
+                    loaded,
+                    attachAuthenticity(loaded.verification(), engine.providerUnavailable()),
+                    IdvDecisionEngine.BIO_RULES_VERSION,
+                    now);
             return finished(loaded, null);
         }
         long durationMs = (System.nanoTime() - start) / 1_000_000L;
@@ -427,9 +445,17 @@ public class HostedFlowService {
                         true,
                         "liveness_fail");
             }
-            commit(loaded, face, IdvDecisionEngine.BIO_RULES_VERSION, now);
+            commit(
+                    loaded,
+                    attachAuthenticity(loaded.verification(), face),
+                    IdvDecisionEngine.BIO_RULES_VERSION,
+                    now);
         } catch (ProviderUnavailableException e) {
-            commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
+            commit(
+                    loaded,
+                    attachAuthenticity(loaded.verification(), engine.providerUnavailable()),
+                    IdvDecisionEngine.BIO_RULES_VERSION,
+                    now);
         }
         return finished(loaded, null);
     }
@@ -450,7 +476,8 @@ public class HostedFlowService {
         String rulesVersion;
         if (integration.isLive()) {
             rulesVersion = IdvDecisionEngine.VISION_RULES_VERSION;
-            result = decideLive(verification.getId(), documentBytes, selfieBytes, now);
+            result = attachAuthenticity(
+                    verification, decideLive(verification.getId(), documentBytes, selfieBytes, now));
         } else {
             rulesVersion = IdvDecisionEngine.RULES_VERSION;
             String scenario = verification.getSandboxScenario() == null ? "approved" : verification.getSandboxScenario();
@@ -473,11 +500,15 @@ public class HostedFlowService {
         if (integration == null || !integration.isLive()) {
             return false;
         }
-        IdvDecisionEngine.Result document = storedDocument(loaded.verification());
+        IdvDecisionEngine.Result document =
+                attachAuthenticity(loaded.verification(), storedDocument(loaded.verification()));
         if (faceStepAllowed(document)) {
             return false;
         }
-        commit(loaded, document, IdvDecisionEngine.VISION_RULES_VERSION, now);
+        String rules = authenticityHttpAttempted(loaded.verification())
+                ? IdvDecisionEngine.AUTH_RULES_VERSION
+                : IdvDecisionEngine.VISION_RULES_VERSION;
+        commit(loaded, document, rules, now);
         return true;
     }
 
@@ -660,11 +691,14 @@ public class HostedFlowService {
         }
         String side = kind == MediaKind.DOCUMENT_BACK ? "BACK" : "FRONT";
         byte[] image = body == null || body.length == 0 ? objectStorage.read(item.getObjectKey()) : body;
+        PendingAuthenticity pending = beginAuthenticity(loaded, image, side);
         try {
             DocumentLiveView view = readSide(loaded, image, side);
             if (recaptureIssue(view) || qualityStop(view)) {
+                pending.future().cancel(true);
                 return rejectCapture(loaded, item, attempt, now, captureReason(view));
             }
+            persistAuthenticity(pending, loaded.verification().getId(), side, now);
             analyses.saveAccepted(loaded.verification().getId(), view, side, now);
             if (!view.accepted()) {
                 return retrySide(loaded, item, attempt, now, side, captureReason(view));
@@ -687,9 +721,122 @@ public class HostedFlowService {
             }
             return null;
         } catch (ProviderUnavailableException e) {
+            persistAuthenticity(pending, loaded.verification().getId(), side, now);
             log.info("document-ia capture side={} code=provider_unavailable", side);
             return retrySide(loaded, item, attempt, now, side, "provider_unavailable");
         }
+    }
+
+    private record PendingAuthenticity(CompletableFuture<JsonNode> future, long started) {}
+
+    private PendingAuthenticity beginAuthenticity(Loaded loaded, byte[] image, String side) {
+        long started = System.nanoTime();
+        if (!properties.antiSpoof().enabled()) {
+            return new PendingAuthenticity(
+                    CompletableFuture.completedFuture(StubDocumentAuthenticity.assessment(objectMapper)), started);
+        }
+        AuthenticityRequest request =
+                new AuthenticityRequest(loaded.verification().getId(), side, null, null);
+        byte[] jpeg = image;
+        return new PendingAuthenticity(
+                CompletableFuture.supplyAsync(() -> authenticity.analyze(jpeg, request)), started);
+    }
+
+    private void persistAuthenticity(PendingAuthenticity pending, UUID verificationId, String side, Instant now) {
+        if (pending == null || pending.future() == null) {
+            return;
+        }
+        try {
+            JsonNode assessment = pending.future().get();
+            if (assessment == null) {
+                return;
+            }
+            long durationMs = elapsedMs(pending.started());
+            authenticityAssessments.replaceMeasured(verificationId, side, assessment, durationMs, now);
+            journalAuthenticity(verificationId, side, durationMs, assessment.path("engine_version").asText(), null);
+        } catch (CancellationException e) {
+            // Recapture or quality stop: the port result is discarded.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            long durationMs = elapsedMs(pending.started());
+            authenticityAssessments.replaceUnavailable(verificationId, side, durationMs, now);
+            journalAuthenticity(verificationId, side, durationMs, null, "interrupted");
+        } catch (ExecutionException e) {
+            long durationMs = elapsedMs(pending.started());
+            authenticityAssessments.replaceUnavailable(verificationId, side, durationMs, now);
+            String kind = e.getCause() instanceof AuthenticityUnavailable unavailable
+                    ? unavailable.getMessage()
+                    : "io";
+            journalAuthenticity(verificationId, side, durationMs, null, kind);
+        }
+    }
+
+    private static long elapsedMs(long started) {
+        return Math.max(0L, (System.nanoTime() - started) / 1_000_000L);
+    }
+
+    private IdvDecisionEngine.Result attachAuthenticity(Verification verification, IdvDecisionEngine.Result result) {
+        if (verification == null || !liveIntegration(verification)) {
+            return result;
+        }
+        IdvDecisionEngine.AuthenticityVerdict front = authenticityVerdict(verification.getId(), "FRONT");
+        IdvDecisionEngine.AuthenticityVerdict back = verification.isDocumentBackRequired()
+                ? authenticityVerdict(verification.getId(), "BACK")
+                : null;
+        boolean stub = isStub(verification.getId(), "FRONT")
+                && (!verification.isDocumentBackRequired() || isStub(verification.getId(), "BACK"));
+        if (stub || (front == null && back == null && !properties.antiSpoof().enabled())) {
+            return engine.withStubAuthenticity(result);
+        }
+        IdvDecisionEngine.AuthenticityVerdict worst = engine.worseAuthenticity(front, back);
+        if (worst == null) {
+            return result;
+        }
+        return engine.mergeAuthenticity(result, worst);
+    }
+
+    private boolean isStub(UUID verificationId, String side) {
+        return authenticityAssessments
+                .find(verificationId, side)
+                .map(row -> StubDocumentAuthenticity.ENGINE_VERSION.equals(row.getEngineVersion()))
+                .orElse(false);
+    }
+
+    private IdvDecisionEngine.AuthenticityVerdict authenticityVerdict(UUID verificationId, String side) {
+        return authenticityAssessments
+                .find(verificationId, side)
+                .map(row -> {
+                    if (AuthenticityAssessmentStore.ENGINE_UNAVAILABLE.equals(row.getEngineVersion())) {
+                        return engine.authenticityUnavailable();
+                    }
+                    if (StubDocumentAuthenticity.ENGINE_VERSION.equals(row.getEngineVersion())) {
+                        return null;
+                    }
+                    return engine.applyAuthenticity(authenticityAssessments.facts(row), authenticityPolicy());
+                })
+                .orElse(null);
+    }
+
+    private boolean authenticityHttpAttempted(Verification verification) {
+        return authenticityAssessments.findAll(verification.getId()).stream()
+                .anyMatch(row -> !StubDocumentAuthenticity.ENGINE_VERSION.equals(row.getEngineVersion()));
+    }
+
+    private IdvDecisionEngine.AuthenticityPolicy authenticityPolicy() {
+        var config = properties.antiSpoof();
+        return new IdvDecisionEngine.AuthenticityPolicy(
+                config.reviewAt(), config.declineAt(), config.openDeclineCodes());
+    }
+
+    private void journalAuthenticity(
+            UUID verificationId, String side, long durationMs, String engineVersion, String error) {
+        log.info(
+                "anti-spoof flow verificationId={} side={} durationMs={} engineVersion={} error={}",
+                verificationId,
+                side,
+                durationMs,
+                engineVersion,
+                error);
     }
 
     private DocumentLiveView readSide(Loaded loaded, byte[] image, String side) {

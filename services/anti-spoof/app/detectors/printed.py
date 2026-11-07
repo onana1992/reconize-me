@@ -1,6 +1,7 @@
-"""Copie papier : trame de points, et grain d'appui plafonné sous 0,80.
+"""Copie papier : trame de points, rosace sur les deux axes, grain plafonné.
 
-Le pic étroit et déphasé de l'écran ne compte pas ici.
+Le pic étroit et déphasé de l'écran ne compte pas ici. Une photo d'impression
+laisse la rosace sur une partie du cadre : elle compte quand même.
 """
 
 from __future__ import annotations
@@ -8,8 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
-from app.detectors.spectrum import grain_of, limit_side, peaks_of
+from app.detectors.spectrum import dot_residue, grain_of, impulsive, limit_side, peaks_of
 
 _FRACTION = 0.006
 _SPREAD = 0.15
@@ -33,19 +35,49 @@ _GRID_MAX = 16
 _GRID_TILE = 128
 _GRID_STEP = 64
 _GRID_SHARE = 0.20
+_ROSETTE_TILE = 96
+_ROSETTE_STEP = 64
+# Une carte imprimée au milieu d'une feuille dépasse 0,55. Une grille qui glisse, non.
+_ROSETTE_SHARE = 0.20
 
 
 def detect(pixels: np.ndarray) -> PrintedHit:
     view = limit_side(pixels)
+    gray = _luma(view)
+    residue = gray - gaussian_filter(gray, 2.0)
     lattice = [peak for peak in peaks_of(view) if peak.fraction >= _FRACTION and peak.spread <= _SPREAD]
-    halftone = 0.0 if len(lattice) < 4 else float(np.clip((len(lattice) - 3) / 3.0, 0.0, 1.0))
-    score = max(halftone, grain_of(view), _offset_grid(view))
+    # Un pic étroit et en phase est aussi celui d'une dalle. Seuls les points impulsifs comptent.
+    halftone = 0.0
+    if impulsive(residue) and len(lattice) >= 4:
+        halftone = float(np.clip((len(lattice) - 3) / 3.0, 0.0, 1.0))
+    score = max(halftone, grain_of(view), _offset_grid(view), _rosette(view))
     if score <= 0:
         return PrintedHit(score=0.0, regions=[])
     return PrintedHit(
         score=float(score),
         regions=[Mark(name="document", box=(0.0, 0.0, 1.0, 1.0), score=float(score))],
     )
+
+
+def _rosette(pixels: np.ndarray) -> float:
+    """Points jet d'encre : la période se retrouve en x, en y et en diagonale."""
+    height, width = pixels.shape[:2]
+    if height < _ROSETTE_TILE or width < _ROSETTE_TILE:
+        return 0.0
+    gray = _luma(pixels)
+    residue = gray - gaussian_filter(gray, 2.0)
+    votes = 0
+    total = 0
+    for top in range(0, height - _ROSETTE_TILE + 1, _ROSETTE_STEP):
+        for left in range(0, width - _ROSETTE_TILE + 1, _ROSETTE_STEP):
+            total += 1
+            tile = residue[top : top + _ROSETTE_TILE, left : left + _ROSETTE_TILE]
+            if dot_residue(tile):
+                votes += 1
+    # Un seul carreau peut venir d'un dégradé. Une impression en couvre plusieurs.
+    if votes < 2:
+        return 0.0
+    return float(np.clip((votes / total) / _ROSETTE_SHARE, 0.0, 1.0))
 
 
 def _offset_grid(pixels: np.ndarray) -> float:
@@ -62,7 +94,8 @@ def _offset_grid(pixels: np.ndarray) -> float:
             total += 1
             horizontal = _axis_period(tile.mean(axis=0))
             vertical = _axis_period(tile.mean(axis=1))
-            if horizontal and vertical and abs(horizontal - vertical) <= 3:
+            residue = tile - gaussian_filter(tile, 2.0)
+            if horizontal and vertical and abs(horizontal - vertical) <= 3 and impulsive(residue):
                 votes += 1
     if votes == 0:
         return 0.0

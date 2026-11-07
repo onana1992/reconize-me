@@ -585,6 +585,32 @@
       },
       "issuingCountry": "Pays d’émission",
       "documentNumberLabel": "Numéro de pièce",
+      "authenticityTitle": "Authenticité de la pièce",
+      "authenticityLead": "Mesure du service sur chaque face. Sous 0,55 l’alerte est ignorée. De 0,55 à 0,80 elle envoie le dossier en revue. À partir de 0,80 elle est forte.",
+      "authenticityFront": "Recto",
+      "authenticityBack": "Verso",
+      "authenticityUnusable": "Cette image n’a pas pu être mesurée.",
+      "authenticityScore": "Score d’authenticité",
+      "tamperingScore": "Falsification",
+      "presentationScore": "Présentation",
+      "engineVersion": "Moteur",
+      "authenticityAlerts": {
+        "splicing": "Collage",
+        "text_alteration": "Altération de texte",
+        "compression_inconsistency": "Compression incohérente",
+        "screen_replay": "Rejeu sur écran",
+        "printed_copy": "Copie imprimée"
+      },
+      "authenticityFamilies": {
+        "digital_forgery": "Falsification numérique",
+        "presentation_spoof": "Présentation"
+      },
+      "authenticityBands": {
+        "clear": "Ignorée",
+        "review": "Revue",
+        "strong": "Forte",
+        "none": "Non mesurée"
+      },
       "checksTitle": "Contrôles",
       "checksLine": "Contrôles réussis : {passed} sur {total}.",
       "noChecks": "Les contrôles s’affichent une fois les captures analysées.",

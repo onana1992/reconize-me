@@ -274,6 +274,21 @@ final class IdvSupport {
         return jpeg(800);
     }
 
+    /** JPEG dont le grand côté dépasse le plafond vision (1 280 px), avec assez de détail pour la qualité. */
+    static byte[] largeSharpJpeg() throws Exception {
+        int size = 1600;
+        int cell = 8;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                image.setRGB(x, y, ((x / cell + y / cell) % 2 == 0) ? 0x000000 : 0xFFFFFF);
+            }
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpg", out);
+        return out.toByteArray();
+    }
+
     static byte[] sharpPng() throws Exception {
         int width = 800;
         int height = 800;

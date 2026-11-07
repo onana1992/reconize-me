@@ -124,6 +124,95 @@ def test_shifting_gray_grating_raises_screen_only() -> None:
     assert printed["score"] < 0.55
 
 
+def _photographed(card: np.ndarray) -> bytes:
+    """Carte posée sur une feuille, puis photographiée : flou léger et JPEG."""
+    rng = np.random.default_rng(3)
+    sheet = gaussian_filter(rng.normal(0, 1, (960, 1280)), 3.0)
+    sheet = 232 + 4 * sheet / (sheet.std() + 1e-6)
+    canvas = np.stack([sheet, sheet * 0.99, sheet * 0.97], axis=2)
+    top, left = 220, 280
+    canvas[top : top + card.shape[0], left : left + card.shape[1]] = card
+    blurred = gaussian_filter(canvas, 0.6)
+    return _save(blurred, quality=82)
+
+
+def _printed_card(step: int) -> np.ndarray:
+    card = np.full((420, 680, 3), 214, np.float32)
+    card[40:250, 36:210] = (168, 176, 188)
+    for top in (280, 320, 360):
+        card[top : top + 18, 36:420] = 70
+    for y in range(0, card.shape[0], step):
+        shift = step // 2 if (y // step) % 2 == 0 else 0
+        for x in range(shift, card.shape[1], step):
+            card[y : y + 2, x : x + 2] = np.minimum(card[y : y + 2, x : x + 2], 30)
+    return card
+
+
+def test_photographed_print_raises_printed_only() -> None:
+    response = _post(_photographed(_printed_card(10)))
+    assert response.status_code == 200
+    payload = response.json()
+    screen = _alert(payload, "screen_replay")["score"]
+    printed = _alert(payload, "printed_copy")["score"]
+    assert printed > 0.55
+    assert printed > screen
+    assert screen < 0.55
+
+
+def _shown_on_screen(period: int, colored: bool) -> bytes:
+    """Pièce affichée sur une dalle, puis photographiée. La cellule est pleine."""
+    card = np.full((720, 1100, 3), 230, np.float32)
+    card[80:400, 60:360] = (150, 160, 175)
+    for top in (440, 500, 560, 620):
+        card[top : top + 22, 60:780] = 55
+    rows, cols = np.mgrid[0:card.shape[0], 0:card.shape[1]]
+    if colored:
+        phase = 2 * np.pi * cols / period
+        card[:, :, 0] += 28 * np.sin(phase)
+        card[:, :, 1] += 28 * np.sin(phase + 2 * np.pi / 3)
+        card[:, :, 2] += 28 * np.sin(phase + 4 * np.pi / 3)
+        row = 0.72 + 0.28 * (np.sin(2 * np.pi * rows / period) > 0)
+        card *= row[..., None]
+    else:
+        cell = ((cols % period) < period // 2) & ((rows % period) < period // 2)
+        card = np.where(cell[..., None], card * 0.78, card)
+    rng = np.random.default_rng(5)
+    card = card + rng.normal(0, 1.5, card.shape)
+    return _save(gaussian_filter(card, 0.4), quality=80)
+
+
+def test_gray_pixel_cell_raises_screen_only() -> None:
+    response = _post(_shown_on_screen(7, colored=False))
+    assert response.status_code == 200
+    payload = response.json()
+    screen = _alert(payload, "screen_replay")["score"]
+    printed = _alert(payload, "printed_copy")["score"]
+    assert screen > 0.55
+    assert screen > printed
+    assert printed < 0.55
+
+
+def test_colored_pixel_cell_raises_screen_only() -> None:
+    response = _post(_shown_on_screen(8, colored=True))
+    assert response.status_code == 200
+    payload = response.json()
+    screen = _alert(payload, "screen_replay")["score"]
+    printed = _alert(payload, "printed_copy")["score"]
+    assert screen > 0.55
+    assert screen > printed
+    assert printed < 0.55
+
+
+def test_plain_card_on_paper_is_not_printed() -> None:
+    card = np.full((420, 680, 3), 214, np.float32)
+    card[40:250, 36:210] = (168, 176, 188)
+    for top in (280, 320, 360):
+        card[top : top + 18, 36:420] = 70
+    response = _post(_photographed(card))
+    assert response.status_code == 200
+    assert _alert(response.json(), "printed_copy")["score"] < 0.55
+
+
 def test_dot_screen_raises_printed_only() -> None:
     response = _post(_dots())
     assert response.status_code == 200

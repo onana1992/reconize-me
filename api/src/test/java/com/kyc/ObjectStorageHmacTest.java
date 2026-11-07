@@ -76,7 +76,7 @@ class ObjectStorageHmacTest {
                 new KycProperties.DocumentIa(false),
                 new KycProperties.OpenSanctions(false, ""),
                 new KycProperties.AuditRetention(12),
-                new AntiSpoof(false, "http://127.0.0.1:8090", "", 2500, 0.80, 0.55, ""));
+                new AntiSpoof(false, false, "http://127.0.0.1:8090", "", 2500, 0.80, 0.55, ""));
     }
 
     private static String value(String query, String name) {

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from app.detectors.spectrum import Peak, crop, limit_side, peaks_of
+from app.detectors.spectrum import Peak, crop, dot_residue, halftone_residue, impulsive, limit_side, peaks_of
 
 _FRACTION = 0.02
 _COLOR_SPREAD = 0.45
@@ -114,11 +114,47 @@ def _tiles(pixels: np.ndarray) -> float:
         for left in range(0, width - _TILE + 1, _TILE_STEP):
             tile = pixels[top : top + _TILE, left : left + _TILE]
             total += 1
-            if _grating(tile) and not _lattice(tile):
+            # Une cellule pleine (dalle) vote écran. Un point d'encre reste au papier.
+            if _screen_cell(tile) or (_grating(tile) and not _lattice(tile) and not _print_lattice(tile)):
                 votes += 1
     if votes == 0:
         return 0.0
     return float(np.clip((votes / total) / _TILE_SHARE, 0.0, 1.0))
+
+
+def _screen_cell(tile: np.ndarray) -> bool:
+    """Dalle : la période est en x, en y et en diagonale, et la cellule est pleine."""
+    gray = _luma(tile)
+    residue = gray - gaussian_filter(gray, 2.0)
+    return halftone_residue(residue) and not impulsive(residue)
+
+
+def _print_lattice(tile: np.ndarray) -> bool:
+    """Points d'encre : les deux axes, la diagonale, et un résidu impulsif.
+
+    Un carreau de 128 px mélange souvent la feuille et la carte. On regarde
+    aussi des fenêtres de 96 px, celles qui portent la trame.
+    """
+    gray = _luma(tile)
+    residues = (gray - float(gray.mean()), gray - gaussian_filter(gray, 2.0))
+    for residue in residues:
+        if _dot_windows(residue):
+            return True
+    return False
+
+
+def _dot_windows(residue: np.ndarray) -> bool:
+    if dot_residue(residue):
+        return True
+    if residue.shape[0] < 96 or residue.shape[1] < 96:
+        return False
+    corners = (
+        (0, 0),
+        (0, residue.shape[1] - 96),
+        (residue.shape[0] - 96, 0),
+        (residue.shape[0] - 96, residue.shape[1] - 96),
+    )
+    return any(dot_residue(residue[top : top + 96, left : left + 96]) for top, left in corners)
 
 
 def _lattice(tile: np.ndarray) -> bool:

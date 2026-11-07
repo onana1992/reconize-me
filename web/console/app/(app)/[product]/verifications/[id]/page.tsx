@@ -21,6 +21,7 @@ import {
   verificationTone,
 } from "../../../../../lib/status";
 import { AmlCase } from "../../aml-case";
+import { AuthenticityReport } from "./authenticity-report";
 import { IdentityScreeningReport } from "./screening-report";
 import { VerificationActions } from "./verification-actions";
 
@@ -254,6 +255,10 @@ export default async function VerificationDetailPage({
           </section>
         </div>
       </div>
+
+      {verification.authenticity && verification.authenticity.length > 0 ? (
+        <AuthenticityReport faces={verification.authenticity} t={t} />
+      ) : null}
 
       {verification.screening ? (
         <IdentityScreeningReport

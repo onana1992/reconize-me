@@ -2,6 +2,7 @@ package com.kyc.dto.idv;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public record VerificationResponse(
         @JsonProperty("extracted_identity") Map<String, Object> extractedIdentity,
         @JsonProperty("aml_screening_id") UUID amlScreeningId,
         Screening screening,
+        List<AuthenticityFace> authenticity,
         @JsonProperty("created_at") Instant createdAt,
         @JsonProperty("updated_at") Instant updatedAt) {
 
@@ -34,6 +36,17 @@ public record VerificationResponse(
             String email) {}
 
     public record Signal(String code, String outcome, Double score) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record AuthenticityFace(
+            String side,
+            @JsonProperty("engine_version") String engineVersion,
+            @JsonProperty("fusion_version") String fusionVersion,
+            @JsonProperty("forensic_usable") Boolean forensicUsable,
+            @JsonProperty("authenticity_score") Double authenticityScore,
+            @JsonProperty("tampering_score") Double tamperingScore,
+            @JsonProperty("presentation_score") Double presentationScore,
+            JsonNode alerts) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Screening(
