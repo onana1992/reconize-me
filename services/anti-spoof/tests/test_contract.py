@@ -52,7 +52,7 @@ def test_scores_serialize_with_three_decimals() -> None:
 def test_health_does_not_need_a_token() -> None:
     response = client.get("/health", headers={"Authorization": "Bearer wrong"})
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "engine_version": "anti-spoof-1"}
+    assert response.json() == {"status": "ok", "engine_version": "anti-spoof-2"}
 
 
 def test_analyze_without_token_is_empty_401() -> None:
@@ -101,8 +101,8 @@ def test_valid_jpeg_returns_the_contract_form() -> None:
     response = client.post("/v1/analyze", json=body(hints=hints), headers=AUTH)
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
-    assert payload["fusion_version"] == "identity"
+    assert payload["engine_version"] == "anti-spoof-2"
+    assert payload["fusion_version"] == "forensic-1"
     assert payload["forensic_usable"] is True
     assert payload["authenticity_score"] == 1.0
     assert payload["tampering_score"] == 0.0
@@ -139,8 +139,8 @@ def test_upload_uses_the_same_form() -> None:
     )
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
-    assert payload["fusion_version"] == "identity"
+    assert payload["engine_version"] == "anti-spoof-2"
+    assert payload["fusion_version"] == "forensic-1"
     assert [alert["score"] for alert in payload["alerts"]] == [0.0, 0.0, 0.0, 0.0, 0.0]
 
 
@@ -163,7 +163,7 @@ def test_journal_has_scores_and_not_the_image(capsys: pytest.CaptureFixture[str]
     assert record["request_id"] == REQUEST_ID
     assert record["verification_id"] == VERIFICATION_ID
     assert record["side"] == "FRONT"
-    assert record["engine_version"] == "anti-spoof-1"
+    assert record["engine_version"] == "anti-spoof-2"
     assert record["forensic_usable"] is True
     assert record["splicing"] == 0.0
     assert record["printed_copy"] == 0.0
@@ -232,7 +232,7 @@ def test_docs_off_hides_docs_and_upload(monkeypatch: pytest.MonkeyPatch) -> None
     assert upload.status_code == 404
     analyzed = hidden.post("/v1/analyze", json=body(), headers=AUTH)
     assert analyzed.status_code == 200
-    assert analyzed.json()["engine_version"] == "anti-spoof-1"
+    assert analyzed.json()["engine_version"] == "anti-spoof-2"
 
 
 def test_missing_token_refuses_to_start(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
@@ -274,7 +274,7 @@ def test_small_jpeg_is_not_measurable() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["forensic_usable"] is False
-    assert payload["engine_version"] == "anti-spoof-1"
+    assert payload["engine_version"] == "anti-spoof-2"
     assert payload["authenticity_score"] is None
     assert payload["tampering_score"] is None
     assert payload["presentation_score"] is None

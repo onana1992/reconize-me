@@ -56,7 +56,7 @@ class AntiSpoofLabTest {
     private static final byte[] JPEG = new byte[] {(byte) 0xFF, (byte) 0xD8, 1, 2, 3, 4};
     private static final String ASSESSMENT =
             """
-            {"engine_version":"anti-spoof-1","fusion_version":"identity","forensic_usable":true,\
+            {"engine_version":"anti-spoof-2","fusion_version":"identity","forensic_usable":true,\
             "authenticity_score":1.0,"tampering_score":0.0,"presentation_score":0.0,"alerts":[\
             {"code":"splicing","score":0.0,"regions":[]},\
             {"code":"text_alteration","score":0.0,"regions":[]},\
@@ -127,14 +127,14 @@ class AntiSpoofLabTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pipeline").value("auth-1"))
                 .andExpect(jsonPath("$.providerCalled").value(true))
-                .andExpect(jsonPath("$.engineVersion").value("anti-spoof-1"))
+                .andExpect(jsonPath("$.engineVersion").value("anti-spoof-2"))
                 .andExpect(jsonPath("$.decision.issue").value("PASS"))
                 .andExpect(jsonPath("$.decision.rulesVersion").value("auth-1"))
                 .andExpect(jsonPath("$.decision.signals[0].code").value("document_authentic"))
                 .andExpect(jsonPath("$.decision.signals[0].outcome").value("PASS"))
                 .andExpect(jsonPath("$.decision.signals[0].score").value(1.0))
                 .andExpect(jsonPath("$.code").doesNotExist())
-                .andExpect(jsonPath("$.assessment.engine_version").value("anti-spoof-1"))
+                .andExpect(jsonPath("$.assessment.engine_version").value("anti-spoof-2"))
                 .andExpect(jsonPath("$.assessment.fusion_version").value("identity"))
                 .andExpect(jsonPath("$.assessment.alerts.length()").value(5));
         assertEquals(before, verifications.count());
@@ -153,7 +153,7 @@ class AntiSpoofLabTest {
     void closedScreenReplayStaysReview() throws Exception {
         responseJson =
                 """
-                {"engine_version":"anti-spoof-1","fusion_version":"identity","forensic_usable":true,\
+                {"engine_version":"anti-spoof-2","fusion_version":"identity","forensic_usable":true,\
                 "authenticity_score":0.1,"tampering_score":0.0,"presentation_score":0.9,"alerts":[\
                 {"code":"splicing","score":0.0,"regions":[]},\
                 {"code":"text_alteration","score":0.0,"regions":[]},\

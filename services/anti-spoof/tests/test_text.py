@@ -73,7 +73,7 @@ def test_retouched_glyphs_raise_text_and_compression() -> None:
     response = _post(raw)
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
+    assert payload["engine_version"] == "anti-spoof-2"
     text = _alert(payload, "text_alteration")
     compression = _alert(payload, "compression_inconsistency")
     assert text["score"] > 0.55
@@ -105,6 +105,17 @@ def test_global_recompress_stays_at_zero() -> None:
     payload = response.json()
     assert _alert(payload, "text_alteration")["score"] == 0.0
     assert _alert(payload, "compression_inconsistency")["score"] == 0.0
+
+
+def test_mixed_blob_sizes_are_not_text() -> None:
+    """Portrait + ligne de texte : les boîtes n'ont pas la même taille, ce n'est pas une retouche."""
+    rng = np.random.default_rng(6)
+    canvas = np.full((480, 640, 3), 228, np.uint8)
+    canvas[70:250, 40:200] = (120, 130, 145)
+    _glyphs(rng, canvas, [300, 360, 420], 30)
+    response = _post(_save(canvas, 82))
+    assert response.status_code == 200
+    assert _alert(response.json(), "text_alteration")["score"] < 0.55
 
 
 def test_uniform_card_is_not_text() -> None:

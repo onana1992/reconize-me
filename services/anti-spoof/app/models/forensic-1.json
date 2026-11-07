@@ -1,0 +1,37 @@
+{
+  "fusion_version": "forensic-1",
+  "dataset": {
+    "name": "document-splice-v1",
+    "n": 96,
+    "holdout": {
+      "auroc": 1.0,
+      "recall_at_0_55": 1.0,
+      "fpr_at_0_55": 0.0
+    }
+  },
+  "external_bench": {
+    "name": "Columbia Image Splicing Detection Evaluation Dataset",
+    "url": "https://www.ee.columbia.edu/ln/dvmm/downloads/AuthSplicedDataSet/AuthSplicedDataSet.htm",
+    "used_for_coefficients": false,
+    "reason": "Blocs 128x128, sous le seuil 480 px du service. Les coefficients viennent de document-splice-v1 : grain étranger contre une seule capture, à la taille JPEG du contrat. Le copy-move du contrat reste une contrainte, pas une classe du jeu."
+  },
+  "alerts": {
+    "splicing": {
+      "family": "anchored_logistic",
+      "a": -2.0,
+      "b": 3.75
+    },
+    "text_alteration": {
+      "family": "identity"
+    },
+    "compression_inconsistency": {
+      "family": "identity"
+    },
+    "screen_replay": {
+      "family": "identity"
+    },
+    "printed_copy": {
+      "family": "identity"
+    }
+  }
+}

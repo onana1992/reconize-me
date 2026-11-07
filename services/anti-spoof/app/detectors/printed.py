@@ -11,7 +11,9 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from app.artifacts import Artifacts
 from app.detectors.spectrum import dot_residue, grain_of, impulsive, limit_side, peaks_of
+from app.forensic.lbp import spot_score
 
 _FRACTION = 0.006
 _SPREAD = 0.15
@@ -41,8 +43,8 @@ _ROSETTE_STEP = 64
 _ROSETTE_SHARE = 0.20
 
 
-def detect(pixels: np.ndarray) -> PrintedHit:
-    view = limit_side(pixels)
+def detect(artifacts: Artifacts) -> PrintedHit:
+    view = limit_side(artifacts.pixels)
     gray = _luma(view)
     residue = gray - gaussian_filter(gray, 2.0)
     lattice = [peak for peak in peaks_of(view) if peak.fraction >= _FRACTION and peak.spread <= _SPREAD]
@@ -50,7 +52,12 @@ def detect(pixels: np.ndarray) -> PrintedHit:
     halftone = 0.0
     if impulsive(residue) and len(lattice) >= 4:
         halftone = float(np.clip((len(lattice) - 3) / 3.0, 0.0, 1.0))
-    score = max(halftone, grain_of(view), _offset_grid(view), _rosette(view))
+    lattice_score = max(halftone, _offset_grid(view), _rosette(view))
+    # Fibre et LBP d'une photo de pièce : sous le seuil de revue. La trame, elle, passe.
+    grain = min(grain_of(view), 0.50)
+    score = max(lattice_score, grain)
+    if lattice_score >= 0.45 and impulsive(residue):
+        score = float(np.clip(score + 0.20 * spot_score(gray), 0.0, 1.0))
     if score <= 0:
         return PrintedHit(score=0.0, regions=[])
     return PrintedHit(
@@ -68,8 +75,9 @@ def _rosette(pixels: np.ndarray) -> float:
     residue = gray - gaussian_filter(gray, 2.0)
     votes = 0
     total = 0
-    for top in range(0, height - _ROSETTE_TILE + 1, _ROSETTE_STEP):
-        for left in range(0, width - _ROSETTE_TILE + 1, _ROSETTE_STEP):
+    step = _step(_ROSETTE_STEP, height, width)
+    for top in range(0, height - _ROSETTE_TILE + 1, step):
+        for left in range(0, width - _ROSETTE_TILE + 1, step):
             total += 1
             tile = residue[top : top + _ROSETTE_TILE, left : left + _ROSETTE_TILE]
             if dot_residue(tile):
@@ -88,8 +96,9 @@ def _offset_grid(pixels: np.ndarray) -> float:
     gray = _luma(pixels)
     votes = 0
     total = 0
-    for top in range(0, height - _GRID_TILE + 1, _GRID_STEP):
-        for left in range(0, width - _GRID_TILE + 1, _GRID_STEP):
+    step = _step(_GRID_STEP, height, width)
+    for top in range(0, height - _GRID_TILE + 1, step):
+        for left in range(0, width - _GRID_TILE + 1, step):
             tile = gray[top : top + _GRID_TILE, left : left + _GRID_TILE]
             total += 1
             horizontal = _axis_period(tile.mean(axis=0))
@@ -124,6 +133,10 @@ def _axis_period(profile: np.ndarray) -> int:
         best = period
         best_value = value
     return best
+
+
+def _step(base: int, height: int, width: int) -> int:
+    return base if max(height, width) <= 900 else base * 2
 
 
 def _luma(pixels: np.ndarray) -> np.ndarray:

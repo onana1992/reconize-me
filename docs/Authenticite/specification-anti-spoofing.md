@@ -6,6 +6,7 @@
 **Date :** 5 novembre 2026  
 **Statut :** spécification d’implémentation — le service n’existe pas encore  
 **Lecture pédagogique :** [`specification-detaillee-anti-spoofing.md`](./specification-detaillee-anti-spoofing.md) — cas d’utilisation, parcours, règles, tests, déploiement. En cas de contradiction, le présent contrat gagne.  
+**Moteur forensique :** [`specification-moteur-forensique.md`](./specification-moteur-forensique.md) — reconstruction des extracteurs (`anti-spoof-2` : PhotoHolmes, OpenCV, ELA, FFT, LBP, Tesseract). Les codes, seuils et HTTP restent ceux du présent contrat.  
 **Ordre de construction :** [`roadmap-implementation-anti-spoofing.md`](./roadmap-implementation-anti-spoofing.md) — Swagger du service, puis banc de l’API, puis le flow.  
 **Documents liés :**
 
@@ -103,6 +104,8 @@ Budget de temps, par face, hors réseau : p95 ≤ 1,5 s sur l’instance de réf
 Chaque alerte est portée par un ou plusieurs détecteurs. Chacun produit un score brut dans \[0, 1\] et, quand il localise, des rectangles normalisés. La fusion du §8.1 en fait le score d’alerte.
 
 Les méthodes ci-dessous sont des extracteurs de traces. Elles ne décident pas. Le calibrateur du §8.1 est le modèle de cette version : une régression logistique dont les coefficients voyagent avec le service (`app/models/fusion-1.json`). Remplacer un extracteur par un réseau ne change pas le contrat HTTP.
+
+La reconstruction `anti-spoof-2` (PhotoHolmes, SIFT, ELA, FFT, LBP, Tesseract) est spécifiée dans [`specification-moteur-forensique.md`](./specification-moteur-forensique.md). Elle change l’intérieur des extracteurs, pas les codes d’alerte ni ce paragraphe de fusion.
 
 Le prétraitement commun :
 

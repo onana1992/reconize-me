@@ -9,6 +9,7 @@
 
 - [`specification-anti-spoofing.md`](./specification-anti-spoofing.md) — le contrat. Les codes, les seuils et les HTTP sont les siens.
 - [`specification-detaillee-anti-spoofing.md`](./specification-detaillee-anti-spoofing.md) — cas d’utilisation, règles, procédures de test
+- [`specification-moteur-forensique.md`](./specification-moteur-forensique.md) — reconstruction des extracteurs (`anti-spoof-2`). Paliers F0–F7, après S8.
 
 Ce document dit **dans quel ordre** construire. Un palier n’est pas vert tant que son résultat n’est pas visible dans Swagger, sans ouvrir une session de vérification. Le flow (`HostedFlowService`) ne bouge pas avant **S8**.
 

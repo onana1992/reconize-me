@@ -111,8 +111,10 @@ class Alert(BaseModel):
 class Assessment(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    engine_version: str = Field(description="anti-spoof-1 : les cinq détecteurs mesurent.")
-    fusion_version: str = Field(description="identity : score brut, sans coefficient appris.")
+    engine_version: str = Field(description="anti-spoof-2 : extracteurs forensiques.")
+    fusion_version: str = Field(
+        description="forensic-1 quand forensic-1.json existe, sinon identity."
+    )
     forensic_usable: bool
     authenticity_score: float | None
     tampering_score: float | None

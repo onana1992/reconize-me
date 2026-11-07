@@ -59,7 +59,7 @@ def test_pasted_texture_raises_splicing_only() -> None:
     response = client.post("/v1/analyze", json=body(image_base64=encoded), headers=AUTH)
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
+    assert payload["engine_version"] == "anti-spoof-2"
     splicing = _alert(payload, "splicing")
     screen = _alert(payload, "screen_replay")
     printed = _alert(payload, "printed_copy")
@@ -88,6 +88,28 @@ def _photographed_card() -> bytes:
     top, left = 180, 220
     canvas[top : top + card.shape[0], left : left + card.shape[1]] = card[..., None]
     return _save(canvas, quality=82)
+
+
+def test_recompressed_card_on_table_is_not_spliced() -> None:
+    """JPEG serré, deux textures : Splicebuster ne doit pas y voir un collage."""
+    rng = np.random.default_rng(8)
+    sheet = 220 + rng.normal(0, 1.0, (960, 1280))
+    card = np.full((700, 1100), 200.0, dtype=np.float32)
+    card += rng.normal(0, 0.8, card.shape)
+    card[80:360, 60:320] = 110
+    for top in (420, 470, 520, 570):
+        card[top : top + 16, 60:820] = 48
+    canvas = np.stack([sheet, sheet * 0.99, sheet * 0.97], axis=2)
+    canvas[80:780, 90:1190] = card[..., None]
+    first = _save(canvas, quality=55)
+    with Image.open(io.BytesIO(first)) as image:
+        pixels = np.array(image.convert("RGB"), dtype=np.float32)
+    encoded = base64.b64encode(_save(pixels, quality=40)).decode("ascii")
+    response = client.post("/v1/analyze", json=body(image_base64=encoded), headers=AUTH)
+    assert response.status_code == 200
+    payload = response.json()
+    assert _alert(payload, "splicing")["score"] < 0.55
+    assert _alert(payload, "printed_copy")["score"] < 0.55
 
 
 def test_photographed_card_is_not_spliced() -> None:

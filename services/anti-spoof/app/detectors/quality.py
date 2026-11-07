@@ -43,7 +43,7 @@ class Zone:
     score: float
 
 
-def measure(pixels: np.ndarray) -> Measured:
+def measure(pixels: np.ndarray, errors: np.ndarray | None = None) -> Measured:
     """Erreurs d'aller-retour par bande de 32 px. `pixels` reste en mémoire."""
     height, width = pixels.shape[:2]
     gray = _gray(pixels)
@@ -53,7 +53,7 @@ def measure(pixels: np.ndarray) -> Measured:
     mad = float(np.median(np.abs(row - median))) + 1e-6
     text_level = median + 4.0 * mad
     residual = gray[:, 1:-1] - 0.5 * (gray[:, :-2] + gray[:, 2:])
-    errors = _errors(pixels)
+    errors = _errors(pixels) if errors is None else errors
     strips: list[Strip] = []
     for top in range(0, height - _STRIP + 1, _STRIP):
         tile = gradient[top : top + _STRIP]
@@ -135,6 +135,11 @@ def score_of(found: list[tuple[Strip, float]]) -> float:
         return 0.0
     margin = max(margin for _strip, margin in found)
     return float(np.clip((margin - 1.12) / 0.28, 0.0, 1.0))
+
+
+def roundtrip_errors(pixels: np.ndarray) -> np.ndarray:
+    """Quatre plans d'erreur JPEG. Le dernier (qualité 90) sert d'ELA."""
+    return _errors(pixels)
 
 
 def _errors(pixels: np.ndarray) -> np.ndarray:

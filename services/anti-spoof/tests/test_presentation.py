@@ -94,7 +94,7 @@ def test_fine_rgb_grid_raises_screen_only() -> None:
     response = _post(_rgb_grid())
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
+    assert payload["engine_version"] == "anti-spoof-2"
     screen = _alert(payload, "screen_replay")
     printed = _alert(payload, "printed_copy")
     assert screen["score"] > 0.55
@@ -203,6 +203,23 @@ def test_colored_pixel_cell_raises_screen_only() -> None:
     assert printed < 0.55
 
 
+def test_phone_photo_grain_is_not_printed() -> None:
+    """Bruit de capteur + JPEG : le LBP ne doit pas inventer une copie papier."""
+    rng = np.random.default_rng(12)
+    image = np.full((720, 1100, 3), 206, np.float32)
+    image[90:380, 70:340] = (158, 166, 178)
+    for top in (430, 490, 550, 610):
+        image[top : top + 18, 70:720] = 62
+    rows, cols = np.mgrid[0 : image.shape[0], 0 : image.shape[1]]
+    image += 6.0 * np.sin(cols / 5.5)[..., None]
+    image += rng.laplace(0, 7.0, image.shape)
+    response = _post(_save(np.clip(image, 0, 255), quality=76))
+    assert response.status_code == 200
+    payload = response.json()
+    assert _alert(payload, "printed_copy")["score"] < 0.55
+    assert _alert(payload, "screen_replay")["score"] < 0.55
+
+
 def test_plain_card_on_paper_is_not_printed() -> None:
     card = np.full((420, 680, 3), 214, np.float32)
     card[40:250, 36:210] = (168, 176, 188)
@@ -273,8 +290,8 @@ def test_uniform_card_stays_under_review_on_the_measured_engine() -> None:
     response = client.post("/v1/analyze", json=body(image_base64=encoded), headers=AUTH)
     assert response.status_code == 200
     payload = response.json()
-    assert payload["engine_version"] == "anti-spoof-1"
-    assert payload["fusion_version"] == "identity"
+    assert payload["engine_version"] == "anti-spoof-2"
+    assert payload["fusion_version"] == "forensic-1"
     assert all(alert["score"] < 0.55 for alert in payload["alerts"])
 
 

@@ -1,4 +1,4 @@
-"""Splicing : copie interne, résidu de bruit, frontière de collage.
+"""Splicing : Splicebuster, Noisesniffer, SIFT, copie interne.
 
 Le fond périodique ne compte pas. Le hint portrait pondère, il n'est pas obligatoire.
 """
@@ -9,10 +9,12 @@ from dataclasses import dataclass
 from itertools import combinations
 
 import numpy as np
-from PIL import Image
 from scipy.ndimage import gaussian_filter, label
 
-MAX_SIDE = 1600
+from app.artifacts import Artifacts
+from app.forensic.photoholmes import noisesniffer, splicebuster
+from app.forensic.sift_copymove import detect as sift_copymove
+
 _RESIDUAL_BLOCK = 32
 _COPY_BLOCK = 16
 _COPY_STRIDE = 8
@@ -36,35 +38,38 @@ class SplicingHit:
     regions: list[Zone]
 
 
-def detect(pixels: np.ndarray, portrait: tuple[float, float, float, float] | None = None) -> SplicingHit:
+def detect(
+    artifacts: Artifacts,
+    portrait: tuple[float, float, float, float] | None = None,
+) -> SplicingHit:
     """Score dans [0, 1] et au plus cinq rectangles, les plus scorés."""
-    gray = _gray(_limit_side(pixels))
+    gray = artifacts.luma
     copy_score, copy_zone = _internal_copy(gray, portrait)
     residual_score, residual_zone = _noise_residual(gray, portrait)
     boundary_score, boundary_zone = _paste_boundary(gray, residual_zone, portrait)
-    score = max(copy_score, residual_score, boundary_score)
-    regions = _strongest([copy_zone, residual_zone, boundary_zone])
+    sift = sift_copymove(artifacts.pixels, portrait)
+    noise = noisesniffer(artifacts.residual, portrait)
+    splice = splicebuster(artifacts.luma, portrait)
+    sift_zone = _hit_zone(sift.box, sift.score, sift.name)
+    noise_zone = _hit_zone(noise.box, noise.score, noise.name)
+    splice_zone = _hit_zone(splice.box, splice.score, splice.name)
+    score = max(copy_score, residual_score, boundary_score, sift.score, noise.score, splice.score)
+    regions = _strongest(
+        [copy_zone, residual_zone, boundary_zone, sift_zone, noise_zone, splice_zone]
+    )
     if score <= 0:
         return SplicingHit(score=0.0, regions=[])
     return SplicingHit(score=float(score), regions=regions)
 
 
-def _gray(pixels: np.ndarray) -> np.ndarray:
-    rgb = pixels.astype(np.float32)
-    return 0.299 * rgb[:, :, 0] + 0.587 * rgb[:, :, 1] + 0.114 * rgb[:, :, 2]
-
-
-def _limit_side(pixels: np.ndarray) -> np.ndarray:
-    height, width = pixels.shape[:2]
-    long_side = max(height, width)
-    if long_side <= MAX_SIDE:
-        return pixels
-    scale = MAX_SIDE / long_side
-    resized = Image.fromarray(pixels, "RGB").resize(
-        (max(1, int(width * scale)), max(1, int(height * scale))),
-        Image.Resampling.BILINEAR,
-    )
-    return np.asarray(resized, dtype=np.uint8)
+def _hit_zone(
+    box: tuple[float, float, float, float] | None,
+    score: float,
+    name: str,
+) -> Zone | None:
+    if box is None or score <= 0:
+        return None
+    return Zone(name=name, box=box, score=float(score))
 
 
 def _internal_copy(
@@ -153,7 +158,7 @@ def _noise_residual(
     for index in range(1, int(count) + 1):
         component = labeled == index
         size = int(component.sum())
-        if size < 4 or size > 0.5 * area:
+        if size < 4 or size > 0.5 * area or _touches_border(component):
             continue
         weighted = anomaly[component].mean()
         if portrait is not None:
@@ -304,6 +309,16 @@ def _zone_name(
     if portrait is not None and _inside(center, portrait):
         return "portrait"
     return "document"
+
+
+def _touches_border(component: np.ndarray) -> bool:
+    """Le fond de la pièce touche le cadre. Un collage dans la carte, non."""
+    return bool(
+        component[0].any()
+        or component[-1].any()
+        or component[:, 0].any()
+        or component[:, -1].any()
+    )
 
 
 def _inside(point: tuple[float, float], box: tuple[float, float, float, float]) -> bool:

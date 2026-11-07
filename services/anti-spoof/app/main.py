@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
         description=(
             "Mesure d'authenticité d'une image de pièce. "
             "La réponse ne contient pas de décision. "
-            "anti-spoof-1 : les cinq détecteurs mesurent. La fusion est l'identité."
+            "anti-spoof-2 : extracteurs forensiques. La fusion est l'identité."
         ),
         docs_url="/docs" if docs else None,
         redoc_url=None,
@@ -124,7 +124,7 @@ def create_app() -> FastAPI:
         summary="Analyse JSON",
         description=(
             "Corps du contrat. Les cinq alertes peuvent monter. "
-            "engine_version vaut anti-spoof-1 et fusion_version vaut identity."
+            "engine_version vaut anti-spoof-2. fusion_version vaut forensic-1 si les coefficients sont là."
         ),
         response_model=Assessment,
         responses={
@@ -217,6 +217,7 @@ def _journal(
     record["duration_ms"] = duration_ms
     record["engine_version"] = assessment.engine_version
     record["forensic_usable"] = assessment.forensic_usable
+    record["ocr_boxes"] = sum(len(alert.regions) for alert in assessment.alerts if alert.code == "text_alteration")
     for alert in assessment.alerts:
         record[alert.code] = alert.score
     sys.stdout.write(dumps(record) + "\n")

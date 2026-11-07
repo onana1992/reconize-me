@@ -59,7 +59,7 @@ class AuthenticityLiveFlowTest {
     private static final String KEY = "ky_live_authflow1";
     private static final String PASS =
             """
-            {"engine_version":"anti-spoof-1","fusion_version":"identity","forensic_usable":true,\
+            {"engine_version":"anti-spoof-2","fusion_version":"identity","forensic_usable":true,\
             "authenticity_score":1.0,"tampering_score":0.0,"presentation_score":0.0,"alerts":[\
             {"code":"splicing","score":0.0,"regions":[]},\
             {"code":"text_alteration","score":0.0,"regions":[]},\
@@ -69,7 +69,7 @@ class AuthenticityLiveFlowTest {
             """;
     private static final String SCREEN =
             """
-            {"engine_version":"anti-spoof-1","fusion_version":"identity","forensic_usable":true,\
+            {"engine_version":"anti-spoof-2","fusion_version":"identity","forensic_usable":true,\
             "authenticity_score":0.1,"tampering_score":0.0,"presentation_score":0.9,"alerts":[\
             {"code":"splicing","score":0.0,"regions":[]},\
             {"code":"text_alteration","score":0.0,"regions":[]},\
@@ -150,7 +150,7 @@ class AuthenticityLiveFlowTest {
         assertEquals("capture_document_back", front.path("next").asText());
         VerificationAuthenticityAssessment stored =
                 assessments.findByVerificationIdAndSide(id, "FRONT").orElseThrow();
-        assertEquals("anti-spoof-1", stored.getEngineVersion());
+        assertEquals("anti-spoof-2", stored.getEngineVersion());
         var accepted = media.findByVerificationIdAndKindAndAttempt(
                         id, com.kyc.enums.MediaKind.DOCUMENT, 1)
                 .orElseThrow();
@@ -162,7 +162,7 @@ class AuthenticityLiveFlowTest {
 
         var back = IdvSupport.captureDocumentBack(mockMvc, token, jpeg);
         assertEquals("liveness", back.path("next").asText());
-        assertEquals("anti-spoof-1", assessments.findByVerificationIdAndSide(id, "BACK").orElseThrow().getEngineVersion());
+        assertEquals("anti-spoof-2", assessments.findByVerificationIdAndSide(id, "BACK").orElseThrow().getEngineVersion());
         assertEquals(2, CALLS.get());
 
         var done = IdvSupport.completeLiveness(mockMvc, token);
@@ -172,7 +172,7 @@ class AuthenticityLiveFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.decision").value("approved"))
                 .andExpect(jsonPath("$.signals[*].code").value(hasItem("document_authentic")))
-                .andExpect(jsonPath("$.authenticity[0].engine_version").value("anti-spoof-1"))
+                .andExpect(jsonPath("$.authenticity[0].engine_version").value("anti-spoof-2"))
                 .andExpect(jsonPath("$.authenticity[0].alerts[0].code").value("splicing"));
     }
 

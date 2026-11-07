@@ -6,6 +6,7 @@
 **Date :** 5 novembre 2026  
 **Statut :** spécification pédagogique — le contrat expliqué  
 **Document qui prime :** [`specification-anti-spoofing.md`](./specification-anti-spoofing.md)  
+**Moteur forensique :** [`specification-moteur-forensique.md`](./specification-moteur-forensique.md) — comment les scores sont mesurés à partir de `anti-spoof-2`  
 **Ordre de construction :** [`roadmap-implementation-anti-spoofing.md`](./roadmap-implementation-anti-spoofing.md)
 
 Ce texte s’adresse à quatre lecteurs : la personne qui implémente le service Python, la personne qui le branche dans l’API, l’analyste qui lit un dossier en revue, et la personne qui déploie. Il reprend le contrat et le raconte dans l’ordre où on s’en sert. Les codes, les seuils et les codes HTTP sont ceux du contrat. Si une phrase d’ici et une ligne du contrat se contredisent, le contrat gagne.
@@ -257,7 +258,9 @@ Le service Python n’est pas sur Internet. Pas de CORS, pas de clé d’organis
 | `app/pipeline.py` | Ordonne les détecteurs. Coupe à 2 s. Une exception devient un HTTP 500, pas un score partiel. |
 | `app/models/fusion-1.json` | Coefficients de la régression logistique. Version `fusion-1`. |
 
-Dépendances d’exécution : Python 3.12, FastAPI, Uvicorn, Pydantic v2, NumPy, SciPy, Pillow, OpenCV headless. Pas de PyTorch dans cette image. Remplacer plus tard un extracteur par un réseau ne change pas l’URL ni le JSON.
+Dépendances d’exécution, moteur actuel (`anti-spoof-1`) : Python 3.12, FastAPI, Uvicorn, Pydantic v2, NumPy, SciPy, Pillow, OpenCV headless. Pas de PyTorch dans cette image. Remplacer plus tard un extracteur par un réseau ne change pas l’URL ni le JSON.
+
+La reconstruction des extracteurs (`anti-spoof-2` : PhotoHolmes, SIFT, ELA, FFT, LBP, Tesseract) est dans [`specification-moteur-forensique.md`](./specification-moteur-forensique.md). Les cinq alertes et ce tableau de modules restent.
 
 Le moteur de langage de Document IA continue de lire le texte. Il ne reçoit pas le droit de dire que la pièce est vraie. Les check digits MRZ et les dates restent des signaux Java, à côté.
 

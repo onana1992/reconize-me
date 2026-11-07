@@ -386,7 +386,7 @@ def write_dataset(out: Path, per_attack: int, authentic: int) -> dict[str, objec
     manifest = {
         "version": VERSION,
         "kind": "synthetic",
-        "engine_target": "anti-spoof-1",
+        "engine_target": "anti-spoof-2",
         "width": WIDTH,
         "height": HEIGHT,
         "media_type": "image/jpeg",
@@ -441,7 +441,7 @@ def write_kit(out: Path) -> dict[str, object]:
     manifest = {
         "version": "lab-kit-1",
         "kind": "synthetic-kit",
-        "engine_target": "anti-spoof-1",
+        "engine_target": "anti-spoof-2",
         "note": (
             "Jeu court pour tester le service. Aucune pièce réelle. Hors git. "
             "Une carte authentique : toutes les alertes < 0,55. "

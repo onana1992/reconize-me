@@ -1,20 +1,20 @@
-"""Ordonnancement. anti-spoof-1 : les cinq détecteurs mesurent. La fusion est l'identité."""
+"""Ordonnancement. anti-spoof-2 : extracteurs forensiques, calibration forensic-1."""
 
 from __future__ import annotations
 
 import threading
 
+from app.artifacts import Artifacts, build as build_artifacts
+from app.calibration import FUSION_VERSION, apply
 from app.contract import ALERTS, Alert, Assessment, Hints, Region
 from app.detectors.compression import detect as detect_compression
 from app.detectors.printed import detect as detect_printed
-from app.detectors.quality import measure
 from app.detectors.screen import detect as detect_screen
 from app.detectors.splicing import detect
 from app.detectors.text import detect as detect_text
 from app.preprocess import Prepared, prepare
 
-ENGINE_VERSION = "anti-spoof-1"
-FUSION_VERSION = "identity"
+ENGINE_VERSION = "anti-spoof-2"
 DEADLINE_S = 30.0
 _TEXT_HINTS = {"mrz", "birth_date", "document_number", "surname", "given_names"}
 
@@ -32,33 +32,52 @@ def assess(image: bytes, hints: Hints | None = None) -> Assessment:
     prepared = prepare(image)
     if not prepared.usable or prepared.pixels is None:
         return _unusable()
-    return _bounded(lambda: _score(prepared, hints))
+    return _bounded(lambda: _score(image, prepared, hints))
 
 
-def _score(prepared: Prepared, hints: Hints | None) -> Assessment:
+def _score(original: bytes, prepared: Prepared, hints: Hints | None) -> Assessment:
     pixels = prepared.pixels
     if pixels is None:
         return _unusable()
-    hit = detect(pixels, _portrait(hints))
-    measured = measure(pixels)
-    text = detect_text(measured, _text_hints(hints))
-    compression = detect_compression(measured)
-    screen = detect_screen(pixels, _document(hints))
-    printed = detect_printed(pixels)
+    artifacts = build_artifacts(original, pixels, _text_hints(hints))
+    return _alerts(artifacts, hints)
+
+
+def _alerts(artifacts: Artifacts, hints: Hints | None) -> Assessment:
+    hit = detect(artifacts, _portrait(hints))
+    text = detect_text(artifacts, _text_hints(hints))
+    compression = detect_compression(artifacts)
+    screen = detect_screen(artifacts, _document(hints))
+    printed = detect_printed(artifacts)
     scores = {code: 0.0 for code, _family in ALERTS}
-    scores["splicing"] = hit.score
-    scores["text_alteration"] = text.score
-    scores["compression_inconsistency"] = compression.score
-    scores["screen_replay"] = screen.score
-    scores["printed_copy"] = printed.score
+    scores["splicing"] = apply("splicing", hit.score)
+    scores["text_alteration"] = apply("text_alteration", text.score)
+    scores["compression_inconsistency"] = apply("compression_inconsistency", compression.score)
+    scores["screen_replay"] = apply("screen_replay", screen.score)
+    scores["printed_copy"] = apply("printed_copy", printed.score)
     regions = {
-        "splicing": _regions(hit.regions),
-        "text_alteration": _regions(text.regions),
-        "compression_inconsistency": _regions(compression.regions),
-        "screen_replay": _regions(screen.regions),
-        "printed_copy": _regions(printed.regions),
+        "splicing": _regions("splicing", hit.regions),
+        "text_alteration": _regions("text_alteration", text.regions),
+        "compression_inconsistency": _regions("compression_inconsistency", compression.regions),
+        "screen_replay": _regions("screen_replay", screen.regions),
+        "printed_copy": _regions("printed_copy", printed.regions),
     }
+    _separate_presentation(scores, regions)
     return _measured(scores, regions)
+
+
+def _separate_presentation(scores: dict[str, float], regions: dict[str, list[Region]]) -> None:
+    """Une dalle et une trame ne portent pas les deux scores au-dessus du seuil."""
+    screen = scores["screen_replay"]
+    printed = scores["printed_copy"]
+    if screen < 0.55 or printed < 0.55:
+        return
+    if screen >= printed:
+        scores["printed_copy"] = min(printed, 0.54)
+        regions["printed_copy"] = []
+    else:
+        scores["screen_replay"] = min(screen, 0.54)
+        regions["screen_replay"] = []
 
 
 def _bounded(fn):
@@ -80,8 +99,10 @@ def _bounded(fn):
     return box["value"]
 
 
-def _regions(zones: list) -> list[Region]:
-    return [Region(name=zone.name, box=list(zone.box), score=zone.score) for zone in zones]
+def _regions(code: str, zones: list) -> list[Region]:
+    return [
+        Region(name=zone.name, box=list(zone.box), score=apply(code, zone.score)) for zone in zones
+    ]
 
 
 def _text_hints(

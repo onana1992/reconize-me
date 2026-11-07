@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from app.artifacts import Artifacts
 from app.detectors.spectrum import Peak, crop, dot_residue, halftone_residue, impulsive, limit_side, peaks_of
 
 _FRACTION = 0.02
@@ -51,14 +52,17 @@ class ScreenHit:
 
 
 def detect(
-    pixels: np.ndarray,
+    artifacts: Artifacts,
     document: tuple[float, float, float, float] | None = None,
 ) -> ScreenHit:
     """Spectre dans le rectangle document, ou sur l'image entière."""
     box = document if document is not None else (0.0, 0.0, 1.0, 1.0)
+    pixels = artifacts.pixels
     view = limit_side(crop(pixels, document) if document is not None else pixels)
     peaks = peaks_of(view, period_max=_PERIOD_MAX)
-    score = max(_score(peaks), _tiles(view), _tiles(_highpass(view)))
+    score = _score(peaks)
+    if score < 0.8:
+        score = max(score, _tiles(view), _tiles(_highpass(view)))
     if score <= 0:
         return ScreenHit(score=0.0, regions=[])
     return ScreenHit(score=score, regions=[Mark(name="document", box=box, score=score)])
@@ -108,10 +112,11 @@ def _tiles(pixels: np.ndarray) -> float:
     height, width = pixels.shape[:2]
     if height < _TILE or width < _TILE:
         return 0.0
+    step = _TILE_STEP if max(height, width) <= 900 else _TILE_STEP * 2
     votes = 0
     total = 0
-    for top in range(0, height - _TILE + 1, _TILE_STEP):
-        for left in range(0, width - _TILE + 1, _TILE_STEP):
+    for top in range(0, height - _TILE + 1, step):
+        for left in range(0, width - _TILE + 1, step):
             tile = pixels[top : top + _TILE, left : left + _TILE]
             total += 1
             # Une cellule pleine (dalle) vote écran. Un point d'encre reste au papier.

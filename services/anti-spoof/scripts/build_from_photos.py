@@ -84,21 +84,9 @@ def screen_real_of(jpeg: bytes, source: str) -> Sample:
 def splicing_on(pixels: np.ndarray, rng: np.random.Generator) -> Sample:
     canvas = pixels.astype(np.float32)
     height, width = canvas.shape[:2]
-    size = min(160, height // 3, width // 3)
-    yy, xx = np.mgrid[0:size, 0:size]
-    patch = np.stack(
-        [
-            40 + 140 * (xx / size),
-            30 + 80 * ((xx - 80) ** 2 + (yy - 60) ** 2) / 12800,
-            200 - 120 * (yy / size),
-        ],
-        axis=2,
-    )
-    ax = int(rng.integers(16, max(17, width // 8)))
-    ay = int(rng.integers(16, max(17, height // 8)))
-    bx = min(width - size - 8, ax + max(200, width // 3))
-    by = min(height - size - 8, ay + max(160, height // 4))
-    canvas[ay : ay + size, ax : ax + size] = patch
+    size = min(192, height // 3, width // 3)
+    ax, ay, patch = _textured_patch(canvas, size, rng)
+    bx, by = _far_slot(width, height, size, ax, ay, rng)
     canvas[by : by + size, bx : bx + size] = patch
     return Sample(
         jpeg=_save(canvas, 92),
@@ -109,8 +97,45 @@ def splicing_on(pixels: np.ndarray, rng: np.random.Generator) -> Sample:
             _roi("portrait", _box(width, height, ax, ay, ax + size, ay + size)),
             _roi("document", _box(width, height, bx, by, bx + size, by + size)),
         ),
-        notes="Même patch de gradient collé deux fois, à plus de 80 px.",
+        notes="Patch réel copié à plus de 80 px : copy-move, pas un dégradé synthétique.",
     )
+
+
+def _textured_patch(
+    canvas: np.ndarray,
+    size: int,
+    rng: np.random.Generator,
+) -> tuple[int, int, np.ndarray]:
+    height, width = canvas.shape[:2]
+    best = (16, 16, canvas[16 : 16 + size, 16 : 16 + size].copy())
+    best_std = -1.0
+    for _ in range(16):
+        left = int(rng.integers(16, max(17, width - size - 16)))
+        top = int(rng.integers(16, max(17, height - size - 16)))
+        patch = canvas[top : top + size, left : left + size]
+        std = float(patch.std())
+        if std > best_std:
+            best_std = std
+            best = (left, top, patch.copy())
+    return best
+
+
+def _far_slot(
+    width: int,
+    height: int,
+    size: int,
+    ax: int,
+    ay: int,
+    rng: np.random.Generator,
+) -> tuple[int, int]:
+    for _ in range(24):
+        left = int(rng.integers(8, max(9, width - size - 8)))
+        top = int(rng.integers(8, max(9, height - size - 8)))
+        if np.hypot(left - ax, top - ay) >= 80 and abs(left - ax) >= size and abs(top - ay) >= size // 2:
+            return left, top
+    left = min(width - size - 8, max(8, ax + max(size + 16, 80)))
+    top = min(height - size - 8, max(8, ay + max(size // 2 + 16, 80)))
+    return left, top
 
 
 def text_on(pixels: np.ndarray, rng: np.random.Generator, seed: int) -> Sample:
@@ -270,7 +295,7 @@ def write_from_photos(source: Path, out: Path) -> dict[str, object]:
     manifest = {
         "version": VERSION,
         "kind": "synthetic-on-photo",
-        "engine_target": "anti-spoof-1",
+        "engine_target": "anti-spoof-2",
         "media_type": "image/jpeg",
         "source_dir": str(source.resolve()),
         "n_physical": len(physical),
