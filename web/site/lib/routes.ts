@@ -21,6 +21,8 @@ export const ROUTES = {
   company: "/company",
   security: "/security",
   docs: "/docs",
+  supportedDocuments: "/resources/supported-documents",
+  blog: "/blog",
   contact: "/contact",
   terms: "/legal/terms",
   privacy: "/legal/privacy",
@@ -50,14 +52,18 @@ export const PRODUCT_NAV: RouteKey[] = [
   "amlScreening",
 ];
 
-export const HEADER_LINKS: RouteKey[] = ["services", "company", "pricing", "docs"];
+export const COMPANY_NAV = ["company", "contact"] as const satisfies readonly RouteKey[];
+
+export const RESOURCE_NAV = ["docs", "supportedDocuments", "blog", "pricing"] as const satisfies readonly RouteKey[];
+
+export const LEGAL_NAV = ["terms", "privacy", "dpa"] as const satisfies readonly RouteKey[];
 
 export const FOOTER_NAV: { heading: "products" | "resources" | "legal"; items: RouteKey[] }[] = [
   {
     heading: "products",
-    items: ["identityVerification", "biometricAuthentication", "amlScreening", "pricing"],
+    items: ["identityVerification", "biometricAuthentication", "amlScreening"],
   },
-  { heading: "resources", items: ["docs", "security", "contact"] },
+  { heading: "resources", items: ["docs", "supportedDocuments", "blog", "pricing"] },
   { heading: "legal", items: ["terms", "privacy", "dpa"] },
 ];
 
@@ -69,6 +75,8 @@ export const SITEMAP_PRIORITY: Record<RouteKey, number> = {
   services: 0.6,
   company: 0.6,
   docs: 0.8,
+  supportedDocuments: 0.5,
+  blog: 0.5,
   security: 0.7,
   biometricAuthentication: 0.5,
   amlScreening: 0.5,

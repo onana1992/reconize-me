@@ -3,7 +3,6 @@
 import { Dialog, DialogPanel, Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import {
   Bars3Icon,
-  CheckCircleIcon,
   ChevronDownIcon,
   UserIcon,
   XMarkIcon,
@@ -14,8 +13,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ProductKey } from "../lib/catalog";
 import type { Locale } from "../lib/locales";
-import { HEADER_LINKS, href, type RouteKey } from "../lib/routes";
+import { href, type RouteKey } from "../lib/routes";
 import { LOGIN_URL, SIGNUP_URL } from "../lib/site-config";
+import { CompanyMenu, type CompanyLink } from "./company-menu";
 import { LanguageMenu } from "./language-menu";
 import { ProductsMegaMenu } from "./products-mega-menu";
 
@@ -40,16 +40,15 @@ export type HeaderProduct = {
   route: RouteKey;
   name: string;
   note: string;
-  available: boolean;
-  badge: string;
 };
 
 export type HeaderLabels = {
   nav: Record<RouteKey, string>;
   products: string;
+  resources: string;
+  legal: string;
   signup: string;
   login: string;
-  getVerified: string;
   mainNav: string;
   utilityNav: string;
   languageSwitch: string;
@@ -58,17 +57,20 @@ export type HeaderLabels = {
   closeMenu: string;
 };
 
-const navLinkClass =
-  "relative inline-flex h-[var(--rm-header-main)] items-center text-sm font-medium text-rm-text-muted no-underline hover:text-rm-text after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:bg-transparent hover:after:bg-rm-text aria-[current=page]:text-rm-text aria-[current=page]:after:bg-rm-text";
-
 export function SiteHeader({
   locale,
   labels,
   products,
+  companyLinks,
+  resourceLinks,
+  legalLinks,
 }: {
   locale: Locale;
   labels: HeaderLabels;
   products: HeaderProduct[];
+  companyLinks: CompanyLink[];
+  resourceLinks: CompanyLink[];
+  legalLinks: CompanyLink[];
 }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -103,13 +105,6 @@ export function SiteHeader({
                 <UserIcon className="size-3.5" aria-hidden="true" />
                 {labels.login}
               </a>
-              <Link
-                href={href(locale, "identityVerification")}
-                className="hidden items-center gap-1.5 text-[13px] font-medium text-rm-ink-text no-underline hover:text-white sm:inline-flex"
-              >
-                <CheckCircleIcon className="size-3.5" aria-hidden="true" />
-                {labels.getVerified}
-              </Link>
             </nav>
             <LanguageMenu locale={locale} label={labels.languageSwitch} tone="ink" />
           </div>
@@ -134,16 +129,24 @@ export function SiteHeader({
                 label={labels.products}
                 current={current}
               />
-              {HEADER_LINKS.map((route) => (
-                <Link
-                  key={route}
-                  href={href(locale, route)}
-                  aria-current={current(route)}
-                  className={navLinkClass}
-                >
-                  {labels.nav[route]}
-                </Link>
-              ))}
+              <CompanyMenu
+                locale={locale}
+                label={labels.nav.company}
+                links={companyLinks}
+                current={current}
+              />
+              <CompanyMenu
+                locale={locale}
+                label={labels.resources}
+                links={resourceLinks}
+                current={current}
+              />
+              <CompanyMenu
+                locale={locale}
+                label={labels.legal}
+                links={legalLinks}
+                current={current}
+              />
             </nav>
 
             <div className="flex flex-1 items-center justify-end gap-3">
@@ -194,29 +197,60 @@ export function SiteHeader({
           </Disclosure>
 
           <nav className="grid" aria-label={labels.mainNav}>
-            {HEADER_LINKS.map((route) => (
-              <Link
-                key={route}
-                href={href(locale, route)}
-                aria-current={current(route)}
-                className="border-b border-rm-border py-3 text-lg font-medium text-rm-text no-underline aria-[current=page]:text-rm-accent"
-              >
-                {labels.nav[route]}
-              </Link>
-            ))}
-            <Link
-              href={href(locale, "contact")}
-              aria-current={current("contact")}
-              className="border-b border-rm-border py-3 text-lg font-medium text-rm-text no-underline aria-[current=page]:text-rm-accent"
-            >
-              {labels.nav.contact}
-            </Link>
-            <Link
-              href={href(locale, "identityVerification")}
-              className="border-b border-rm-border py-3 text-lg font-medium text-rm-text no-underline"
-            >
-              {labels.getVerified}
-            </Link>
+            <Disclosure as="div" className="border-b border-rm-border">
+              <DisclosureButton className="group flex w-full items-center justify-between border-0 bg-transparent px-0 py-3 text-left text-lg font-medium text-rm-text hover:bg-transparent">
+                {labels.nav.company}
+                <ChevronDownIcon className="size-5 group-data-open:rotate-180" aria-hidden="true" />
+              </DisclosureButton>
+              <DisclosurePanel className="grid gap-1 pb-2">
+                {companyLinks.map((link) => (
+                  <Link
+                    key={link.route}
+                    href={href(locale, link.route)}
+                    aria-current={current(link.route)}
+                    className="block py-3 text-base text-rm-text no-underline aria-[current=page]:text-rm-accent"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </DisclosurePanel>
+            </Disclosure>
+            <Disclosure as="div" className="border-b border-rm-border">
+              <DisclosureButton className="group flex w-full items-center justify-between border-0 bg-transparent px-0 py-3 text-left text-lg font-medium text-rm-text hover:bg-transparent">
+                {labels.resources}
+                <ChevronDownIcon className="size-5 group-data-open:rotate-180" aria-hidden="true" />
+              </DisclosureButton>
+              <DisclosurePanel className="grid gap-1 pb-2">
+                {resourceLinks.map((link) => (
+                  <Link
+                    key={link.route}
+                    href={href(locale, link.route)}
+                    aria-current={current(link.route)}
+                    className="block py-3 text-base text-rm-text no-underline aria-[current=page]:text-rm-accent"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </DisclosurePanel>
+            </Disclosure>
+            <Disclosure as="div" className="border-b border-rm-border">
+              <DisclosureButton className="group flex w-full items-center justify-between border-0 bg-transparent px-0 py-3 text-left text-lg font-medium text-rm-text hover:bg-transparent">
+                {labels.legal}
+                <ChevronDownIcon className="size-5 group-data-open:rotate-180" aria-hidden="true" />
+              </DisclosureButton>
+              <DisclosurePanel className="grid gap-1 pb-2">
+                {legalLinks.map((link) => (
+                  <Link
+                    key={link.route}
+                    href={href(locale, link.route)}
+                    aria-current={current(link.route)}
+                    className="block py-3 text-base text-rm-text no-underline aria-[current=page]:text-rm-accent"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </DisclosurePanel>
+            </Disclosure>
           </nav>
 
           <div className="mt-6 grid gap-3">

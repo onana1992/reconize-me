@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { DM_Sans, Epilogue, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "@/brand/tokens.css";
 import "@/brand/base.css";
 import "@/brand/site.css";
 import "../globals.css";
+import { SiteFooter } from "../../components/site-footer";
 import { SiteHeader, type HeaderProduct } from "../../components/site-header";
-import { PRODUCT_AVAILABLE, PRODUCT_ORDER, PRODUCT_ROUTE } from "../../lib/catalog";
+import { PRODUCT_ORDER, PRODUCT_ROUTE } from "../../lib/catalog";
 import { DEFAULT_LOCALE, LOCALES, isLocale, type Locale } from "../../lib/locales";
 import { getMessages } from "../../lib/messages";
 import { metadataBase } from "../../lib/metadata";
-import { PRODUCT_NAV } from "../../lib/routes";
+import { COMPANY_NAV, LEGAL_NAV, PRODUCT_NAV, RESOURCE_NAV } from "../../lib/routes";
 import { INDEXABLE } from "../../lib/site-config";
 
 /*
@@ -45,6 +46,24 @@ const mono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--rm-font-brand-mono",
+});
+
+/*
+ * Hero seulement, calqué sur smile.id : Epilogue 500 pour le titre,
+ * DM Sans 400 pour le sous-titre. Le reste du site garde Plus Jakarta Sans.
+ */
+const display = Epilogue({
+  subsets: ["latin", "latin-ext"],
+  weight: "500",
+  display: "swap",
+  variable: "--rm-font-display",
+});
+
+const heroText = DM_Sans({
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  display: "swap",
+  variable: "--rm-font-hero-text",
 });
 
 export function generateStaticParams() {
@@ -93,12 +112,33 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     route: PRODUCT_ROUTE[product],
     name: messages.products[product].name,
     note: messages.products[product].tagline,
-    available: PRODUCT_AVAILABLE[product],
-    badge: PRODUCT_AVAILABLE[product] ? messages.badges.available : messages.badges.roadmap,
+  }));
+
+  const companyName = {
+    company: messages.nav.about,
+    contact: messages.nav.contactUs,
+  } as const;
+  const companyLinks = COMPANY_NAV.map((route) => ({
+    route,
+    name: companyName[route],
+  }));
+
+  const resourceLinks = RESOURCE_NAV.map((route) => ({
+    route,
+    name: messages.nav[route],
+  }));
+
+  const legalLinks = LEGAL_NAV.map((route) => ({
+    route,
+    name: messages.nav[route],
   }));
 
   return (
-    <html lang={locale} className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${sans.variable} ${mono.variable} ${display.variable} ${heroText.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Sans JavaScript, l'apparition au défilement ne se déclenchera jamais :
             on neutralise son état de départ plutôt que de laisser une page
@@ -116,12 +156,16 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           <SiteHeader
             locale={locale}
             products={products}
+            companyLinks={companyLinks}
+            resourceLinks={resourceLinks}
+            legalLinks={legalLinks}
             labels={{
               nav: messages.nav,
               products: messages.nav.products,
+              resources: messages.nav.resources,
+              legal: messages.footer.legal,
               signup: messages.actions.signup,
               login: messages.actions.login,
-              getVerified: messages.nav.getVerified,
               mainNav: messages.a11y.mainNav,
               utilityNav: messages.a11y.utilityNav,
               languageSwitch: messages.a11y.languageSwitch,
@@ -132,6 +176,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           />
 
           <main id="rm-content">{children}</main>
+          <SiteFooter locale={locale} />
         </div>
       </body>
     </html>

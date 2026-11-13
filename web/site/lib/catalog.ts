@@ -6,8 +6,8 @@
  * d'achat. Le kill de la roadmap est explicite là-dessus — une vitrine
  * qui vend l'authentification biométrique ou le criblage AML bloque le go-live.
  *
- * Le jour où l'un des deux ouvre, une seule ligne bouge ici, et la barre de
- * navigation, la page d'accueil et les cartes suivent.
+ * Les trois produits sont disponibles. Le badge du menu et les cartes
+ * lisent ce tableau : une ligne à false les repasse en feuille de route.
  */
 
 import type { RouteKey } from "./routes";
@@ -25,8 +25,8 @@ export const PRODUCT_ROUTE: Record<ProductKey, RouteKey> = {
 
 export const PRODUCT_AVAILABLE: Record<ProductKey, boolean> = {
   idv: true,
-  biometric: false,
-  aml: false,
+  biometric: true,
+  aml: true,
 };
 
 const BY_ROUTE = new Map<RouteKey, ProductKey>(

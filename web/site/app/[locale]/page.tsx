@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { PrimaryActions } from "../../components/actions";
+import { HomeClose } from "../../components/home-close";
+import { HomeBenefits } from "../../components/home-benefits";
+import { HomeIndustries } from "../../components/home-industries";
+import { HomeServices } from "../../components/home-services";
 import { getMessages } from "../../lib/messages";
 import { pageMetadata } from "../../lib/metadata";
 import { resolveLocale, type LocaleParams } from "../../lib/params";
@@ -18,8 +22,7 @@ import { resolveLocale, type LocaleParams } from "../../lib/params";
 import heroPresence from "../../public/media/hero-presence.png";
 
 /*
- * Accueil — vitrine courte : barre de navigation et hero, rien en dessous.
- * Le reste du site n'est pas servi ; les anciennes URL reviennent ici.
+ * Accueil — hero, bénéfices, industries, services.
  */
 
 export async function generateMetadata({ params }: LocaleParams): Promise<Metadata> {
@@ -30,40 +33,48 @@ export async function generateMetadata({ params }: LocaleParams): Promise<Metada
 
 export default async function HomePage({ params }: LocaleParams) {
   const locale = await resolveLocale(params);
-  const copy = getMessages(locale).home;
+  const messages = getMessages(locale);
+  const copy = messages.home;
 
   return (
-    <section
-      className="rm-hero flex min-h-[calc(100svh-var(--rm-header-height))] flex-col justify-center"
-      data-tone="ink"
-    >
-      <div className="rm-hero-backdrop">
-        <Image
-          src={heroPresence}
-          alt=""
-          fill
-          /* Élément LCP : ni différé, ni suspendu à un observateur. Sans
-             `priority`, Next le charge en paresseux et le plus grand pixel
-             de la page arrive après tout le reste.
-             `alt` vide parce que l'image est décorative : le sens est dans
-             le titre à côté, le répéter n'aiderait personne. */
-          priority
-          sizes="(min-width: 64rem) 60vw, 100vw"
-        />
-      </div>
-
-      <div className="rm-shell">
-        <div className="rm-hero-copy max-w-[40rem]">
-          <h1 className="rm-title" data-size="hero">
-            {copy.title}
-          </h1>
-          <p className="rm-lead" data-size="hero">
-            {copy.lead}
-          </p>
-          <PrimaryActions locale={locale} />
-          <p className="rm-hero-note">{copy.heroNote}</p>
+    <>
+      <section
+        className="rm-hero flex min-h-[calc(100svh-var(--rm-header-height))] flex-col justify-center"
+        data-tone="ink"
+      >
+        <div className="rm-hero-backdrop">
+          <Image
+            src={heroPresence}
+            alt=""
+            fill
+            /* Élément LCP : ni différé, ni suspendu à un observateur. Sans
+               `priority`, Next le charge en paresseux et le plus grand pixel
+               de la page arrive après tout le reste.
+               `alt` vide parce que l'image est décorative : le sens est dans
+               le titre à côté, le répéter n'aiderait personne. */
+            priority
+            sizes="(min-width: 64rem) 60vw, 100vw"
+          />
         </div>
-      </div>
-    </section>
+
+        <div className="rm-shell">
+          <div className="rm-hero-copy max-w-[40rem]">
+            <h1 className="rm-title" data-size="hero">
+              {copy.title}
+            </h1>
+            <p className="rm-lead" data-size="hero">
+              {copy.lead}
+            </p>
+            <PrimaryActions locale={locale} />
+            <p className="rm-hero-note">{copy.heroNote}</p>
+          </div>
+        </div>
+      </section>
+
+      <HomeBenefits copy={copy} />
+      <HomeIndustries copy={copy} />
+      <HomeServices copy={copy} />
+      <HomeClose locale={locale} copy={copy} />
+    </>
   );
 }

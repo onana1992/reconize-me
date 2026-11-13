@@ -34,9 +34,13 @@
     "pricing": "Pricing",
     "services": "Services",
     "company": "Company",
+    "about": "About us",
+    "contactUs": "Contact us",
     "security": "Security",
+    "resources": "Resources",
     "docs": "Documentation",
-    "getVerified": "How to get verified",
+    "supportedDocuments": "Supported countries and documents",
+    "blog": "Blog",
     "contact": "Contact",
     "terms": "Terms of service",
     "privacy": "Privacy",
@@ -62,7 +66,7 @@
     "resources": "Resources",
     "legal": "Legal",
     "rights": "All rights reserved.",
-    "honesty": "We display no certification we have not earned."
+    "description": "Recogniz-Me helps companies secure their customer journeys with a complete platform for identity verification, trust management and fraud prevention."
   },
   "products": {
     "idv": {
@@ -73,19 +77,19 @@
     "biometric": {
       "name": "Biometric authentication",
       "tagline": "Recognise a customer you have already verified.",
-      "summary": "Re-authenticate someone by their face, without asking for their identity document again. On our roadmap, not yet something we can ship."
+      "summary": "Re-authenticate someone by their face, without asking for their identity document again."
     },
     "aml": {
       "name": "AML screening",
       "tagline": "Politically exposed persons, sanctions, adverse media.",
-      "summary": "Check a verified identity against sanctions lists and registers of politically exposed persons. On our roadmap, not yet something we can ship."
+      "summary": "Check a verified identity against sanctions lists and registers of politically exposed persons."
     }
   },
   "home": {
     "metaTitle": "Identity verification for businesses",
     "metaDescription": "Verify an identity in real time: document, biometrics and a decision, via API or hosted link. Free sandbox.",
-    "title": "Verify identities. Reduce fraud. Stay compliant.",
-    "lead": "A SaaS platform for fast, secure identity checks, document validation and KYC/AML — simple for the user, complete for the business.",
+    "title": "Instant trust, lasting compliance.",
+    "lead": "AI identity verification, fast for the customer, solid for the file.",
     "heroNote": "Free sandbox, no card required.",
     "hero": {
       "verdictTitle": "Decision returned",
@@ -143,27 +147,403 @@
     ],
     "metricsScreenTitle": "POST /v1/verifications",
     "benefitsEyebrow": "What it changes",
-    "benefitsTitle": "Four reasons to verify rather than take someone’s word",
+    "benefitsTitle": "Verify effectively and eliminate the risk of fraud.",
+    "benefitsLead": "Four levers to meet what product and compliance teams expect from online identity verification.",
     "benefits": [
       {
         "glyph": "frame",
-        "title": "Fewer drop-offs at the door",
-        "body": "Quality checks run during capture. An unusable photo is retaken on the spot, not rejected ten minutes later by email."
-      },
-      {
-        "glyph": "ledger",
-        "title": "Something to show later",
-        "body": "The timestamped consent, the version of the text accepted, the signals and the decision are kept together. That is what a regulator asks for."
-      },
-      {
-        "glyph": "match",
-        "title": "The holder, not just the document",
-        "body": "A genuine document in someone else’s hands does not pass: the face is compared to the document, and real presence is checked."
+        "title": "Smooth the user experience",
+        "body": "Simplify the verification journey to reduce friction and limit drop-off."
       },
       {
         "glyph": "api",
-        "title": "An integration, not a project",
-        "body": "One POST, one GET, a sandbox key from signup. Switching to live does not change your code, only the key prefix."
+        "title": "Speed up identity verification",
+        "body": "Shorten review times with fast, automated processes."
+      },
+      {
+        "glyph": "shield",
+        "title": "Strengthen fraud prevention",
+        "body": "Detect fraudulent identities, falsified documents and impersonation attempts."
+      },
+      {
+        "glyph": "ledger",
+        "title": "Guarantee regulatory compliance",
+        "body": "Meet KYC and regulatory requirements while keeping every verification traceable."
+      }
+    ],
+    "servicesTitle": "From identity to screening",
+    "servicesLead": "Three services that chain together to secure onboarding: verify who the person is, recognise them later, then check them against the lists.",
+    "servicesTabsLabel": "Services",
+    "services": [
+      {
+        "key": "idv",
+        "nav": "Identity verification",
+        "badge": "Identity",
+        "title": "Verify who the person is",
+        "summary": "Document, face and real presence in one journey. A reasoned decision, clear for your customer and for your compliance team.",
+        "cards": [
+          {
+            "glyph": "frame",
+            "title": "Capture the document",
+            "body": "The customer frames their ID. The journey detects blur, glare and crop, and asks for a retry on the spot."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Read the document",
+            "body": "The document type is recognised. Useful fields — name, birth, number, expiry — are extracted."
+          },
+          {
+            "glyph": "match",
+            "title": "Confirm the face",
+            "body": "A selfie checks real presence and a match with the portrait on the document."
+          },
+          {
+            "glyph": "shield",
+            "title": "Receive the decision",
+            "body": "A clear outcome — approved, rejected or for review — with reasons kept on the file."
+          }
+        ]
+      },
+      {
+        "key": "biometric",
+        "nav": "Biometric authentication",
+        "badge": "Biometrics",
+        "title": "Recognise an already verified customer",
+        "summary": "Without asking for the document again. A face is enough to confirm it is the same person, at the sensitive moment.",
+        "cards": [
+          {
+            "glyph": "link",
+            "title": "Use the reference",
+            "body": "The face reference is tied to an identity already verified. No new file to build."
+          },
+          {
+            "glyph": "match",
+            "title": "Compare the face",
+            "body": "A short selfie confirms the person present is the one your organisation already knows."
+          },
+          {
+            "glyph": "frame",
+            "title": "Block the spoof",
+            "body": "The check blocks a screen photo and a printed portrait held up to the camera."
+          },
+          {
+            "glyph": "shield",
+            "title": "Receive the confirmation",
+            "body": "Same shape as identity verification: a clear outcome and reasons on the file."
+          }
+        ]
+      },
+      {
+        "key": "aml",
+        "nav": "AML screening",
+        "badge": "AML",
+        "title": "Screen before you commit",
+        "summary": "Sanctions, exposed persons and adverse media — with a readable trace for the compliance file.",
+        "cards": [
+          {
+            "glyph": "shield",
+            "title": "Match sanctions lists",
+            "body": "Check the verified identity against international sanctions lists before onboarding."
+          },
+          {
+            "glyph": "console",
+            "title": "Flag exposed persons",
+            "body": "Flag a politically exposed person, or a close associate, for the right level of vigilance."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Surface adverse media",
+            "body": "Bring up press mentions linked to the person, useful for the compliance file."
+          },
+          {
+            "glyph": "webhook",
+            "title": "Keep the record",
+            "body": "Every screen leaves a readable trace: date, sources consulted, result and reasons."
+          }
+        ]
+      }
+    ],
+    "industriesTitle": "Identity verification built for your industry",
+    "industriesLead": "Solutions designed for the security, fluidity and compliance challenges of each industry.",
+    "industriesTabsLabel": "Industries",
+    "industriesAsideEyebrow": "The moment of risk",
+    "industries": [
+      {
+        "key": "banking",
+        "label": "Banking & fintech",
+        "body": "Secure account opening, smooth onboarding, and meet KYC requirements. The decision arrives with reasons: compliance can reopen the file, and legitimate customers do not drop off.",
+        "points": [
+          "KYC checks at onboarding and account opening",
+          "Document, face and real presence in one journey",
+          "Decision and reasons kept for the compliance file",
+          "Hosted link or API, free sandbox to integrate"
+        ],
+        "aside": "Account opening and the first payout. That is where fraud shows up, and where a good customer must not wait."
+      },
+      {
+        "key": "insurance",
+        "label": "Insurance",
+        "body": "Verify policyholders and limit impersonation and fraud. An authentic document, a present face, a decision your team can defend.",
+        "points": [
+          "Verification at underwriting and beneficiary changes",
+          "Block falsified documents and identity theft",
+          "A readable file for compliance and disputes",
+          "Mobile journey, no app to install"
+        ],
+        "aside": "Underwriting and claims. Two moments where a doubtful identity is costly — and needless friction loses a customer."
+      },
+      {
+        "key": "telecom",
+        "label": "Telecommunications",
+        "body": "Make online sign-up reliable and secure line activation. The journey fits on a phone: guided capture, instant retries, a decision in minutes.",
+        "points": [
+          "Identity check before line activation",
+          "Fewer drop-offs thanks to guided capture",
+          "A reasoned decision for fraud and support teams",
+          "Integrate by API or a link sent to the customer"
+        ],
+        "aside": "Sign-up and activation. A line opened on a false identity is fraud from day one."
+      },
+      {
+        "key": "commerce",
+        "label": "E-commerce & marketplaces",
+        "body": "Verify users, secure transactions, and prevent fraudulent accounts. Seller and buyer: the same proof of identity, before the first payment or the first payout.",
+        "points": [
+          "Seller and buyer verification",
+          "A check before a high-risk payment or payout",
+          "Block synthetic accounts and falsified documents",
+          "Sandbox to test the journey before going live"
+        ],
+        "aside": "The first payment and the first payout. That is where the platform stakes its liability — and its reputation."
+      },
+      {
+        "key": "mobility",
+        "label": "Mobility & rental",
+        "body": "Confirm customer identity and secure bookings and contracts. The check runs on the driver’s phone, without needless friction at the counter.",
+        "points": [
+          "Verification at booking and hand-over",
+          "Real presence to block screen photos",
+          "A reasoned decision for the contract and insurance",
+          "Hosted journey, French and English"
+        ],
+        "aside": "Booking and key hand-over. An unverified driver is a risk for the vehicle, the contract and the insurance."
+      },
+      {
+        "key": "hr",
+        "label": "Human resources & recruiting",
+        "body": "Verify candidates and secure employee onboarding. Proof is taken before day one, and the file stays available for your internal controls.",
+        "points": [
+          "Identity check before hire or onboarding",
+          "Decision and reasons for the HR file",
+          "Remote journey, no trip to head office",
+          "Isolation per organisation: your candidates stay yours"
+        ],
+        "aside": "The offer and day one. An unverified identity exposes the employer as much as the team that welcomes them."
+      }
+    ],
+    "platformEyebrow": "The platform",
+    "platformTitle": "Every check in one flow",
+    "platformLead": "Start with one module, add more without changing tools or rewriting your integration.",
+    "platformMore": "Learn more",
+    "platformModules": [
+      {
+        "key": "idv",
+        "title": "Identity verification",
+        "body": "Document, face, presence and decision in a single journey.",
+        "featured": true,
+        "route": "identityVerification"
+      },
+      {
+        "key": "liveness",
+        "title": "Biometrics",
+        "body": "Confirm a real person is in front of the camera.",
+        "featured": true,
+        "route": "none"
+      },
+      {
+        "key": "face-match",
+        "title": "Face match",
+        "body": "The selfie compared to the portrait on the document.",
+        "featured": true,
+        "route": "none"
+      },
+      {
+        "key": "biometric",
+        "title": "Biometric authentication",
+        "body": "Recognise a customer already verified, without asking for the ID again.",
+        "featured": false,
+        "route": "biometricAuthentication"
+      },
+      {
+        "key": "aml",
+        "title": "AML screening",
+        "body": "Sanctions, politically exposed persons, adverse media.",
+        "featured": false,
+        "route": "amlScreening"
+      },
+      {
+        "key": "poa",
+        "title": "Proof of address",
+        "body": "Confirm an address from a supporting document.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "age",
+        "title": "Age verification",
+        "body": "Confirm an age threshold without exposing the full file.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "fraud",
+        "title": "Fraud",
+        "body": "Cross signals across documents, devices and repeat attempts.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "kyb",
+        "title": "KYB",
+        "body": "Company, directors and beneficial owners.",
+        "featured": false,
+        "route": "none"
+      }
+    ],
+    "journeyEyebrow": "The journey",
+    "journeyTitle": "From photo to decision, with no spare step",
+    "journeyLead": "Guided capture on the customer’s phone, then a clear outcome for your team.",
+    "journeyStepsLabel": "Journey steps",
+    "journeySteps": [
+      {
+        "key": "capture",
+        "title": "Assisted capture",
+        "body": "The frame flags blur, glare and a cropped ID while the photo is taken.",
+        "screenLabel": "Assisted capture screen",
+        "screenTitle": "Frame your ID",
+        "screenNote": "Retake — the photo is blurry"
+      },
+      {
+        "key": "document",
+        "title": "Document reading",
+        "body": "The document type is recognised. Useful fields are extracted.",
+        "screenLabel": "Document reading screen",
+        "screenTitle": "Document recognised",
+        "screenNote": "Name, birth date, number, expiry"
+      },
+      {
+        "key": "decision",
+        "title": "Face and decision",
+        "body": "Real presence, portrait match, then a clear outcome.",
+        "screenLabel": "Decision screen",
+        "screenTitle": "Identity confirmed",
+        "screenNote": "Document, face and presence agree"
+      }
+    ],
+    "journeyDocKind": "Identity document",
+    "journeyFieldsLabel": "Fields",
+    "journeySignalsLabel": "Signals",
+    "journeySignalDocument": "Document authentic",
+    "journeySignalFace": "Face match",
+    "journeySignalPresence": "Presence confirmed",
+    "journeyVerdict": "Identity confirmed",
+    "coverageEyebrow": "Coverage",
+    "coverageTitle": "Documents supported worldwide",
+    "coverageLead": "Thousands of ID types across 200+ countries — the same journey, whichever market you enter.",
+    "coverageMetrics": [
+      { "value": "200+", "label": "countries" },
+      { "value": "12,000+", "label": "documents" },
+      { "value": "40+", "label": "languages" }
+    ],
+    "coverageSearchLabel": "Search a country or document",
+    "coverageSearchPlaceholder": "Country or document type",
+    "coverageFiltersLabel": "Filter by region",
+    "coverageFilters": [
+      { "key": "all", "label": "All" },
+      { "key": "americas", "label": "Americas" },
+      { "key": "europe", "label": "Europe" },
+      { "key": "africa", "label": "Africa" },
+      { "key": "mena", "label": "Middle East" },
+      { "key": "apac", "label": "Asia-Pacific" }
+    ],
+    "coverageColumns": {
+      "country": "Country",
+      "document": "Document type",
+      "reading": "What is read"
+    },
+    "coverageEmpty": "No documents for this search",
+    "coverageRows": [
+      {
+        "region": "americas",
+        "country": "Canada",
+        "document": "Driver licence",
+        "reading": "Name, birth date, number, expiry"
+      },
+      {
+        "region": "americas",
+        "country": "United States",
+        "document": "Driver licence",
+        "reading": "Name, address, birth date, expiry"
+      },
+      {
+        "region": "americas",
+        "country": "Brazil",
+        "document": "National ID",
+        "reading": "Name, birth date, number"
+      },
+      {
+        "region": "europe",
+        "country": "France",
+        "document": "National ID card",
+        "reading": "Name, birth date, number, expiry"
+      },
+      {
+        "region": "europe",
+        "country": "France",
+        "document": "Passport",
+        "reading": "Name, birth date, number, expiry, MRZ"
+      },
+      {
+        "region": "europe",
+        "country": "United Kingdom",
+        "document": "Passport",
+        "reading": "Name, birth date, number, expiry, MRZ"
+      },
+      {
+        "region": "europe",
+        "country": "Germany",
+        "document": "National ID",
+        "reading": "Name, birth date, number, expiry"
+      },
+      {
+        "region": "africa",
+        "country": "South Africa",
+        "document": "National ID",
+        "reading": "Name, birth date, number"
+      },
+      {
+        "region": "africa",
+        "country": "Nigeria",
+        "document": "Passport",
+        "reading": "Name, birth date, number, expiry, MRZ"
+      },
+      {
+        "region": "mena",
+        "country": "United Arab Emirates",
+        "document": "National ID",
+        "reading": "Name, birth date, number, expiry"
+      },
+      {
+        "region": "apac",
+        "country": "India",
+        "document": "Aadhaar",
+        "reading": "Name, birth date, number"
+      },
+      {
+        "region": "apac",
+        "country": "Australia",
+        "document": "Driver licence",
+        "reading": "Name, address, birth date, expiry"
       }
     ],
     "stepsEyebrow": "The flow",
@@ -375,7 +755,7 @@
     "catalogLead": "We would rather say it than let you assume it: identity verification is the only product billed today.",
     "catalogNote": "Biometric authentication and AML screening cannot be enabled, are not priced, and are not exposed through the API. No launch date is announced.",
     "closingEyebrow": "Try it",
-    "closingTitle": "Your first verification, without talking to a salesperson",
+    "closingTitle": "Your first verification, with no card and no commitment.",
     "closingBody": "Create an account, collect the sandbox key and run the whole flow. Nothing billed, no card requested.",
     "closingNote": "A sales contact exists. It is not the way in.",
     "closingListTitle": "What you have in hand straight away",

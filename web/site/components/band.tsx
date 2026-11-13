@@ -25,6 +25,7 @@ export function Band({
   tight = false,
   labelledBy,
   id,
+  className,
   /** `text` resserre sur la largeur de lecture confortable (45 rem). */
   width,
 }: {
@@ -34,12 +35,13 @@ export function Band({
   tight?: boolean;
   labelledBy?: string;
   id?: string;
+  className?: string;
   width?: "text";
 }) {
   return (
     <section
       id={id}
-      className="rm-band"
+      className={["rm-band", className].filter(Boolean).join(" ")}
       data-tone={tone}
       data-mesh={mesh ? "true" : undefined}
       data-tight={tight ? "true" : undefined}

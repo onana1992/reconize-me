@@ -34,9 +34,13 @@
     "pricing": "Tarifs",
     "services": "Services",
     "company": "Entreprise",
+    "about": "À propos de nous",
+    "contactUs": "Contactez-nous",
     "security": "Sécurité",
+    "resources": "Ressources",
     "docs": "Documentation",
-    "getVerified": "Comment se faire vérifier",
+    "supportedDocuments": "Pays et pièces supportées",
+    "blog": "Blog",
     "contact": "Contact",
     "terms": "Conditions générales",
     "privacy": "Confidentialité",
@@ -62,7 +66,7 @@
     "resources": "Ressources",
     "legal": "Légal",
     "rights": "Tous droits réservés.",
-    "honesty": "Nous n’affichons aucune certification que nous n’avons pas obtenue."
+    "description": "Recogniz-Me accompagne les entreprises dans la sécurisation de leurs parcours clients grâce à une plateforme complète de vérification d’identité, de gestion de la confiance et de prévention de la fraude."
   },
   "products": {
     "idv": {
@@ -73,19 +77,19 @@
     "biometric": {
       "name": "Authentification biométrique",
       "tagline": "Reconnaître un client déjà vérifié.",
-      "summary": "Ré-authentifier une personne par son visage, sans lui redemander sa pièce d’identité. Sur notre feuille de route, pas encore livrable."
+      "summary": "Ré-authentifier une personne par son visage, sans lui redemander sa pièce d’identité."
     },
     "aml": {
       "name": "Criblage AML",
       "tagline": "Personnes exposées, sanctions, presse défavorable.",
-      "summary": "Confronter une identité vérifiée aux listes de sanctions et aux registres de personnes politiquement exposées. Sur notre feuille de route, pas encore livrable."
+      "summary": "Confronter une identité vérifiée aux listes de sanctions et aux registres de personnes politiquement exposées."
     }
   },
   "home": {
     "metaTitle": "Vérification d’identité pour les entreprises",
     "metaDescription": "Vérifiez une identité en temps réel : document, biométrie et décision, via API ou lien hébergé. Sandbox gratuit.",
-    "title": "Vérifiez les identités. Réduisez la fraude. Restez conforme.",
-    "lead": "Une plateforme SaaS pour des contrôles d’identité rapides et sûrs, la validation de documents et le KYC/AML — simple pour l’utilisateur, complète pour l’entreprise.",
+    "title": "Confiance instantanée, conformité durable.",
+    "lead": "Une vérification d’identité par l’IA, rapide pour le client, solide pour le dossier.",
     "heroNote": "Sandbox gratuit, sans carte bancaire.",
     "hero": {
       "verdictTitle": "Décision rendue",
@@ -143,27 +147,403 @@
     ],
     "metricsScreenTitle": "POST /v1/verifications",
     "benefitsEyebrow": "Ce que ça change",
-    "benefitsTitle": "Quatre raisons de vérifier plutôt que de déclarer",
+    "benefitsTitle": "Vérifier efficacement et éliminer les risques de fraude.",
+    "benefitsLead": "Quatre leviers pour répondre aux attentes des équipes produit et conformité en matière de vérification d’identité en ligne.",
     "benefits": [
       {
         "glyph": "frame",
-        "title": "Moins d’abandons à l’entrée",
-        "body": "Les contrôles de qualité tournent pendant la capture. Une photo inexploitable est reprise sur place, pas refusée dix minutes plus tard par courriel."
-      },
-      {
-        "glyph": "ledger",
-        "title": "De quoi se justifier plus tard",
-        "body": "Le consentement horodaté, la version du texte accepté, les signaux et la décision sont conservés ensemble. C’est ce qui se montre à un régulateur."
-      },
-      {
-        "glyph": "match",
-        "title": "Le porteur, pas seulement la pièce",
-        "body": "Une pièce authentique dans les mains de quelqu’un d’autre ne passe pas : le visage est comparé au document et la présence réelle est contrôlée."
+        "title": "Fluidifier l’expérience utilisateur",
+        "body": "Simplifier le parcours de vérification pour réduire les frictions et limiter les abandons."
       },
       {
         "glyph": "api",
-        "title": "Une intégration, pas un projet",
-        "body": "Un POST, un GET, une clé sandbox dès l’inscription. Passer en live ne change pas votre code, seulement le préfixe de la clé."
+        "title": "Accélérer la vérification d’identité",
+        "body": "Réduire les délais de contrôle grâce à des processus rapides et automatisés."
+      },
+      {
+        "glyph": "shield",
+        "title": "Renforcer la prévention de la fraude",
+        "body": "Détecter les identités frauduleuses, les documents falsifiés et les tentatives d’usurpation."
+      },
+      {
+        "glyph": "ledger",
+        "title": "Garantir la conformité réglementaire",
+        "body": "Répondre aux exigences KYC et réglementaires tout en assurant la traçabilité des vérifications."
+      }
+    ],
+    "servicesTitle": "De l’identité au criblage",
+    "servicesLead": "Trois services qui s’enchaînent pour sécuriser l’entrée en relation : vérifier qui est la personne, la reconnaître ensuite, puis la confronter aux listes.",
+    "servicesTabsLabel": "Services",
+    "services": [
+      {
+        "key": "idv",
+        "nav": "Vérification d’identité",
+        "badge": "Identité",
+        "title": "Vérifier qui est la personne",
+        "summary": "Pièce, visage et présence réelle dans un seul parcours. Une décision motivée, lisible pour votre client et pour votre conformité.",
+        "cards": [
+          {
+            "glyph": "frame",
+            "title": "Capturer la pièce",
+            "body": "Le client cadre son document. Le parcours détecte le flou, le reflet et la coupe, et demande une reprise sur place."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Lire le document",
+            "body": "Le type de pièce est reconnu. Les champs utiles — nom, naissance, numéro, expiration — sont extraits."
+          },
+          {
+            "glyph": "match",
+            "title": "Confirmer le visage",
+            "body": "Un selfie vérifie la présence réelle et la correspondance avec le portrait de la pièce."
+          },
+          {
+            "glyph": "shield",
+            "title": "Recevoir la décision",
+            "body": "Issue claire — approuvée, refusée ou à revoir — avec les motifs conservés au dossier."
+          }
+        ]
+      },
+      {
+        "key": "biometric",
+        "nav": "Authentification biométrique",
+        "badge": "Biométrie",
+        "title": "Reconnaître un client déjà vérifié",
+        "summary": "Sans redemander la pièce. Un visage suffit pour confirmer que c’est la même personne, au moment sensible.",
+        "cards": [
+          {
+            "glyph": "link",
+            "title": "S’appuyer sur la référence",
+            "body": "Le visage de référence est rattaché à une identité déjà vérifiée. Aucun nouveau dossier à constituer."
+          },
+          {
+            "glyph": "match",
+            "title": "Comparer le visage",
+            "body": "Un selfie court confirme que la personne présente est celle déjà connue de votre organisation."
+          },
+          {
+            "glyph": "frame",
+            "title": "Écarter le leurre",
+            "body": "Le contrôle bloque la photo d’écran et le portrait imprimé présenté à la caméra."
+          },
+          {
+            "glyph": "shield",
+            "title": "Recevoir la confirmation",
+            "body": "Même forme que la vérification d’identité : une issue claire et des motifs au dossier."
+          }
+        ]
+      },
+      {
+        "key": "aml",
+        "nav": "Criblage AML",
+        "badge": "AML",
+        "title": "Cribler avant d’engager la relation",
+        "summary": "Sanctions, personnes exposées et presse défavorable — avec une trace relisible pour le dossier de conformité.",
+        "cards": [
+          {
+            "glyph": "shield",
+            "title": "Croiser les sanctions",
+            "body": "Confronter l’identité vérifiée aux listes de sanctions internationales avant l’entrée en relation."
+          },
+          {
+            "glyph": "console",
+            "title": "Repérer les personnes exposées",
+            "body": "Signaler une personne politiquement exposée, ou un proche, pour le niveau de vigilance adapté."
+          },
+          {
+            "glyph": "ledger",
+            "title": "Remonter la presse",
+            "body": "Faire remonter les mentions de presse rattachées à la personne, utiles au dossier de conformité."
+          },
+          {
+            "glyph": "webhook",
+            "title": "Conserver la trace",
+            "body": "Chaque criblage laisse une trace relisible : date, sources consultées, résultat et motifs."
+          }
+        ]
+      }
+    ],
+    "industriesTitle": "La vérification d’identité au service de votre secteur",
+    "industriesLead": "Des solutions pensées pour répondre aux enjeux de sécurité, de fluidité et de conformité de chaque industrie.",
+    "industriesTabsLabel": "Secteurs d’activité",
+    "industriesAsideEyebrow": "Le moment de risque",
+    "industries": [
+      {
+        "key": "banking",
+        "label": "Banque & Fintech",
+        "body": "Sécuriser l’ouverture de comptes, fluidifier l’onboarding et répondre aux exigences KYC. La décision arrive motivée : votre conformité relit le dossier, votre client légitime ne décroche pas.",
+        "points": [
+          "Contrôle KYC à l’entrée en relation et à l’ouverture de compte",
+          "Pièce, visage et présence réelle dans un seul parcours",
+          "Décision et motifs conservés pour le dossier de conformité",
+          "Lien hébergé ou API, sandbox gratuit pour intégrer"
+        ],
+        "aside": "L’ouverture du compte et le premier versement. C’est là que la fraude se présente, et que le bon client ne doit pas attendre."
+      },
+      {
+        "key": "insurance",
+        "label": "Assurance",
+        "body": "Vérifier l’identité des assurés et limiter les risques d’usurpation et de fraude. Une pièce authentique, un visage présent, une décision que votre équipe peut défendre.",
+        "points": [
+          "Vérification à la souscription et au changement de bénéficiaire",
+          "Écarter les documents falsifiés et les usurpations d’identité",
+          "Dossier relisible pour la conformité et le contentieux",
+          "Parcours sur mobile, sans application à installer"
+        ],
+        "aside": "La souscription et le sinistre. Deux moments où une identité douteuse coûte cher — et où une friction inutile fait perdre un client."
+      },
+      {
+        "key": "telecom",
+        "label": "Télécommunications",
+        "body": "Fiabiliser la souscription en ligne et sécuriser l’activation des lignes. Le parcours tient sur un téléphone : capture guidée, reprises immédiates, décision en quelques minutes.",
+        "points": [
+          "Contrôle d’identité avant l’activation de la ligne",
+          "Réduction des abandons grâce à une capture guidée",
+          "Décision motivée pour les équipes fraude et support",
+          "Intégration par API ou lien à transmettre au client"
+        ],
+        "aside": "La souscription et l’activation. Une ligne ouverte sur une fausse identité, c’est de la fraude dès le premier jour."
+      },
+      {
+        "key": "commerce",
+        "label": "E-commerce & Marketplaces",
+        "body": "Vérifier les utilisateurs, sécuriser les transactions et prévenir les comptes frauduleux. Vendeur comme acheteur : la même preuve d’identité, avant le premier paiement ou le premier retrait.",
+        "points": [
+          "Vérification du vendeur et de l’acheteur",
+          "Contrôle avant un paiement ou un retrait à risque",
+          "Blocage des comptes synthétiques et des pièces falsifiées",
+          "Sandbox pour tester le parcours avant la mise en live"
+        ],
+        "aside": "Le premier paiement et le premier retrait. C’est là que la plateforme engage sa responsabilité — et sa réputation."
+      },
+      {
+        "key": "mobility",
+        "label": "Mobilité & Location",
+        "body": "Confirmer l’identité des clients et sécuriser les réservations et les contrats. Le contrôle tient sur le téléphone du conducteur, sans friction inutile au guichet.",
+        "points": [
+          "Vérification à la réservation et à la prise en charge",
+          "Présence réelle pour écarter la photo d’écran",
+          "Décision motivée pour le contrat et l’assurance",
+          "Parcours hébergé, français et anglais"
+        ],
+        "aside": "La réservation et la remise des clés. Un conducteur non vérifié, c’est un risque pour le véhicule, le contrat et l’assurance."
+      },
+      {
+        "key": "hr",
+        "label": "Ressources humaines & Recrutement",
+        "body": "Vérifier l’identité des candidats et sécuriser l’intégration des collaborateurs. La preuve est prise avant le premier jour, et le dossier reste disponible pour vos contrôles internes.",
+        "points": [
+          "Contrôle d’identité avant l’embauche ou l’intégration",
+          "Décision et motifs pour le dossier RH",
+          "Parcours distant, sans déplacement au siège",
+          "Cloisonnement par organisation : vos candidats restent les vôtres"
+        ],
+        "aside": "L’offre et le premier jour. Une identité non vérifiée expose l’employeur autant que l’équipe qui accueille."
+      }
+    ],
+    "platformEyebrow": "La plateforme",
+    "platformTitle": "Tous les contrôles dans un même flux",
+    "platformLead": "Commencez par un module, ajoutez-en d’autres sans changer d’outil ni réécrire votre intégration.",
+    "platformMore": "En savoir plus",
+    "platformModules": [
+      {
+        "key": "idv",
+        "title": "Vérification d’identité",
+        "body": "Pièce, visage, présence et décision dans un seul parcours.",
+        "featured": true,
+        "route": "identityVerification"
+      },
+      {
+        "key": "liveness",
+        "title": "Biométrie",
+        "body": "Confirmer qu’une personne réelle est devant la caméra.",
+        "featured": true,
+        "route": "none"
+      },
+      {
+        "key": "face-match",
+        "title": "Correspondance du visage",
+        "body": "Le selfie comparé au portrait de la pièce.",
+        "featured": true,
+        "route": "none"
+      },
+      {
+        "key": "biometric",
+        "title": "Authentification biométrique",
+        "body": "Reconnaître un client déjà vérifié, sans redemander la pièce.",
+        "featured": false,
+        "route": "biometricAuthentication"
+      },
+      {
+        "key": "aml",
+        "title": "Criblage AML",
+        "body": "Sanctions, personnes politiquement exposées, presse défavorable.",
+        "featured": false,
+        "route": "amlScreening"
+      },
+      {
+        "key": "poa",
+        "title": "Preuve d’adresse",
+        "body": "Justifier une adresse à partir d’un document.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "age",
+        "title": "Vérification d’âge",
+        "body": "Confirmer un seuil d’âge sans exposer tout le dossier.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "fraud",
+        "title": "Fraude",
+        "body": "Signaux croisés entre documents, appareils et tentatives répétées.",
+        "featured": false,
+        "route": "none"
+      },
+      {
+        "key": "kyb",
+        "title": "KYB",
+        "body": "Société, dirigeants et bénéficiaires effectifs.",
+        "featured": false,
+        "route": "none"
+      }
+    ],
+    "journeyEyebrow": "Le parcours",
+    "journeyTitle": "De la photo à la décision, sans étape inutile",
+    "journeyLead": "Une capture guidée sur le téléphone du client, puis une issue claire pour votre équipe.",
+    "journeyStepsLabel": "Étapes du parcours",
+    "journeySteps": [
+      {
+        "key": "capture",
+        "title": "Capture assistée",
+        "body": "Le cadre détecte le flou, le reflet et la pièce coupée pendant la prise de vue.",
+        "screenLabel": "Écran de capture assistée",
+        "screenTitle": "Cadrez votre pièce",
+        "screenNote": "Reprenez, la photo est floue"
+      },
+      {
+        "key": "document",
+        "title": "Lecture du document",
+        "body": "Le type de pièce est reconnu. Les champs utiles sont extraits.",
+        "screenLabel": "Écran de lecture du document",
+        "screenTitle": "Document reconnu",
+        "screenNote": "Nom, naissance, numéro, expiration"
+      },
+      {
+        "key": "decision",
+        "title": "Visage et décision",
+        "body": "Présence réelle, comparaison au portrait, puis une issue claire.",
+        "screenLabel": "Écran de décision",
+        "screenTitle": "Identité confirmée",
+        "screenNote": "Pièce, visage et présence concordent"
+      }
+    ],
+    "journeyDocKind": "Pièce d’identité",
+    "journeyFieldsLabel": "Champs",
+    "journeySignalsLabel": "Signaux",
+    "journeySignalDocument": "Pièce authentique",
+    "journeySignalFace": "Visage correspondant",
+    "journeySignalPresence": "Présence confirmée",
+    "journeyVerdict": "Identité confirmée",
+    "coverageEyebrow": "Couverture",
+    "coverageTitle": "Les documents pris en charge, dans le monde",
+    "coverageLead": "Des milliers de pièces, dans plus de 200 pays — le même parcours, quel que soit le marché.",
+    "coverageMetrics": [
+      { "value": "200+", "label": "pays" },
+      { "value": "12 000+", "label": "documents" },
+      { "value": "40+", "label": "langues" }
+    ],
+    "coverageSearchLabel": "Rechercher un pays ou un document",
+    "coverageSearchPlaceholder": "Pays ou type de document",
+    "coverageFiltersLabel": "Filtrer par région",
+    "coverageFilters": [
+      { "key": "all", "label": "Tous" },
+      { "key": "americas", "label": "Amériques" },
+      { "key": "europe", "label": "Europe" },
+      { "key": "africa", "label": "Afrique" },
+      { "key": "mena", "label": "Moyen-Orient" },
+      { "key": "apac", "label": "Asie-Pacifique" }
+    ],
+    "coverageColumns": {
+      "country": "Pays",
+      "document": "Type de document",
+      "reading": "Ce qui est lu"
+    },
+    "coverageEmpty": "Aucun document pour cette recherche",
+    "coverageRows": [
+      {
+        "region": "americas",
+        "country": "Canada",
+        "document": "Permis de conduire",
+        "reading": "Nom, naissance, numéro, expiration"
+      },
+      {
+        "region": "americas",
+        "country": "États-Unis",
+        "document": "Permis de conduire",
+        "reading": "Nom, adresse, naissance, expiration"
+      },
+      {
+        "region": "americas",
+        "country": "Brésil",
+        "document": "Carte d’identité",
+        "reading": "Nom, naissance, numéro"
+      },
+      {
+        "region": "europe",
+        "country": "France",
+        "document": "Carte nationale d’identité",
+        "reading": "Nom, naissance, numéro, expiration"
+      },
+      {
+        "region": "europe",
+        "country": "France",
+        "document": "Passeport",
+        "reading": "Nom, naissance, numéro, expiration, bande MRZ"
+      },
+      {
+        "region": "europe",
+        "country": "Royaume-Uni",
+        "document": "Passeport",
+        "reading": "Nom, naissance, numéro, expiration, bande MRZ"
+      },
+      {
+        "region": "europe",
+        "country": "Allemagne",
+        "document": "Carte d’identité",
+        "reading": "Nom, naissance, numéro, expiration"
+      },
+      {
+        "region": "africa",
+        "country": "Afrique du Sud",
+        "document": "Carte d’identité",
+        "reading": "Nom, naissance, numéro"
+      },
+      {
+        "region": "africa",
+        "country": "Nigeria",
+        "document": "Passeport",
+        "reading": "Nom, naissance, numéro, expiration, bande MRZ"
+      },
+      {
+        "region": "mena",
+        "country": "Émirats arabes unis",
+        "document": "Carte d’identité",
+        "reading": "Nom, naissance, numéro, expiration"
+      },
+      {
+        "region": "apac",
+        "country": "Inde",
+        "document": "Aadhaar",
+        "reading": "Nom, naissance, numéro"
+      },
+      {
+        "region": "apac",
+        "country": "Australie",
+        "document": "Permis de conduire",
+        "reading": "Nom, adresse, naissance, expiration"
       }
     ],
     "stepsEyebrow": "Le parcours",
@@ -375,7 +755,7 @@
     "catalogLead": "Nous préférons le dire que le laisser croire : seule la vérification d’identité est vendue aujourd’hui.",
     "catalogNote": "L’authentification biométrique et le criblage AML ne sont ni activables, ni tarifés, ni exposés en API. Aucune date d’ouverture n’est annoncée.",
     "closingEyebrow": "Essayer",
-    "closingTitle": "Votre première vérification, sans parler à un commercial",
+    "closingTitle": "Votre première vérification, sans carte et sans engagement.",
     "closingBody": "Créez un compte, récupérez la clé sandbox et lancez le parcours complet. Aucun appel facturé, aucune carte demandée.",
     "closingNote": "Un contact commercial existe. Ce n’est pas le chemin d’entrée.",
     "closingListTitle": "Ce que vous avez en main tout de suite",

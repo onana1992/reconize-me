@@ -3,7 +3,6 @@ import { Wordmark } from "@/brand";
 import type { Locale } from "../lib/locales";
 import { getMessages } from "../lib/messages";
 import { FOOTER_NAV, href } from "../lib/routes";
-import { CONTACT_EMAIL } from "../lib/site-config";
 import { LanguageSwitch } from "./language-switch";
 
 /* Composant serveur : le pied de page n'a pas besoin de l'URL courante. Seule
@@ -24,10 +23,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             >
               <Wordmark size={24} />
             </Link>
-            <p className="rm-footer-baseline">{messages.meta.baseline}</p>
-            <p className="rm-hint">
-              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-            </p>
+            <p className="rm-footer-baseline">{messages.footer.description}</p>
           </div>
 
           {FOOTER_NAV.map((group) => (
@@ -49,8 +45,6 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <span>
             © {new Date().getFullYear()} {messages.meta.siteName}. {messages.footer.rights}
           </span>
-          {/* Règle de vérité CDC §8.3 : l'absence de certification s'écrit. */}
-          <span>{messages.footer.honesty}</span>
         </div>
       </div>
     </footer>

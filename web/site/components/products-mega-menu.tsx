@@ -86,15 +86,7 @@ export function ProductsMegaMenu({
                         <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0">
-                        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                          {product.name}
-                          <span
-                            className="rm-badge text-[0.65rem]"
-                            data-tone={product.available ? "success" : "neutral"}
-                          >
-                            {product.badge}
-                          </span>
-                        </span>
+                        <span className="text-sm font-semibold">{product.name}</span>
                         <span className="mt-1 block text-[13px] leading-snug text-rm-text-muted group-hover:text-rm-text">
                           {product.note}
                         </span>

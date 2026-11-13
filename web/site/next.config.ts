@@ -9,6 +9,8 @@ const RETIRED_PATHS = [
   "/company",
   "/security",
   "/docs",
+  "/resources/supported-documents",
+  "/blog",
   "/contact",
   "/legal/terms",
   "/legal/privacy",
