@@ -1,0 +1,37 @@
+Tâche : produire un fichier d'annotation COCO de référence (gabarit de vérification) à partir de l'image de pièce jointe.
+
+## Méthode
+1. Lis la taille de l'image avec Python.
+2. Localise le texte avec Tesseract (agrandissement x2 ou x4, `--psm 11`). Resserre ensuite chaque boîte sur les pixels : pixels sombres pour les valeurs, couleur du libellé pour les libellés. Pour la photo et le contour de la carte, affine les bords par détection de gradient.
+3. Affiche le résultat sur l'image et contrôle-le visuellement. Corrige ce qui est décalé avant de livrer.
+4. Corrige toi-même les erreurs d'OCR sur la position, jamais en inventant une boîte.
+
+## Rôles (un seul par catégorie)
+- `document` : rectangle de la carte. Une seule catégorie. Origine de la projection.
+- `fixed` : élément identique sur toutes les cartes de cette version (logo, titre, emblème, texte légal constant). Contrôle : ressemblance du crop.
+- `value` : texte qui varie d'une carte à l'autre. Contrôle : position de `bbox_value`, puis OCR et règles de contenu. Son libellé imprimé (`bbox_label`) est traité comme `fixed`.
+- `region` : photo, signature, zone dont on vérifie seulement la présence et la position. Pas d'OCR d'identité.
+En cas de doute sur un rôle, choisis le plus probable et signale-le dans ton rapport.
+
+## Format COCO (strict)
+- `info` : description, version, `bbox_format` = "[x, y, largeur, hauteur] en pixels, origine en haut à gauche, pour bbox, attributes.bbox_value et attributes.bbox_label", et `roles` (définition de chaque rôle).
+- `categories` : uniquement `id`, `name`, `role`. Pas de `supercategory`. Noms en snake_case français sans accents (ex. : `numero_permis`, `date_naissance`, `photo`, `signature`).
+- `annotations` : `id`, `image_id`, `category_id`, `bbox` (= champ complet, libellé + valeur), `area`, `iscrowd` = 0, `segmentation` (rectangle).
+- Seules les catégories `value` ont `attributes` : `bbox_value` et `bbox_label` (`null` s'il n'y a pas de libellé imprimé). Toutes les boîtes sont en [x, y, largeur, hauteur].
+- Aucune transcription de texte dans les fichiers.
+
+## Confidentialité
+Si la pièce semble réelle (nom, adresse, photo d'une personne), annote uniquement les positions. Ne retranscris aucune donnée personnelle, ni dans les fichiers ni dans ta réponse.
+
+## Vérifications automatiques à exécuter (et à rapporter)
+- Une seule catégorie `document`.
+- Toutes les boîtes sont dans l'image, avec largeur et hauteur positives.
+- Toutes les boîtes non `document` sont dans le rectangle de la carte.
+- Chaque `bbox_value` et `bbox_label` est contenu dans la `bbox` de son champ.
+- Les identifiants sont uniques et les `category_id` existent.
+
+## Livrables
+`annotations_coco.json`, `verification_visuelle.png` (couleur par rôle), le tout dans un zip.
+
+## Réponse finale (courte)
+Catégories par rôle, décisions ambiguës, résultat des vérifications, et rappel que la précision est d'environ 1 à 3 pixels sans garantie d'exactitude (à valider dans CVAT ou Label Studio).
