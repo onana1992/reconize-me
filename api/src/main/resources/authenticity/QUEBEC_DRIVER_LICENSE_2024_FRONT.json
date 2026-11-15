@@ -1,0 +1,51 @@
+{
+  "documentId": "QUEBEC_DRIVER_LICENSE:2024:FRONT",
+  "code": "QUEBEC_DRIVER_LICENSE",
+  "version": "2024",
+  "side": "FRONT",
+  "status": "DRAFT",
+  "aspectRatio": 1.582,
+  "aspectTolerance": 0.01,
+  "regions": [
+    {
+      "name": "portrait",
+      "box": [0.0729, 0.0769, 0.2401, 0.6779],
+      "role": "security",
+      "method": "CONTRAST",
+      "minContrast": 40,
+      "searchMargin": 0.01
+    },
+    {
+      "name": "documentNumber",
+      "box": [0.3769, 0.1587, 0.4681, 0.0865],
+      "role": "text"
+    },
+    {
+      "name": "fleurDeLis",
+      "box": [0.8511, 0.1346, 0.1277, 0.1827],
+      "role": "security",
+      "method": "CONTRAST",
+      "minContrast": 16,
+      "searchMargin": 0.01
+    }
+  ],
+  "colors": [
+    {
+      "name": "background",
+      "box": [0.7173, 0.0288, 0.1216, 0.0769],
+      "lab": [93.19, -0.57, -3.48],
+      "tolerance": 10
+    }
+  ],
+  "fonts": [
+    {
+      "region": "documentNumber",
+      "family": "quebec-license-number",
+      "sizeRatio": 0.0625,
+      "sizeTolerance": 0.08,
+      "tracking": 0.375,
+      "trackingTolerance": 0.35
+    }
+  ],
+  "encoded": { "kind": "NONE" }
+}

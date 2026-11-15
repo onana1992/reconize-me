@@ -54,9 +54,7 @@ export const PRODUCT_NAV: RouteKey[] = [
 
 export const COMPANY_NAV = ["company", "contact"] as const satisfies readonly RouteKey[];
 
-export const RESOURCE_NAV = ["docs", "supportedDocuments", "blog", "pricing"] as const satisfies readonly RouteKey[];
-
-export const LEGAL_NAV = ["terms", "privacy", "dpa"] as const satisfies readonly RouteKey[];
+export const RESOURCE_NAV = ["docs", "supportedDocuments", "blog"] as const satisfies readonly RouteKey[];
 
 export const FOOTER_NAV: { heading: "products" | "resources" | "legal"; items: RouteKey[] }[] = [
   {

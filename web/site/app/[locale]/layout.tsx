@@ -10,7 +10,7 @@ import { PRODUCT_ORDER, PRODUCT_ROUTE } from "../../lib/catalog";
 import { DEFAULT_LOCALE, LOCALES, isLocale, type Locale } from "../../lib/locales";
 import { getMessages } from "../../lib/messages";
 import { metadataBase } from "../../lib/metadata";
-import { COMPANY_NAV, LEGAL_NAV, PRODUCT_NAV, RESOURCE_NAV } from "../../lib/routes";
+import { COMPANY_NAV, PRODUCT_NAV, RESOURCE_NAV } from "../../lib/routes";
 import { INDEXABLE } from "../../lib/site-config";
 
 /*
@@ -128,11 +128,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
     name: messages.nav[route],
   }));
 
-  const legalLinks = LEGAL_NAV.map((route) => ({
-    route,
-    name: messages.nav[route],
-  }));
-
   return (
     <html
       lang={locale}
@@ -158,12 +153,10 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
             products={products}
             companyLinks={companyLinks}
             resourceLinks={resourceLinks}
-            legalLinks={legalLinks}
             labels={{
               nav: messages.nav,
               products: messages.nav.products,
               resources: messages.nav.resources,
-              legal: messages.footer.legal,
               signup: messages.actions.signup,
               login: messages.actions.login,
               mainNav: messages.a11y.mainNav,
