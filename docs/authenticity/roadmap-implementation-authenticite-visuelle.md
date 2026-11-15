@@ -3,7 +3,7 @@
 **Produit :** Recogniz-Me, Identity & Document Verification  
 **Version du document :** 1.0  
 **Date :** 15 novembre 2026  
-**Statut :** non commencé  
+**Statut :** A0 livré ; A1 non commencé  
 **Moteur :** `template-1`  
 **Document lié :** [`cahier-des-charges-authenticite-visuelle.md`](./cahier-des-charges-authenticite-visuelle.md) — le *quoi* (principe, COCO, contrôles, verdict)
 
@@ -131,7 +131,7 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 ## 6. Paliers
 
-### A0 — Banc Swagger
+### A0 — Banc Swagger — **livré**
 
 **But :** joindre le module sans logique image.
 
@@ -142,6 +142,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Sans clé → **401**. Flag éteint → **404**.
 
 **Fait quand :** les deux routes répondent ; aucune session créée.
+
+**As-built :** `AuthenticityController` `/v1/authenticity/**`, flag `kyc.authenticity.lab-enabled`, enveloppe `AuthenticityCheckResponse`, liste vide jusqu’à A1.
 
 ---
 

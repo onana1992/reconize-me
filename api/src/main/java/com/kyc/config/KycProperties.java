@@ -20,6 +20,7 @@ public record KycProperties(
         @DefaultValue Stripe stripe,
         @DefaultValue Aws aws,
         @DefaultValue DocumentIa documentIa,
+        @DefaultValue Authenticity authenticity,
         @DefaultValue OpenSanctions opensanctions,
         @DefaultValue AuditRetention audit) {
 
@@ -87,6 +88,8 @@ public record KycProperties(
     }
 
     public record DocumentIa(@DefaultValue("false") boolean labEnabled) {}
+
+    public record Authenticity(@DefaultValue("false") boolean labEnabled) {}
 
     public record AuditRetention(@DefaultValue("12") int retentionMonths) {}
 
