@@ -8,6 +8,7 @@
 **Documents liés :**
 
 - [`roadmap-implementation-authenticite-visuelle.md`](./roadmap-implementation-authenticite-visuelle.md) — ordre de construction (paliers A0–A6)
+- [`specification-fonctionnelle-a1-redressement.md`](./specification-fonctionnelle-a1-redressement.md) — contrat du palier A1 (registre, canevas, deux voies)
 - [`../DocumentIA/cahier-des-charges-document-ia.md`](../DocumentIA/cahier-des-charges-document-ia.md) — lecture et classification `vision-1`
 - [`../DocumentIA/roadmap-implementation-document-ia.md`](../DocumentIA/roadmap-implementation-document-ia.md) — le banc Swagger isolé, modèle de livraison
 - [`../specs/todo-conformite-canafe-idv.md`](../specs/todo-conformite-canafe-idv.md) — une approbation exige une authenticité évaluée et acceptée

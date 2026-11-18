@@ -3,7 +3,7 @@
 **Produit :** Recogniz-Me, Identity & Document Verification  
 **Version du document :** 1.0  
 **Date :** 15 novembre 2026  
-**Statut :** A0 livré ; A1 non commencé  
+**Statut :** A0 et A1 livrés  
 **Moteur :** `template-1`  
 **Document lié :** [`cahier-des-charges-authenticite-visuelle.md`](./cahier-des-charges-authenticite-visuelle.md) — le *quoi* (principe, COCO, contrôles, verdict)
 
@@ -149,6 +149,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 ### A1 — Redressement
 
+**Contrat :** [`specification-fonctionnelle-a1-redressement.md`](./specification-fonctionnelle-a1-redressement.md)
+
 **But :** carte au canevas dérivé du COCO.
 
 **À construire**
@@ -163,6 +165,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Photo sans carte → `verdict: a_verifier`, code `alignment_failed`.
 
 **Fait quand :** référence du gabarit se redresse ; image sans carte → `alignment_failed`.
+
+**As-built :** `TemplateRegistry` et `CardRectifier`. OpenCV via JavaCV. `until=rectify` renvoie `method` et `canvas` `[729, 457]`. Image grise → `a_verifier` / `alignment_failed`. Le `reference.png` du classpath est un spécimen géométrique 1280×813 : le remplacer par la photo réelle avant les paliers qui comparent les pixels.
 
 ---
 
@@ -179,6 +183,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Liste des boîtes projetées (nom, rôle, rectangle canevas) pour le gabarit chargé.
 
 **Fait quand :** le nombre de boîtes projetées = annotations non `document` du COCO ; toutes dans le canevas.
+
+**As-built :** `BoxProjector`. Chaque boîte hors `document` est translatée sur le rectangle de la carte, puis mise à l’échelle du canevas. `until=project` renvoie nom, rôle et rectangle. `until=rectify` laisse `project` à `null`. Alignement impossible : `project` reste `null`.
 
 ---
 
@@ -199,6 +205,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** référence auto-comparée passe ; marque absente tombe en `suspect` sur cet élément.
 
+**As-built :** `FixedMatcher`. NCC, seuils 0,75 / 0,50, marge 15 px. `until=fixed` score chaque catégorie `fixed` et chaque `bbox_label`. La référence comparée à elle-même est `conforme` sur chaque élément. Une marque masquée passe sous 0,50 et devient `suspect` ; les autres mesures restent là. Le verdict global reste `null` jusqu'à `decide`.
+
 ---
 
 ### A4 — Positions
@@ -215,6 +223,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Champ déplacé synthétiquement ≥ 35 px → `suspect`.
 
 **Fait quand :** référence auto-comparée conforme sur les positions ; déplacement synthétique détecté.
+
+**As-built :** `PositionMeasurer`. Pour chaque `value` et chaque `region`, la boîte attendue est `bbox_value` si elle existe, sinon `bbox`. La fenêtre dépasse cette boîte de 35 px. Le rectangle retenu est celui de l'encre (contenu visible pour une région), pas les pixels de la référence. L'IoU et le plus grand écart de bord (`left`, `top`, largeur, hauteur) donnent le statut (0,50 / 0,20 et 35 px). Aucun contenu donne `suspect` / `field_absent`. Une fenêtre sans contraste donne `a_verifier` / `zone_unmeasured`. `until=positions` laisse le verdict `null`.
 
 ---
 
@@ -233,6 +243,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Cas d’échec préparés → `suspect` ou `a_verifier` selon la table.
 
 **Fait quand :** les gates du cahier §14 sont verts sur le banc. Latence journalisée (`durationMs`) ; objectif indicatif p95 &lt; 500 ms.
+
+**As-built :** `AuthenticityVerdict`. `until=decide` pose le verdict après les mesures : un élément `suspect` donne `suspect`, sinon un `a_verifier`, sinon `conforme`. Les codes globaux sont ceux des éléments qui ont tranché (`field_absent`, `zone_unmeasured`). L'alignement manqué reste `a_verifier` / `alignment_failed` quel que soit `until`. Avant `decide`, le verdict reste `null`. La référence du permis comparée à elle-même est `conforme`. Une marque masquée donne `suspect`, les autres mesures restent là.
 
 ---
 

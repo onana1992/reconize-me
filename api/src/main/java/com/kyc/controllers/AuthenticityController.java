@@ -37,7 +37,7 @@ public class AuthenticityController {
     }
 
     @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Banc authenticité : enveloppe de contrôle, sans créer de vérification")
+    @Operation(summary = "Banc authenticité : redressement jusqu'au palier demandé, sans créer de vérification")
     public AuthenticityCheckResponse check(
             @Parameter(description = "Triplet code:version:side du gabarit") @RequestParam String documentId,
             @Parameter(description = "rectify, project, fixed, positions ou decide.")

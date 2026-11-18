@@ -14,12 +14,21 @@ public record AuthenticityCheckResponse(
         String documentId,
         String verdict,
         List<String> codes,
-        Object rectify,
-        Object fixed,
-        Object positions) {
+        RectifyBlock rectify,
+        List<ProjectedBoxBlock> project,
+        List<FixedBlock> fixed,
+        List<PositionBlock> positions) {
 
-    public static AuthenticityCheckResponse empty(String documentId, String stoppedAt) {
+    public static AuthenticityCheckResponse of(
+            String documentId,
+            String stoppedAt,
+            String verdict,
+            List<String> codes,
+            RectifyBlock rectify,
+            List<ProjectedBoxBlock> project,
+            List<FixedBlock> fixed,
+            List<PositionBlock> positions) {
         return new AuthenticityCheckResponse(
-                "template-1", stoppedAt, documentId, null, List.of(), null, null, null);
+                "template-1", stoppedAt, documentId, verdict, codes, rectify, project, fixed, positions);
     }
 }
