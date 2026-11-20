@@ -19,6 +19,9 @@ public class PositionMeasurer {
     private static final double FLAT_VARIANCE = 4;
     private static final int VALUE_INK_GAP = 36;
     private static final int REGION_INK_GAP = 18;
+    /** Une lettre grise reste de l'encre. Le fond, plus clair, est encore écarté par l'écart au papier. */
+    private static final int VALUE_INK_CEILING = 150;
+    private static final int REGION_INK_CEILING = 175;
     private static final int MIN_INK_PIXELS = 8;
 
     private final BoxProjector projector;
@@ -88,8 +91,7 @@ public class PositionMeasurer {
         int windowHeight = y1 - y0;
         int paper = paperLevel(image, imageWidth, x0, y0, x1, y1, box);
         int gap = "region".equals(box.role()) ? REGION_INK_GAP : VALUE_INK_GAP;
-        // Le plafond écarte le fond de sécurité, plus clair que l'encre et que la photo.
-        int ceiling = "region".equals(box.role()) ? 175 : 110;
+        int ceiling = "region".equals(box.role()) ? REGION_INK_CEILING : VALUE_INK_CEILING;
         int threshold = Math.min(paper - gap, ceiling);
         byte[] ink = new byte[windowWidth * windowHeight];
         int marks = 0;
