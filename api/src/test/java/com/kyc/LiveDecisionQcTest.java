@@ -38,7 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 
-@SpringBootTest
+@SpringBootTest(properties = "kyc.authenticity.lab-enabled=false")
 @AutoConfigureMockMvc
 @Transactional
 @Import(LiveDecisionQcTest.VisionLiveConfig.class)

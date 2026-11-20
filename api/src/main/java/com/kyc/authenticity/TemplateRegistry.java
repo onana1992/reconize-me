@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.opencv.global.opencv_core;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -32,7 +30,7 @@ public class TemplateRegistry {
     private final Map<String, AuthenticityTemplate> byId;
 
     public TemplateRegistry() {
-        Loader.load(opencv_core.class);
+        OpenCvNatives.load();
         List<AuthenticityTemplate> loaded = new ArrayList<>();
         try {
             Resource[] files = new PathMatchingResourcePatternResolver()

@@ -57,7 +57,10 @@ jobs:
   deploy:
     name: Déployer sur Render
     needs: [api, web]
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: |
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'pull_request') &&
+      needs.web.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Déclencher les déploiements

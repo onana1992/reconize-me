@@ -21,7 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+@SpringBootTest(properties = "kyc.authenticity.lab-enabled=false")
 @AutoConfigureMockMvc
 @Transactional
 @Import(SandboxScenarioIgnoredLiveTest.MismatchAwsConfig.class)
