@@ -15,6 +15,21 @@ import org.junit.jupiter.api.io.TempDir;
 class TemplateRegistryTest {
 
     @Test
+    void loadsTheShippedGabarits() {
+        List<String> ids = new TemplateRegistry().templates().stream()
+                .map(AuthenticityTemplate::documentId)
+                .toList();
+
+        assertEquals(
+                List.of(
+                        "CANADA_PERMANENT_RESIDENT:2015:BACK",
+                        "CANADA_PERMANENT_RESIDENT:2015:FRONT",
+                        "QUEBEC_DRIVER_LICENSE:2024:BACK",
+                        "QUEBEC_DRIVER_LICENSE:2024:FRONT"),
+                ids);
+    }
+
+    @Test
     void derivesCanvasFromDocumentBox(@TempDir Path directory) throws Exception {
         Path folder = directory.resolve("SAMPLE_CARD_2019_BACK");
         Files.createDirectories(folder);
