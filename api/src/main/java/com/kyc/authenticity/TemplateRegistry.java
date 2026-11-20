@@ -257,15 +257,24 @@ public class TemplateRegistry {
 
     private static AuthenticityTemplate readResource(Resource coco) throws IOException {
         String folder = folderName(coco);
-        Resource jpg = coco.createRelative("reference.jpg");
-        Resource png = coco.createRelative("reference.png");
-        boolean hasJpg = jpg.exists();
-        boolean hasPng = png.exists();
+        // Dans le jar nested de Spring Boot, createRelative().exists() répond vrai
+        // pour reference.jpg et reference.png, même si un seul des deux est présent.
+        ClassLoader loader = TemplateRegistry.class.getClassLoader();
+        if (loader == null) {
+            loader = Thread.currentThread().getContextClassLoader();
+        }
+        String base = "authenticity/" + folder + "/";
+        boolean hasJpg = loader.getResource(base + "reference.jpg") != null;
+        boolean hasPng = loader.getResource(base + "reference.png") != null;
         if (hasJpg == hasPng) {
             throw invalid(folder, "il faut un seul fichier reference.jpg ou reference.png");
         }
-        Resource image = hasJpg ? jpg : png;
-        try (InputStream imageStream = image.getInputStream(); InputStream cocoStream = coco.getInputStream()) {
+        String imageName = hasJpg ? "reference.jpg" : "reference.png";
+        try (InputStream imageStream = loader.getResourceAsStream(base + imageName);
+                InputStream cocoStream = loader.getResourceAsStream(base + "annotations.coco.json")) {
+            if (imageStream == null || cocoStream == null) {
+                throw invalid(folder, "lecture impossible");
+            }
             return load(folder, imageStream.readAllBytes(), cocoStream.readAllBytes());
         }
     }
