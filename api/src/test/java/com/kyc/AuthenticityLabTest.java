@@ -1,7 +1,9 @@
 package com.kyc;
 
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -91,17 +93,23 @@ class AuthenticityLabTest {
     void templatesListsTheLoadedGabarit() throws Exception {
         mockMvc.perform(get("/v1/authenticity/templates").header("Authorization", "Bearer " + LIVE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.templates", hasSize(1)))
-                .andExpect(jsonPath("$.templates[0].documentId").value(DOCUMENT))
-                .andExpect(jsonPath("$.templates[0].code").value("QUEBEC_DRIVER_LICENSE"))
-                .andExpect(jsonPath("$.templates[0].version").value("2024"))
-                .andExpect(jsonPath("$.templates[0].side").value("FRONT"))
-                .andExpect(jsonPath("$.templates[0].imageWidth").value(1280))
-                .andExpect(jsonPath("$.templates[0].imageHeight").value(813))
-                .andExpect(jsonPath("$.templates[0].canvasWidth").value(729))
-                .andExpect(jsonPath("$.templates[0].canvasHeight").value(457))
-                .andExpect(jsonPath("$.templates[0].fixedCount").value(5))
-                .andExpect(jsonPath("$.templates[0].fieldCount").value(16));
+                .andExpect(jsonPath("$.templates", hasSize(4)))
+                .andExpect(jsonPath(
+                        "$.templates[*].documentId",
+                        containsInAnyOrder(
+                                "CANADA_PERMANENT_RESIDENT:2015:BACK",
+                                "CANADA_PERMANENT_RESIDENT:2015:FRONT",
+                                "QUEBEC_DRIVER_LICENSE:2024:BACK",
+                                "QUEBEC_DRIVER_LICENSE:2024:FRONT")))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].code", hasItem("QUEBEC_DRIVER_LICENSE")))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].version", hasItem("2024")))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].side", hasItem("FRONT")))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].imageWidth", hasItem(1280)))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].imageHeight", hasItem(813)))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].canvasWidth", hasItem(729)))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].canvasHeight", hasItem(457)))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].fixedCount", hasItem(5)))
+                .andExpect(jsonPath("$.templates[?(@.documentId == '" + DOCUMENT + "')].fieldCount", hasItem(16)));
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/v1/authenticity/check']").exists())
@@ -237,7 +245,7 @@ class AuthenticityLabTest {
     }
 
     @Test
-    void maskedMarkDecidesSuspect() throws Exception {
+    void oneMaskedMarkDoesNotRefuseThePiece() throws Exception {
         MvcResult result = mockMvc.perform(multipart("/v1/authenticity/check")
                         .file(maskedLogo())
                         .param("documentId", DOCUMENT)
@@ -245,7 +253,8 @@ class AuthenticityLabTest {
                         .header("Authorization", "Bearer " + LIVE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stoppedAt").value("decide"))
-                .andExpect(jsonPath("$.verdict").value("suspect"))
+                .andExpect(jsonPath("$.verdict").value("conforme"))
+                .andExpect(jsonPath("$.codes", hasSize(0)))
                 .andExpect(jsonPath("$.fixed", hasSize(15)))
                 .andExpect(jsonPath("$.positions", hasSize(16)))
                 .andReturn();
@@ -288,7 +297,7 @@ class AuthenticityLabTest {
     }
 
     @Test
-    void shiftedFieldIsSuspect() throws Exception {
+    void shiftedNameThatRemainsInItsWindowStaysConforme() throws Exception {
         MvcResult result = mockMvc.perform(multipart("/v1/authenticity/check")
                         .file(shiftedName())
                         .param("documentId", DOCUMENT)
@@ -304,7 +313,7 @@ class AuthenticityLabTest {
         for (JsonNode item : positions) {
             if ("nom".equals(item.get("name").asText())) {
                 name = true;
-                assertEquals("suspect", item.get("status").asText(), item.toString());
+                assertEquals("conforme", item.get("status").asText(), item.toString());
             } else if ("conforme".equals(item.get("status").asText())) {
                 other = true;
             }

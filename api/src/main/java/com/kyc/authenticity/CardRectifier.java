@@ -32,6 +32,10 @@ import org.bytedeco.opencv.opencv_features2d.SIFT;
 @Component
 public class CardRectifier {
 
+    static {
+        OpenCvNatives.load();
+    }
+
     private static final int FEATURES = 2000;
     private final Object monitor = new Object();
     private final FixedMatcher marks = new FixedMatcher(new BoxProjector());
