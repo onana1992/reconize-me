@@ -82,16 +82,6 @@
       "role": "value"
     },
     {
-      "id": 13,
-      "name": "sexe",
-      "role": "value"
-    },
-    {
-      "id": 14,
-      "name": "nationalite",
-      "role": "value"
-    },
-    {
       "id": 15,
       "name": "date_naissance",
       "role": "value"
@@ -436,84 +426,6 @@
           622,
           369,
           66,
-          14
-        ]
-      }
-    },
-    {
-      "id": 13,
-      "image_id": 1,
-      "category_id": 13,
-      "bbox": [
-        622,
-        427,
-        58,
-        40
-      ],
-      "area": 2320,
-      "iscrowd": 0,
-      "segmentation": [
-        [
-          622,
-          427,
-          680,
-          427,
-          680,
-          467,
-          622,
-          467
-        ]
-      ],
-      "attributes": {
-        "bbox_value": [
-          622,
-          446,
-          20,
-          20
-        ],
-        "bbox_label": [
-          622,
-          428,
-          58,
-          14
-        ]
-      }
-    },
-    {
-      "id": 14,
-      "image_id": 1,
-      "category_id": 14,
-      "bbox": [
-        684,
-        427,
-        95,
-        40
-      ],
-      "area": 3800,
-      "iscrowd": 0,
-      "segmentation": [
-        [
-          684,
-          427,
-          779,
-          427,
-          779,
-          467,
-          684,
-          467
-        ]
-      ],
-      "attributes": {
-        "bbox_value": [
-          686,
-          446,
-          50,
-          20
-        ],
-        "bbox_label": [
-          684,
-          428,
-          95,
           14
         ]
       }
