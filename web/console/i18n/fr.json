@@ -590,6 +590,12 @@
       "noChecks": "Les contrôles s’affichent une fois les captures analysées.",
       "scoreLine": "Score {score}",
       "reasonsLine": "Motif : {reasons}",
+      "authenticityVerdicts": {
+        "conforme": "Conforme",
+        "suspect": "Suspect",
+        "a_verifier": "À vérifier",
+        "unsupported": "Gabarit absent"
+      },
       "checkNames": {
         "authenticity": "Authenticité de la pièce",
         "liveness": "Détection du vivant",
@@ -644,10 +650,14 @@
       "outcomes": {
         "pass": "Réussi",
         "fail": "Échec",
-        "unavailable": "Indisponible"
+        "unavailable": "Indisponible",
+        "review": "À vérifier"
       },
       "signalCodes": {
         "authenticity": "Authenticité (stub)",
+        "authenticityFailed": "Authenticité refusée",
+        "authenticityReview": "Authenticité à vérifier",
+        "authenticityUnsupported": "Authenticité sans gabarit",
         "livenessPass": "Liveness",
         "faceMatchPass": "Correspondance visages",
         "livenessFail": "Échec liveness",

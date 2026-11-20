@@ -224,7 +224,7 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** référence auto-comparée conforme sur les positions ; déplacement synthétique détecté.
 
-**As-built :** `PositionMeasurer`. Pour chaque `value` et chaque `region`, la boîte attendue est `bbox_value` si elle existe, sinon `bbox`. La fenêtre dépasse cette boîte de 35 px. Le rectangle retenu est celui de l'encre (contenu visible pour une région), pas les pixels de la référence. L'IoU et le plus grand écart de bord (`left`, `top`, largeur, hauteur) donnent le statut (0,50 / 0,20 et 35 px). Aucun contenu donne `suspect` / `field_absent`. Une fenêtre sans contraste donne `a_verifier` / `zone_unmeasured`. `until=positions` laisse le verdict `null`.
+**As-built :** `PositionMeasurer`. Pour chaque `value` et chaque `region`, la boîte attendue est `bbox_value` si elle existe, sinon `bbox`. La fenêtre dépasse cette boîte de 35 px. Le rectangle retenu est celui de l'encre (contenu visible pour une région), pas les pixels de la référence. Une encre plus courte ou plus longue reste `conforme` si elle part de la boîte et que sa hauteur ne s'écarte pas de 35 px. Un décalage du départ de ligne ou de la hauteur d'au moins 35 px est `suspect`. Aucun contenu donne `suspect` / `field_absent`. Une fenêtre sans contraste donne `a_verifier` / `zone_unmeasured`. `until=positions` laisse le verdict `null`. L'alignement par points masque ces mêmes champs sur la référence.
 
 ---
 
@@ -262,6 +262,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Le banc Swagger **reste**.
 
 **Fait quand :** une session live avec gabarit déposé produit le même verdict que le banc sur la même image ; une session sans gabarit pour la classe ne s’approuve pas.
+
+**As-built :** `AuthenticitySession`, appelée depuis `HostedFlowService` sur le recto live une fois la classe connue, seulement si `kyc.authenticity.lab-enabled` est vrai. `conforme` fige `authenticity_version = template-1` et le `documentId`. `suspect` devient `DECLINED` / `authenticity_failed` avant le visage, et un analyste ne peut pas approuver. `alignment_failed` ou `zone_unmeasured` redemandent la capture tant qu'il reste un essai. Une classe de recto sans gabarit donne `unsupported` et bloque l'approbation. Le verso est mesuré seulement si son gabarit est chargé ; sinon il est ignoré. Le pire verdict des faces mesurées est conservé. Le banc Swagger reste.
 
 **Hors A6 :** détection écran/photocopie ; verso / autres éditions (dossiers COCO supplémentaires seulement).
 

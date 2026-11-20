@@ -67,7 +67,6 @@ public final class MrzEngine {
         Reading reading = accept(edition.mrzFormat(), lines);
         List<NormalizedField> fields = new ArrayList<>();
         List<ValidationIssue> validation = new ArrayList<>(normalization.validation());
-        boolean mismatch = false;
         if (reading.valid()) {
             for (NormalizedField field : normalization.fields()) {
                 String mrzKey = mrzKey(field.field(), reading, today);
@@ -77,14 +76,7 @@ public final class MrzEngine {
                     continue;
                 }
                 if ("MRZ".equals(field.source()) && nameOrDate(field.field())) {
-                    fields.add(new NormalizedField(
-                            field.field(),
-                            mrzKey,
-                            mrzKey,
-                            mrzKey,
-                            field.confidence(),
-                            "MRZ",
-                            "VALID"));
+                    fields.add(fromMrz(field, mrzKey));
                     continue;
                 }
                 if (visual.equals(mrzKey)) {
@@ -94,19 +86,10 @@ public final class MrzEngine {
                             field.normalizedValue(),
                             field.comparisonKey(),
                             field.confidence(),
-                            "VISUAL_AND_MRZ",
+                            "MRZ".equals(field.source()) ? "MRZ" : "VISUAL_AND_MRZ",
                             field.validationStatus()));
                 } else {
-                    mismatch = true;
-                    fields.add(new NormalizedField(
-                            field.field(),
-                            field.value(),
-                            field.normalizedValue(),
-                            field.comparisonKey(),
-                            field.confidence(),
-                            field.source(),
-                            "MISMATCH"));
-                    validation.add(new ValidationIssue("L4", "mrz_mismatch", "WARNING", field.field()));
+                    fields.add(fromMrz(field, mrzKey));
                 }
             }
         } else {
@@ -116,8 +99,8 @@ public final class MrzEngine {
         if (reading.valid()) {
             alignExpiry(fields, validation, reading, today);
         }
-        double score = reading.valid() && !mismatch ? 1.0 : 0.4;
-        String status = !reading.valid() ? "FAILED" : mismatch ? "MISMATCH" : "VALID";
+        double score = reading.valid() ? 1.0 : 0.4;
+        String status = reading.valid() ? "VALID" : "FAILED";
         return new Outcome(
                 List.copyOf(fields),
                 List.copyOf(validation),
@@ -355,6 +338,18 @@ public final class MrzEngine {
         if (expiry.isBefore(today)) {
             validation.add(new ValidationIssue("L3", "document_expired", "ERROR", "expirationDate"));
         }
+    }
+
+    /** La bande aux chiffres de contrôle valides remplace la lecture visuelle divergente. */
+    private static NormalizedField fromMrz(NormalizedField field, String mrzKey) {
+        return new NormalizedField(
+                field.field(),
+                mrzKey,
+                mrzKey,
+                mrzKey,
+                field.confidence(),
+                "MRZ",
+                "VALID");
     }
 
     private static boolean nameOrDate(String field) {

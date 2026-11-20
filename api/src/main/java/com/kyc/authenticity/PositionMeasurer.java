@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 /**
  * Place le contenu de chaque champ {@code value} et de chaque {@code region} sur la carte redressée.
  * La fenêtre dépasse la boîte projetée de {@link TemplateEngine#MAX_SHIFT_PX}. Le contenu est le rectangle
- * de l'encre, ou du contenu visible pour une région. L'IoU et l'écart des bords décident du statut.
+ * de l'encre, ou du contenu visible pour une région. La boîte est une fenêtre : le contenu est conforme
+ * quand au moins la moitié reste dedans, ou quand le recouvrement atteint {@link TemplateEngine#IOU_PASS}.
+ * La règle est la même pour un champ et pour une région.
  */
 @Component
 public class PositionMeasurer {
@@ -39,11 +41,11 @@ public class PositionMeasurer {
         return List.copyOf(scores);
     }
 
-    static String status(double iou, int deltaPx) {
-        if (iou >= TemplateEngine.IOU_PASS && deltaPx < TemplateEngine.MAX_SHIFT_PX) {
+    static String status(double iou, double inside) {
+        if (iou >= TemplateEngine.IOU_PASS || inside >= 0.50) {
             return "conforme";
         }
-        if (iou < TemplateEngine.IOU_SUSPECT || deltaPx >= TemplateEngine.MAX_SHIFT_PX) {
+        if (iou < TemplateEngine.IOU_SUSPECT) {
             return "suspect";
         }
         return "a_verifier";
@@ -66,10 +68,14 @@ public class PositionMeasurer {
         }
         double iou = Math.round(iou(box.x(), box.y(), box.width(), box.height(), found[0], found[1], found[2], found[3]) * 10000.0)
                 / 10000.0;
-        int deltaPx = Math.max(
-                Math.max(Math.abs(found[0] - box.x()), Math.abs(found[1] - box.y())),
-                Math.max(Math.abs(found[2] - box.width()), Math.abs(found[3] - box.height())));
-        return new PositionScore(box.name(), box.role(), iou, deltaPx, status(iou, deltaPx), null);
+        int dLeft = Math.abs(found[0] - box.x());
+        int dTop = Math.abs(found[1] - box.y());
+        int dWidth = Math.abs(found[2] - box.width());
+        int dHeight = Math.abs(found[3] - box.height());
+        int deltaPx = Math.max(Math.max(dLeft, dTop), Math.max(dWidth, dHeight));
+        double inside = contained(box, found);
+        String decided = status(iou, inside);
+        return new PositionScore(box.name(), box.role(), iou, deltaPx, decided, null);
     }
 
     /**
@@ -243,6 +249,20 @@ public class PositionMeasurer {
             }
         }
         return 255;
+    }
+
+    /** Part du rectangle d'encre qui reste dans la boîte annotée. */
+    private static double contained(ProjectedBox box, int[] found) {
+        long area = (long) found[2] * found[3];
+        if (area <= 0) {
+            return 0;
+        }
+        int left = Math.max(box.x(), found[0]);
+        int top = Math.max(box.y(), found[1]);
+        int right = Math.min(box.x() + box.width(), found[0] + found[2]);
+        int bottom = Math.min(box.y() + box.height(), found[1] + found[3]);
+        long intersection = (long) Math.max(0, right - left) * Math.max(0, bottom - top);
+        return intersection / (double) area;
     }
 
     static double iou(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh) {

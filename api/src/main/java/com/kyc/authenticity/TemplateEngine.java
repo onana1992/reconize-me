@@ -2,7 +2,7 @@ package com.kyc.authenticity;
 
 /**
  * Constantes uniques du moteur {@code template-1}. Elles valent pour tous les gabarits.
- * Les seuils de ressemblance et de position sont ceux du cahier, section 6.3.
+ * Les seuils de ressemblance et de position sont ceux du cahier, section 6.3. Ils sont les mêmes pour chaque gabarit.
  */
 public final class TemplateEngine {
 

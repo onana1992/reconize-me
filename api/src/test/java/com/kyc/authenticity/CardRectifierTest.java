@@ -74,6 +74,25 @@ class CardRectifierTest {
     }
 
     @Test
+    void variableFieldsAreNotRequiredForAlignment() throws Exception {
+        AuthenticityTemplate template = quebec();
+        BufferedImage photo = new BufferedImage(
+                template.imageWidth(), template.imageHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = photo.createGraphics();
+        graphics.drawImage(template.reference(), 0, 0, null);
+        graphics.setColor(new Color(90, 90, 90));
+        for (SourceBox field : template.positionTargets()) {
+            graphics.fillRect(field.x(), field.y(), field.width(), field.height());
+        }
+        graphics.dispose();
+
+        Rectified aligned = rectifier.rectify(template, photo).orElseThrow();
+
+        assertEquals(729, aligned.image().getWidth());
+        assertEquals(457, aligned.image().getHeight());
+    }
+
+    @Test
     void flatImageDoesNotAlign() throws Exception {
         BufferedImage gray = new BufferedImage(640, 400, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = gray.createGraphics();

@@ -216,7 +216,7 @@ public class CardRectifier {
         Mat queryDesc = new Mat();
         Mat referenceDesc = new Mat();
         Mat queryMask = new Mat();
-        Mat referenceMask = new Mat();
+        Mat referenceMask = stableMask(referenceDetect, template);
         BFMatcher matcher = BFMatcher.create(
                 orb ? opencv_core.NORM_HAMMING : opencv_core.NORM_L2, false);
         DMatchVectorVector matches = new DMatchVectorVector();
@@ -331,6 +331,33 @@ public class CardRectifier {
             matcher.close();
             matches.close();
         }
+    }
+
+    /**
+     * Masque de la référence pour ORB et SIFT. Les champs variables (valeurs et régions) sont exclus :
+     * l'homographie s'appuie sur le dessin stable, pas sur le visage ni le texte d'une personne.
+     */
+    private static Mat stableMask(Mat referenceDetect, AuthenticityTemplate template) {
+        Mat mask = new Mat(
+                referenceDetect.rows(), referenceDetect.cols(), opencv_core.CV_8UC1, Scalar.all(255));
+        double scaleX = referenceDetect.cols() / (double) template.imageWidth();
+        double scaleY = referenceDetect.rows() / (double) template.imageHeight();
+        for (SourceBox field : template.positionTargets()) {
+            int x = Math.max(0, (int) Math.floor(field.x() * scaleX));
+            int y = Math.max(0, (int) Math.floor(field.y() * scaleY));
+            int right = Math.min(mask.cols(), (int) Math.ceil((field.x() + field.width()) * scaleX));
+            int bottom = Math.min(mask.rows(), (int) Math.ceil((field.y() + field.height()) * scaleY));
+            if (right <= x || bottom <= y) {
+                continue;
+            }
+            org.bytedeco.opencv.opencv_core.Rect rect = new org.bytedeco.opencv.opencv_core.Rect(x, y, right - x, bottom - y);
+            try {
+                opencv_imgproc.rectangle(mask, rect, new Scalar(0), opencv_imgproc.FILLED, 0, 0);
+            } finally {
+                rect.close();
+            }
+        }
+        return mask;
     }
 
     private static Mat scaledGray(Mat gray) {

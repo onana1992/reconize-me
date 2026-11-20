@@ -26,14 +26,26 @@ class AuthenticityVerdictTest {
     }
 
     @Test
-    void oneSuspectElementFailsTheDocument() {
+    void aMinorityOfSuspectZonesStaysConforme() {
+        AuthenticityVerdict.Decision decision = AuthenticityVerdict.decide(List.of(
+                new AuthenticityVerdict.Reading("conforme", null),
+                new AuthenticityVerdict.Reading("conforme", null),
+                new AuthenticityVerdict.Reading("suspect", null),
+                new AuthenticityVerdict.Reading("a_verifier", null)));
+
+        assertEquals("conforme", decision.verdict());
+        assertEquals(List.of(), decision.codes());
+    }
+
+    @Test
+    void halfTheZonesSuspectFailsTheDocument() {
         AuthenticityVerdict.Decision decision = AuthenticityVerdict.decide(List.of(
                 new AuthenticityVerdict.Reading("conforme", null),
                 new AuthenticityVerdict.Reading("suspect", null),
-                new AuthenticityVerdict.Reading("a_verifier", "zone_unmeasured")));
+                new AuthenticityVerdict.Reading("suspect", "field_absent")));
 
         assertEquals("suspect", decision.verdict());
-        assertEquals(List.of(), decision.codes());
+        assertEquals(List.of("field_absent"), decision.codes());
     }
 
     @Test

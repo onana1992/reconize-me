@@ -379,6 +379,10 @@ export type Verification = {
   rules_version?: string | null;
   policy_version?: number | null;
   signals?: { code: string; outcome: string; score?: number | null }[] | null;
+  authenticity_verdict?: string | null;
+  authenticity_document_id?: string | null;
+  authenticity_version?: string | null;
+  authenticity_score?: number | null;
   extracted_identity?: {
     first_name?: string;
     last_name?: string;

@@ -85,6 +85,16 @@ public class AuthenticityLabService {
         }
         String id = documentId.trim();
         BufferedImage image = requireImage(file);
+        return decideImage(id, stoppedAt, image);
+    }
+
+    /** Même pipeline que le banc, sans le contrôle du flag. Le parcours l'appelle une fois le flag lu. */
+    public AuthenticityCheckResponse decideImage(String documentId, BufferedImage image) {
+        return decideImage(documentId, "decide", image);
+    }
+
+    private AuthenticityCheckResponse decideImage(String documentId, String stoppedAt, BufferedImage image) {
+        String id = documentId.trim();
         AuthenticityTemplate template = registry
                 .find(id)
                 .orElseThrow(() -> ApiException.unprocessable("template_not_found", "Template not found"));
@@ -137,7 +147,7 @@ public class AuthenticityLabService {
                 positions);
     }
 
-    private static List<AuthenticityVerdict.Reading> readings(List<FixedBlock> fixed, List<PositionBlock> positions) {
+    static List<AuthenticityVerdict.Reading> readings(List<FixedBlock> fixed, List<PositionBlock> positions) {
         List<AuthenticityVerdict.Reading> readings = new ArrayList<>();
         if (fixed != null) {
             for (FixedBlock item : fixed) {

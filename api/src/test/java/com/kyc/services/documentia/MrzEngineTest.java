@@ -58,18 +58,17 @@ class MrzEngineTest {
     }
 
     @Test
-    void differentNameIsAMismatch() {
+    void aDifferentVisualNameKeepsTheMrzWhenCheckDigitsPass() {
         ParsedDocument document = document(List.of(
                 new ExtractedField("lastName", "TREMBLAY", null, "VISUAL_TEXT"),
                 new ExtractedField("mrz", TD3_LINE_1 + "\n" + TD3_LINE_2, null, "MRZ")));
         MrzEngine.Outcome outcome = MrzEngine.read(passport(), document, normalize(document), TODAY);
 
-        assertEquals("MISMATCH", outcome.report().status());
-        assertEquals(0.4, outcome.report().mrzScore());
-        assertEquals("MISMATCH", field(outcome, "lastName").validationStatus());
-        assertTrue(outcome.validation().stream().anyMatch(issue -> "mrz_mismatch".equals(issue.code())
-                && "L4".equals(issue.level())
-                && "WARNING".equals(issue.severity())));
+        assertEquals("VALID", outcome.report().status());
+        assertEquals(1.0, outcome.report().mrzScore());
+        assertEquals("ERIKSSON", field(outcome, "lastName").normalizedValue());
+        assertEquals("MRZ", field(outcome, "lastName").source());
+        assertTrue(outcome.validation().stream().noneMatch(issue -> "mrz_mismatch".equals(issue.code())));
     }
 
     @Test

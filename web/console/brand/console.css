@@ -2947,7 +2947,8 @@ a.rm-idv-row:focus-visible {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--rm-tone-danger-fg) 14%, transparent);
 }
 
-.rm-vcase-checks li[data-outcome="unavailable"] .rm-vcase-check-dot {
+.rm-vcase-checks li[data-outcome="unavailable"] .rm-vcase-check-dot,
+.rm-vcase-checks li[data-outcome="review"] .rm-vcase-check-dot {
   background: var(--rm-tone-warning-fg);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--rm-tone-warning-fg) 14%, transparent);
 }

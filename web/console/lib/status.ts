@@ -106,7 +106,7 @@ export function signalOutcomeTone(outcome: string): BadgeTone {
   if (outcome === "fail") {
     return "danger";
   }
-  if (outcome === "unavailable") {
+  if (outcome === "unavailable" || outcome === "review") {
     return "warning";
   }
   return "neutral";
@@ -133,6 +133,8 @@ export function tSignalOutcome(t: Translate, outcome: string): string {
       return t("console.verifications.outcomes.fail");
     case "unavailable":
       return t("console.verifications.outcomes.unavailable");
+    case "review":
+      return t("console.verifications.outcomes.review");
     default:
       return outcome;
   }
@@ -142,6 +144,12 @@ export function tSignalCode(t: Translate, code: string): string {
   switch (code) {
     case "authenticity_stub_pass":
       return t("console.verifications.signalCodes.authenticity");
+    case "authenticity_failed":
+      return t("console.verifications.signalCodes.authenticityFailed");
+    case "authenticity_review":
+      return t("console.verifications.signalCodes.authenticityReview");
+    case "authenticity_unsupported":
+      return t("console.verifications.signalCodes.authenticityUnsupported");
     case "liveness_pass":
       return t("console.verifications.signalCodes.livenessPass");
     case "face_match_pass":

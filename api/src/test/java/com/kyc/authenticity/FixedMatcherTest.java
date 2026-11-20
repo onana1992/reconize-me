@@ -13,10 +13,10 @@ class FixedMatcherTest {
 
     @Test
     void statusFollowsTheGlobalThresholds() {
-        assertEquals("conforme", FixedMatcher.status(0.75));
-        assertEquals("a_verifier", FixedMatcher.status(0.7499));
-        assertEquals("a_verifier", FixedMatcher.status(0.50));
-        assertEquals("suspect", FixedMatcher.status(0.4999));
+        assertEquals("conforme", FixedMatcher.status(TemplateEngine.SIMILARITY_PASS));
+        assertEquals("a_verifier", FixedMatcher.status(TemplateEngine.SIMILARITY_PASS - 0.0001));
+        assertEquals("a_verifier", FixedMatcher.status(TemplateEngine.SIMILARITY_SUSPECT));
+        assertEquals("suspect", FixedMatcher.status(TemplateEngine.SIMILARITY_SUSPECT - 0.0001));
     }
 
     @Test
@@ -43,7 +43,7 @@ class FixedMatcherTest {
         List<FixedScore> scores = matcher.match(template(reference), masked);
 
         assertEquals("mark", scores.get(0).name());
-        assertTrue(scores.get(0).score() < 0.50);
+        assertTrue(scores.get(0).score() < TemplateEngine.SIMILARITY_SUSPECT, scores.get(0).toString());
         assertEquals("suspect", scores.get(0).status());
         assertEquals("conforme", scores.get(1).status());
         assertTrue(scores.get(1).score() >= 0.75);

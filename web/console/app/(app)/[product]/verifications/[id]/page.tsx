@@ -67,8 +67,20 @@ export default async function VerificationDetailPage({
     displayName(applicant?.first_name, applicant?.last_name, applicant?.email ?? "") ||
     t("console.verifications.untitled");
   const reasons = verification.decision_reasons ?? [];
-  const signals = [...(verification.signals ?? [])].sort((a, b) => outcomeRank(a.outcome) - outcomeRank(b.outcome));
-  const passed = signals.filter((signal) => signal.outcome === "pass").length;
+  const authenticity = authenticityCheck(t, verification);
+  const signals = [...(verification.signals ?? [])]
+    .filter((signal) => authenticity == null || !AUTHENTICITY_SIGNALS.has(signal.code))
+    .sort((a, b) => outcomeRank(a.outcome) - outcomeRank(b.outcome));
+  const checks = [
+    ...(authenticity ? [authenticity] : []),
+    ...signals.map((signal) => ({
+      key: signal.code,
+      name: checkName(t, signal.code),
+      detail: signal.score == null ? null : t("console.verifications.scoreLine").replace("{score}", formatScore(signal.score)),
+      outcome: signal.outcome,
+    })),
+  ];
+  const passed = checks.filter((check) => check.outcome === "pass").length;
   const verdict = verdictFor(t, verification.status, verification.decision);
   const verdictLines = [
     reasons.length > 0
@@ -77,10 +89,10 @@ export default async function VerificationDetailPage({
           reasons.map((reason) => tSignalCode(t, reason)).join(", "),
         )
       : null,
-    signals.length > 0
+    checks.length > 0
       ? t("console.verifications.checksLine")
           .replace("{passed}", String(passed))
-          .replace("{total}", String(signals.length))
+          .replace("{total}", String(checks.length))
       : null,
   ].filter((line): line is string => line != null);
 
@@ -233,20 +245,18 @@ export default async function VerificationDetailPage({
 
           <section className="rm-vcase-card">
             <h2>{t("console.verifications.checksTitle")}</h2>
-            {signals.length === 0 ? (
+            {checks.length === 0 ? (
               <p className="rm-vcase-empty">{t("console.verifications.noChecks")}</p>
             ) : (
               <ul className="rm-vcase-checks">
-                {signals.map((signal) => (
-                  <li key={signal.code} data-outcome={signal.outcome}>
+                {checks.map((check) => (
+                  <li key={check.key} data-outcome={check.outcome}>
                     <span className="rm-vcase-check-dot" aria-hidden="true" />
                     <span className="rm-vcase-check-name">
-                      {checkName(t, signal.code)}
-                      {signal.score == null ? null : (
-                        <small>{t("console.verifications.scoreLine").replace("{score}", formatScore(signal.score))}</small>
-                      )}
+                      {check.name}
+                      {check.detail ? <small>{check.detail}</small> : null}
                     </span>
-                    <StatusBadge label={tSignalOutcome(t, signal.outcome)} tone={signalOutcomeTone(signal.outcome)} />
+                    <StatusBadge label={tSignalOutcome(t, check.outcome)} tone={signalOutcomeTone(check.outcome)} />
                   </li>
                 ))}
               </ul>
@@ -393,9 +403,35 @@ function verdictFor(t: Translate, status: string, decision?: string | null) {
   };
 }
 
+const AUTHENTICITY_SIGNALS = new Set([
+  "authenticity_stub_pass",
+  "authenticity_failed",
+  "authenticity_review",
+  "authenticity_unsupported",
+]);
+
+function authenticityCheck(t: Translate, verification: Verification) {
+  const verdict = verification.authenticity_verdict?.trim();
+  if (!verdict) {
+    return null;
+  }
+  const outcome =
+    verdict === "conforme" ? "pass" : verdict === "suspect" ? "fail" : verdict === "a_verifier" ? "review" : "unavailable";
+  const score = verification.authenticity_score;
+  return {
+    key: "authenticity",
+    name: t("console.verifications.checkNames.authenticity"),
+    detail: score == null ? null : t("console.verifications.scoreLine").replace("{score}", formatScore(score)),
+    outcome,
+  };
+}
+
 function checkName(t: Translate, code: string): string {
   switch (code) {
     case "authenticity_stub_pass":
+    case "authenticity_failed":
+    case "authenticity_review":
+    case "authenticity_unsupported":
       return t("console.verifications.checkNames.authenticity");
     case "liveness_pass":
     case "liveness_fail":
@@ -429,7 +465,7 @@ function normalize(value: string): string {
 
 function outcomeRank(outcome: string): number {
   if (outcome === "fail") return 0;
-  if (outcome === "unavailable") return 1;
+  if (outcome === "unavailable" || outcome === "review") return 1;
   return 2;
 }
 

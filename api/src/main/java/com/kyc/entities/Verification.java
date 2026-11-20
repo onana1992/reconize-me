@@ -108,6 +108,21 @@ public class Verification {
     @Column(name = "document_back_required", nullable = false)
     private boolean documentBackRequired;
 
+    @Column(name = "authenticity_verdict", length = 32)
+    private String authenticityVerdict;
+
+    @Column(name = "authenticity_document_id", length = 128)
+    private String authenticityDocumentId;
+
+    @Column(name = "authenticity_version", length = 32)
+    private String authenticityVersion;
+
+    @Column(name = "authenticity_score")
+    private Double authenticityScore;
+
+    @Column(name = "authenticity_zone_count")
+    private Integer authenticityZoneCount;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -236,6 +251,26 @@ public class Verification {
             this.decisionReasons = reasonsJson;
         }
         this.updatedAt = now;
+    }
+
+    /** Fige le résultat de template-1. La version n'est écrite que pour un conforme. Le score est la moyenne des zones. */
+    public void recordAuthenticity(String verdict, String documentId, Double score, int zones) {
+        if (score != null && zones > 0) {
+            int previous = authenticityZoneCount == null ? 0 : authenticityZoneCount;
+            double previousSum = authenticityScore == null || previous == 0 ? 0 : authenticityScore * previous;
+            int total = previous + zones;
+            authenticityZoneCount = total;
+            authenticityScore = (previousSum + score * zones) / total;
+        }
+        this.authenticityVerdict = verdict;
+        this.authenticityDocumentId = documentId;
+        this.authenticityVersion = "conforme".equals(verdict) ? "template-1" : null;
+    }
+
+    public boolean authenticityBlocksApproval() {
+        return "suspect".equals(authenticityVerdict)
+                || "unsupported".equals(authenticityVerdict)
+                || "a_verifier".equals(authenticityVerdict);
     }
 
     public void applyReview(VerificationDecision decision, Instant now) {

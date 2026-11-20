@@ -15,11 +15,10 @@ class PositionMeasurerTest {
 
     @Test
     void statusFollowsTheGlobalThresholds() {
-        assertEquals("conforme", PositionMeasurer.status(0.50, 34));
-        assertEquals("a_verifier", PositionMeasurer.status(0.49, 34));
-        assertEquals("a_verifier", PositionMeasurer.status(0.20, 0));
-        assertEquals("suspect", PositionMeasurer.status(0.19, 0));
-        assertEquals("suspect", PositionMeasurer.status(1, 35));
+        assertEquals("conforme", PositionMeasurer.status(0.50, 0));
+        assertEquals("conforme", PositionMeasurer.status(0.10, 0.50));
+        assertEquals("a_verifier", PositionMeasurer.status(0.20, 0.49));
+        assertEquals("suspect", PositionMeasurer.status(0.19, 0.49));
     }
 
     @Test
@@ -64,6 +63,58 @@ class PositionMeasurerTest {
         assertNull(score.code(), score.toString());
         assertTrue(score.iou() >= 0.50, score.toString());
         assertTrue(score.deltaPx() < TemplateEngine.MAX_SHIFT_PX, score.toString());
+    }
+
+    @Test
+    void aShorterLineInTheSlotIsConforme() {
+        BufferedImage reference = paper();
+        BufferedImage other = paper();
+        for (int y = 20; y < 38; y++) {
+            for (int x = 20; x < 40; x++) {
+                other.setRGB(x, y, 0x181818);
+            }
+        }
+
+        PositionScore score = measurer.measure(template(reference, 80), other).get(0);
+
+        assertEquals("conforme", score.status(), score.toString());
+        assertNull(score.code(), score.toString());
+        assertTrue(score.deltaPx() >= TemplateEngine.MAX_SHIFT_PX, score.toString());
+    }
+
+    @Test
+    void aRegionThatStillOverlapsStaysConforme() {
+        BufferedImage image = paper();
+        fill(image, 15, 5, 90, 75, 30);
+
+        PositionScore score = measurer.measure(region(15, 5, 90, 40), image).get(0);
+
+        assertEquals("conforme", score.status(), score.toString());
+        assertTrue(score.iou() >= TemplateEngine.IOU_PASS, score.toString());
+        assertTrue(score.deltaPx() >= TemplateEngine.MAX_SHIFT_PX, score.toString());
+    }
+
+    @Test
+    void aRegionBetweenTheOverlapThresholdsIsAVerifier() {
+        BufferedImage image = paper();
+        fill(image, 30, 5, 70, 55, 30);
+
+        PositionScore score = measurer.measure(region(10, 25, 70, 20), image).get(0);
+
+        assertEquals("a_verifier", score.status(), score.toString());
+        assertTrue(score.iou() >= TemplateEngine.IOU_SUSPECT && score.iou() < TemplateEngine.IOU_PASS, score.toString());
+        assertTrue(score.deltaPx() >= TemplateEngine.MAX_SHIFT_PX, score.toString());
+    }
+
+    @Test
+    void aRegionFarFromItsBoxIsSuspect() {
+        BufferedImage image = paper();
+        fill(image, 110, 5, 10, 40, 30);
+
+        PositionScore score = measurer.measure(region(15, 5, 90, 40), image).get(0);
+
+        assertEquals("suspect", score.status(), score.toString());
+        assertTrue(score.iou() < TemplateEngine.IOU_SUSPECT, score.toString());
     }
 
     @Test
@@ -120,7 +171,7 @@ class PositionMeasurerTest {
         return TemplateRegistry.load("QUEBEC_DRIVER_LICENSE_2024_FRONT", image, coco);
     }
 
-    private static AuthenticityTemplate template(BufferedImage reference) {
+    private static AuthenticityTemplate region(int x, int y, int width, int height) {
         return new AuthenticityTemplate(
                 "SAMPLE_CARD:2019:FRONT",
                 "SAMPLE_CARD",
@@ -139,7 +190,43 @@ class PositionMeasurerTest {
                 1,
                 List.of(),
                 List.of(),
-                List.of(new SourceBox("nom", "value", 20, 20, 36, 18)),
+                List.of(new SourceBox("portrait", "region", x, y, width, height)),
+                paper());
+    }
+
+    private static void fill(BufferedImage image, int x, int y, int width, int height, int value) {
+        int rgb = (value << 16) | (value << 8) | value;
+        for (int row = y; row < y + height; row++) {
+            for (int column = x; column < x + width; column++) {
+                image.setRGB(column, row, rgb);
+            }
+        }
+    }
+
+    private static AuthenticityTemplate template(BufferedImage reference) {
+        return template(reference, 36);
+    }
+
+    private static AuthenticityTemplate template(BufferedImage reference, int fieldWidth) {
+        return new AuthenticityTemplate(
+                "SAMPLE_CARD:2019:FRONT",
+                "SAMPLE_CARD",
+                "2019",
+                "FRONT",
+                120,
+                80,
+                0,
+                0,
+                120,
+                80,
+                120,
+                80,
+                1.5,
+                0,
+                1,
+                List.of(),
+                List.of(),
+                List.of(new SourceBox("nom", "value", 20, 20, fieldWidth, 18)),
                 reference);
     }
 
