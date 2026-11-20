@@ -128,6 +128,10 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+/** La caméra avant vient d'être relâchée par la photo du document. On la laisse exposer avant les couleurs. */
+const CAMERA_SETTLE_MS = 1500;
+const CAMERA_RELEASE_MS = 400;
+
 async function claimFrontCamera(): Promise<string | null> {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     await wait(attempt === 0 ? 800 : 600);
@@ -145,13 +149,55 @@ async function claimFrontCamera(): Promise<string | null> {
       if (facing === "environment") {
         continue;
       }
-      await wait(400);
+      await wait(CAMERA_RELEASE_MS);
       return deviceId;
     } catch {
       stream?.getTracks().forEach((track) => track.stop());
     }
   }
   return null;
+}
+
+async function openFrontCamera(deviceId: string | null): Promise<MediaStream> {
+  if (deviceId) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { deviceId: { exact: deviceId } },
+      });
+    } catch {
+      // L'identifiant du premier sondage n'est plus utilisable.
+    }
+  }
+  return navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: { facingMode: { ideal: "user" } },
+  });
+}
+
+function settleCamera(stream: MediaStream): Promise<void> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = stream;
+    let finished = false;
+    const finish = () => {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      video.pause();
+      video.srcObject = null;
+      resolve();
+    };
+    const started = performance.now();
+    video.onloadeddata = () => {
+      window.setTimeout(finish, Math.max(0, CAMERA_SETTLE_MS - (performance.now() - started)));
+    };
+    void video.play().catch(() => window.setTimeout(finish, CAMERA_SETTLE_MS));
+    window.setTimeout(finish, CAMERA_SETTLE_MS + 1000);
+  });
 }
 
 function livenessFailure(state: string): MessageKey {
@@ -193,8 +239,6 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
   const theme = useMemo(() => livenessTheme(), []);
 
   const opening = useRef<Promise<boolean> | null>(null);
-  const streamed = useRef(false);
-  const requested = useRef(false);
   const starting = useRef(false);
 
   const open = useCallback((fresh = false): Promise<boolean> => {
@@ -239,14 +283,6 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
   }, [token, onDone]);
 
   useEffect(() => {
-    if (requested.current) {
-      return;
-    }
-    requested.current = true;
-    void open(false);
-  }, [open]);
-
-  useEffect(() => {
     let cancelled = false;
     void (async () => {
       const deviceId = await claimFrontCamera();
@@ -263,18 +299,6 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (phase !== "running" || !opened) {
-      setArmed(false);
-      return;
-    }
-    const id = window.setTimeout(() => {
-      streamed.current = true;
-      setArmed(true);
-    }, 400);
-    return () => window.clearTimeout(id);
-  }, [phase, opened]);
 
   useEffect(() => {
     if (phase !== "running") {
@@ -302,17 +326,15 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
         reason?: string;
       };
       if (response.status === 409 && body.error?.code === "liveness_expired") {
+        setOpened(null);
         setPhase("intro");
-        await open(true);
         return;
       }
       if (response.ok && body.reason === "liveness_fail" && body.next === "liveness") {
         setBelow(true);
         setFailure(null);
         setOpened(null);
-        streamed.current = false;
         setPhase("intro");
-        await open(false);
         return;
       }
       if (!response.ok && response.status !== 409) {
@@ -339,23 +361,41 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
     setFailure(null);
     setCheckFailed(false);
     setBelow(false);
+    setArmed(false);
+    setPhase("running");
+    let stream: MediaStream | null = null;
     try {
-      if (streamed.current || !opened) {
-        const ready = await open(streamed.current);
-        if (!ready) {
-          return;
-        }
+      const session = open(true);
+      stream = await openFrontCamera(frontDeviceId);
+      const track = stream.getVideoTracks()[0];
+      const facing = track?.getSettings().facingMode;
+      if (!track || facing === "environment") {
+        setFailure("livenessUi.cameraNotFoundMessageText");
+        setPhase("intro");
+        return;
       }
-      if (frontDeviceId == null) {
-        const deviceId = await claimFrontCamera();
-        if (deviceId == null) {
-          setFailure("livenessUi.cameraNotFoundMessageText");
-          return;
-        }
-        setFrontDeviceId(deviceId);
+      const deviceId = track.getSettings().deviceId || frontDeviceId;
+      if (!deviceId) {
+        setFailure("livenessUi.cameraNotFoundMessageText");
+        setPhase("intro");
+        return;
       }
-      setPhase("running");
+      await settleCamera(stream);
+      const ready = await session;
+      if (!ready) {
+        setPhase("intro");
+        return;
+      }
+      setFrontDeviceId(deviceId);
+      stream.getTracks().forEach((item) => item.stop());
+      stream = null;
+      await wait(CAMERA_RELEASE_MS);
+      setArmed(true);
+    } catch {
+      setFailure("livenessUi.cameraNotFoundMessageText");
+      setPhase("intro");
     } finally {
+      stream?.getTracks().forEach((item) => item.stop());
       starting.current = false;
     }
   }
@@ -386,7 +426,7 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
     return <StateScreen tone="progress" title={t("livenessUi.hintVerifyingText")} lead={t("outcome.waitLead")} />;
   }
 
-  if (phase === "running" && opened && !armed) {
+  if (phase === "running" && !armed) {
     return <StateScreen tone="progress" title={t("liveness.preparing")} lead={t("liveness.lead")} />;
   }
 
@@ -474,9 +514,9 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
             {t("liveness.retry")}
           </button>
         ) : (
-          <button type="button" className="rm-btn-primary" disabled={!opened || frontDeviceId == null} onClick={() => void begin()}>
-            {opened && frontDeviceId != null ? null : <span className="rm-spinner" data-size="sm" aria-hidden="true" />}
-            {opened && frontDeviceId != null ? t("liveness.start") : t("liveness.preparing")}
+          <button type="button" className="rm-btn-primary" disabled={frontDeviceId == null} onClick={() => void begin()}>
+            {frontDeviceId != null ? null : <span className="rm-spinner" data-size="sm" aria-hidden="true" />}
+            {frontDeviceId != null ? t("liveness.start") : t("liveness.preparing")}
           </button>
         )}
       </div>
