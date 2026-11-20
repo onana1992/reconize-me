@@ -173,6 +173,13 @@ public class DocumentAnalysisStore {
         return !registry.findActives(code).isEmpty();
     }
 
+    public Optional<Classification> classification(UUID verificationId, String side) {
+        if (verificationId == null || side == null) {
+            return Optional.empty();
+        }
+        return find(verificationId, side).map(this::readClassification);
+    }
+
     public String documentCode(UUID verificationId, String side) {
         if (verificationId == null || side == null) {
             return null;
@@ -187,9 +194,13 @@ public class DocumentAnalysisStore {
     }
 
     private String code(VerificationDocumentAnalysis row) {
+        Classification classification = readClassification(row);
+        return classification == null ? null : classification.code();
+    }
+
+    private Classification readClassification(VerificationDocumentAnalysis row) {
         try {
-            Classification classification = read(row.getClassificationJson(), Classification.class);
-            return classification == null ? null : classification.code();
+            return read(row.getClassificationJson(), Classification.class);
         } catch (RuntimeException e) {
             return null;
         }

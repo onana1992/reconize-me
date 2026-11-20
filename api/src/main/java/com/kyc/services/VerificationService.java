@@ -7,6 +7,7 @@ import com.kyc.config.KycProperties;
 import com.kyc.dto.idv.CreateVerificationRequest;
 import com.kyc.dto.idv.MediaUrlResponse;
 import com.kyc.dto.idv.VerificationListResponse;
+import com.kyc.dto.documentia.ParsedDocument.Classification;
 import com.kyc.dto.idv.VerificationResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.IdempotencyKey;
@@ -67,6 +68,8 @@ public class VerificationService {
     private final WebhookService webhookService;
     private final IdvPolicyService policies;
     private final IdentityScreeningService identityScreening;
+    private final DocumentAnalysisStore documentAnalyses;
+    private final AuthenticitySession authenticity;
 
     public VerificationService(
             VerificationRepository verifications,
@@ -82,7 +85,9 @@ public class VerificationService {
             CreditService creditService,
             WebhookService webhookService,
             IdvPolicyService policies,
-            IdentityScreeningService identityScreening) {
+            IdentityScreeningService identityScreening,
+            DocumentAnalysisStore documentAnalyses,
+            AuthenticitySession authenticity) {
         this.verifications = verifications;
         this.idempotencyKeys = idempotencyKeys;
         this.media = media;
@@ -97,6 +102,8 @@ public class VerificationService {
         this.webhookService = webhookService;
         this.policies = policies;
         this.identityScreening = identityScreening;
+        this.documentAnalyses = documentAnalyses;
+        this.authenticity = authenticity;
     }
 
     @Transactional
@@ -185,6 +192,7 @@ public class VerificationService {
                 .findByIdAndOrganizationId(id, organizationId)
                 .orElseThrow(() -> ApiException.notFound("Verification not found"));
         identityScreening.ensureReport(verification);
+        fillAuthenticityScore(verification);
         return toResponse(verification, true);
     }
 
@@ -250,6 +258,9 @@ public class VerificationService {
                 .orElseThrow(() -> ApiException.notFound("Verification not found"));
         if (verification.getStatus() != VerificationStatus.REVIEW) {
             throw ApiException.conflict("invalid_status", "Verification is not in review");
+        }
+        if (parsed == VerificationDecision.APPROVED && verification.authenticityBlocksApproval()) {
+            throw ApiException.conflict("invalid_status", "Authenticity blocks approval");
         }
         Instant now = Instant.now();
         verification.applyReview(parsed, now);
@@ -324,11 +335,46 @@ public class VerificationService {
                 verification.getRulesVersion(),
                 verification.getPolicyVersion(),
                 signalItems.isEmpty() ? null : signalItems,
+                detail ? verification.getAuthenticityVerdict() : null,
+                detail ? verification.getAuthenticityDocumentId() : null,
+                detail ? verification.getAuthenticityVersion() : null,
+                detail ? verification.getAuthenticityScore() : null,
                 extracted,
                 verification.getAmlScreeningId(),
                 screeningOf(verification),
                 verification.getCreatedAt(),
                 verification.getUpdatedAt());
+    }
+
+    /** Les dossiers mesurés avant la colonne n'ont pas de moyenne. On la calcule une fois, sur les photos acceptées. */
+    private void fillAuthenticityScore(Verification verification) {
+        if (verification.getAuthenticityVerdict() == null || verification.getAuthenticityScore() != null) {
+            return;
+        }
+        authenticity.fillScore(
+                verification,
+                classification(verification.getId(), "FRONT"),
+                acceptedImage(verification.getId(), MediaKind.DOCUMENT),
+                classification(verification.getId(), "BACK"),
+                acceptedImage(verification.getId(), MediaKind.DOCUMENT_BACK));
+    }
+
+    private Classification classification(UUID id, String side) {
+        try {
+            return documentAnalyses.classification(id, side).orElse(null);
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private byte[] acceptedImage(UUID id, MediaKind kind) {
+        try {
+            return media.findFirstByVerificationIdAndKindAndStatusOrderByAttemptDesc(id, kind, MediaStatus.ACCEPTED)
+                    .map(item -> objectStorage.read(item.getObjectKey()))
+                    .orElse(null);
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     private Map<UUID, Integration> loadIntegrations(List<Verification> page) {

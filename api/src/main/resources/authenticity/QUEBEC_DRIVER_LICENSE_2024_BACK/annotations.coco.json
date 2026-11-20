@@ -1,0 +1,296 @@
+{
+  "info": {
+    "description": "Gabarit de vérification de la face photographiée. Sans transcription.",
+    "version": "2.0",
+    "bbox_format": "[x, y, largeur, hauteur] en pixels, origine en haut à gauche, pour bbox, attributes.bbox_value et attributes.bbox_label",
+    "roles": {
+      "document": "Rectangle de la pièce sur la référence. Origine de la projection.",
+      "fixed": "Ressemblance du crop (bbox) avec la référence.",
+      "value": "Position de attributes.bbox_value. attributes.bbox_label (si présent) est traité comme fixed.",
+      "region": "Position et présence. Pas de comparaison du contenu personnel."
+    }
+  },
+  "licenses": [],
+  "images": [
+    {
+      "id": 1,
+      "file_name": "reference.jpg",
+      "width": 1280,
+      "height": 813
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "document_carte",
+      "role": "document"
+    },
+    {
+      "id": 2,
+      "name": "code_barres_2d",
+      "role": "region"
+    },
+    {
+      "id": 3,
+      "name": "code_barres_1d",
+      "role": "region"
+    },
+    {
+      "id": 4,
+      "name": "libelle_classes_permis",
+      "role": "fixed"
+    },
+    {
+      "id": 5,
+      "name": "zone_autocollant_adresse",
+      "role": "fixed"
+    },
+    {
+      "id": 6,
+      "name": "logo_saaq_quebec",
+      "role": "fixed"
+    },
+    {
+      "id": 7,
+      "name": "renseignements_telephone",
+      "role": "fixed"
+    },
+    {
+      "id": 8,
+      "name": "site_web_saaq",
+      "role": "fixed"
+    },
+    {
+      "id": 9,
+      "name": "code_edition",
+      "role": "fixed"
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [
+        272,
+        192,
+        725,
+        455
+      ],
+      "area": 329875,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          272,
+          192,
+          997,
+          192,
+          997,
+          647,
+          272,
+          647
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "image_id": 1,
+      "category_id": 2,
+      "bbox": [
+        295,
+        218,
+        378,
+        76
+      ],
+      "area": 28728,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          295,
+          218,
+          673,
+          218,
+          673,
+          294,
+          295,
+          294
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "image_id": 1,
+      "category_id": 3,
+      "bbox": [
+        697,
+        218,
+        264,
+        34
+      ],
+      "area": 8976,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          697,
+          218,
+          961,
+          218,
+          961,
+          252,
+          697,
+          252
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "image_id": 1,
+      "category_id": 4,
+      "bbox": [
+        295,
+        303,
+        604,
+        22
+      ],
+      "area": 13288,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          295,
+          303,
+          899,
+          303,
+          899,
+          325,
+          295,
+          325
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "image_id": 1,
+      "category_id": 5,
+      "bbox": [
+        289,
+        515,
+        325,
+        64
+      ],
+      "area": 20800,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          289,
+          515,
+          614,
+          515,
+          614,
+          579,
+          289,
+          579
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "image_id": 1,
+      "category_id": 6,
+      "bbox": [
+        723,
+        520,
+        246,
+        72
+      ],
+      "area": 17712,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          723,
+          520,
+          969,
+          520,
+          969,
+          592,
+          723,
+          592
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "image_id": 1,
+      "category_id": 7,
+      "bbox": [
+        291,
+        615,
+        250,
+        21
+      ],
+      "area": 5250,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          291,
+          615,
+          541,
+          615,
+          541,
+          636,
+          291,
+          636
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "image_id": 1,
+      "category_id": 8,
+      "bbox": [
+        724,
+        616,
+        122,
+        19
+      ],
+      "area": 2318,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          724,
+          616,
+          846,
+          616,
+          846,
+          635,
+          724,
+          635
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "image_id": 1,
+      "category_id": 9,
+      "bbox": [
+        905,
+        614,
+        62,
+        15
+      ],
+      "area": 930,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          905,
+          614,
+          967,
+          614,
+          967,
+          629,
+          905,
+          629
+        ]
+      ]
+    }
+  ]
+}

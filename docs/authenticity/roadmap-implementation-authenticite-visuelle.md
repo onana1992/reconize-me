@@ -3,7 +3,7 @@
 **Produit :** Recogniz-Me, Identity & Document Verification  
 **Version du document :** 1.0  
 **Date :** 15 novembre 2026  
-**Statut :** non commencé  
+**Statut :** A0 et A1 livrés  
 **Moteur :** `template-1`  
 **Document lié :** [`cahier-des-charges-authenticite-visuelle.md`](./cahier-des-charges-authenticite-visuelle.md) — le *quoi* (principe, COCO, contrôles, verdict)
 
@@ -131,7 +131,7 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 ## 6. Paliers
 
-### A0 — Banc Swagger
+### A0 — Banc Swagger — **livré**
 
 **But :** joindre le module sans logique image.
 
@@ -143,9 +143,13 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** les deux routes répondent ; aucune session créée.
 
+**As-built :** `AuthenticityController` `/v1/authenticity/**`, flag `kyc.authenticity.lab-enabled`, enveloppe `AuthenticityCheckResponse`, liste vide jusqu’à A1.
+
 ---
 
 ### A1 — Redressement
+
+**Contrat :** [`specification-fonctionnelle-a1-redressement.md`](./specification-fonctionnelle-a1-redressement.md)
 
 **But :** carte au canevas dérivé du COCO.
 
@@ -162,6 +166,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** référence du gabarit se redresse ; image sans carte → `alignment_failed`.
 
+**As-built :** `TemplateRegistry` et `CardRectifier`. OpenCV via JavaCV. `until=rectify` renvoie `method` et `canvas` `[729, 457]`. Image grise → `a_verifier` / `alignment_failed`. Le `reference.png` du classpath est un spécimen géométrique 1280×813 : le remplacer par la photo réelle avant les paliers qui comparent les pixels.
+
 ---
 
 ### A2 — Projection des boîtes
@@ -177,6 +183,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Liste des boîtes projetées (nom, rôle, rectangle canevas) pour le gabarit chargé.
 
 **Fait quand :** le nombre de boîtes projetées = annotations non `document` du COCO ; toutes dans le canevas.
+
+**As-built :** `BoxProjector`. Chaque boîte hors `document` est translatée sur le rectangle de la carte, puis mise à l’échelle du canevas. `until=project` renvoie nom, rôle et rectangle. `until=rectify` laisse `project` à `null`. Alignement impossible : `project` reste `null`.
 
 ---
 
@@ -197,6 +205,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** référence auto-comparée passe ; marque absente tombe en `suspect` sur cet élément.
 
+**As-built :** `FixedMatcher`. NCC, seuils 0,75 / 0,50, marge 15 px. `until=fixed` score chaque catégorie `fixed` et chaque `bbox_label`. La référence comparée à elle-même est `conforme` sur chaque élément. Une marque masquée passe sous 0,50 et devient `suspect` ; les autres mesures restent là. Le verdict global reste `null` jusqu'à `decide`.
+
 ---
 
 ### A4 — Positions
@@ -213,6 +223,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Champ déplacé synthétiquement ≥ 35 px → `suspect`.
 
 **Fait quand :** référence auto-comparée conforme sur les positions ; déplacement synthétique détecté.
+
+**As-built :** `PositionMeasurer`. Pour chaque `value` et chaque `region`, la boîte attendue est `bbox_value` si elle existe, sinon `bbox`. La fenêtre dépasse cette boîte de 35 px. Le rectangle retenu est celui de l'encre (contenu visible pour une région), pas les pixels de la référence. Une encre plus courte ou plus longue reste `conforme` si elle part de la boîte et que sa hauteur ne s'écarte pas de 35 px. Un décalage du départ de ligne ou de la hauteur d'au moins 35 px est `suspect`. Aucun contenu donne `suspect` / `field_absent`. Une fenêtre sans contraste donne `a_verifier` / `zone_unmeasured`. `until=positions` laisse le verdict `null`. L'alignement par points masque ces mêmes champs sur la référence.
 
 ---
 
@@ -232,6 +244,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 
 **Fait quand :** les gates du cahier §14 sont verts sur le banc. Latence journalisée (`durationMs`) ; objectif indicatif p95 &lt; 500 ms.
 
+**As-built :** `AuthenticityVerdict`. `until=decide` pose le verdict après les mesures : un élément `suspect` donne `suspect`, sinon un `a_verifier`, sinon `conforme`. Les codes globaux sont ceux des éléments qui ont tranché (`field_absent`, `zone_unmeasured`). L'alignement manqué reste `a_verifier` / `alignment_failed` quel que soit `until`. Avant `decide`, le verdict reste `null`. La référence du permis comparée à elle-même est `conforme`. Une marque masquée donne `suspect`, les autres mesures restent là.
+
 ---
 
 ### A6 — Branchement parcours
@@ -248,6 +262,8 @@ Premier gabarit de preuve : `QUEBEC_DRIVER_LICENSE:2024:FRONT` (`docs/authentici
 - Le banc Swagger **reste**.
 
 **Fait quand :** une session live avec gabarit déposé produit le même verdict que le banc sur la même image ; une session sans gabarit pour la classe ne s’approuve pas.
+
+**As-built :** `AuthenticitySession`, appelée depuis `HostedFlowService` sur le recto live une fois la classe connue, seulement si `kyc.authenticity.lab-enabled` est vrai. `conforme` fige `authenticity_version = template-1` et le `documentId`. `suspect` devient `DECLINED` / `authenticity_failed` avant le visage, et un analyste ne peut pas approuver. `alignment_failed` ou `zone_unmeasured` redemandent la capture tant qu'il reste un essai. Une classe de recto sans gabarit donne `unsupported` et bloque l'approbation. Le verso est mesuré seulement si son gabarit est chargé ; sinon il est ignoré. Le pire verdict des faces mesurées est conservé. Le banc Swagger reste.
 
 **Hors A6 :** détection écran/photocopie ; verso / autres éditions (dossiers COCO supplémentaires seulement).
 

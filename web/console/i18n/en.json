@@ -590,6 +590,12 @@
       "noChecks": "Checks appear once the captures are analysed.",
       "scoreLine": "Score {score}",
       "reasonsLine": "Reason: {reasons}",
+      "authenticityVerdicts": {
+        "conforme": "Pass",
+        "suspect": "Suspect",
+        "a_verifier": "Needs review",
+        "unsupported": "No template"
+      },
       "checkNames": {
         "authenticity": "Document authenticity",
         "liveness": "Liveness detection",
@@ -644,10 +650,14 @@
       "outcomes": {
         "pass": "Pass",
         "fail": "Fail",
-        "unavailable": "Unavailable"
+        "unavailable": "Unavailable",
+        "review": "Needs review"
       },
       "signalCodes": {
         "authenticity": "Authenticity (stub)",
+        "authenticityFailed": "Authenticity declined",
+        "authenticityReview": "Authenticity needs review",
+        "authenticityUnsupported": "Authenticity template missing",
         "livenessPass": "Liveness",
         "faceMatchPass": "Face match",
         "livenessFail": "Liveness fail",

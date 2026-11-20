@@ -1,0 +1,405 @@
+{
+  "info": {
+    "description": "Gabarit de vérification de la face photographiée. Sans transcription.",
+    "version": "2.0",
+    "bbox_format": "[x, y, largeur, hauteur] en pixels, origine en haut à gauche, pour bbox, attributes.bbox_value et attributes.bbox_label",
+    "roles": {
+      "document": "Rectangle de la pièce sur la référence. Origine de la projection.",
+      "fixed": "Ressemblance du crop (bbox) avec la référence.",
+      "value": "Position de attributes.bbox_value. attributes.bbox_label (si présent) est traité comme fixed.",
+      "region": "Position et présence. Pas de comparaison du contenu personnel."
+    }
+  },
+  "licenses": [],
+  "images": [
+    {
+      "id": 1,
+      "file_name": "verso_reference.jpg",
+      "width": 1280,
+      "height": 813
+    }
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "card_outline",
+      "role": "document"
+    },
+    {
+      "id": 2,
+      "name": "barcode",
+      "role": "region"
+    },
+    {
+      "id": 3,
+      "name": "document_number_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          703,
+          197,
+          106,
+          18
+        ],
+        "bbox_label": null
+      }
+    },
+    {
+      "id": 4,
+      "name": "canada_flag_icon",
+      "role": "fixed"
+    },
+    {
+      "id": 5,
+      "name": "place_of_landing_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          677,
+          241,
+          66,
+          13
+        ],
+        "bbox_label": [
+          493,
+          241,
+          175,
+          13
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "name": "pr_since_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          598,
+          264,
+          120,
+          13
+        ],
+        "bbox_label": [
+          493,
+          264,
+          102,
+          13
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "name": "eyes_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          556,
+          287,
+          83,
+          13
+        ],
+        "bbox_label": [
+          493,
+          287,
+          50,
+          13
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "name": "height_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          556,
+          310,
+          56,
+          13
+        ],
+        "bbox_label": [
+          493,
+          310,
+          54,
+          13
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "name": "country_of_birth_field",
+      "role": "value",
+      "attributes": {
+        "bbox_value": [
+          556,
+          333,
+          27,
+          13
+        ],
+        "bbox_label": [
+          493,
+          333,
+          54,
+          13
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "name": "machine_readable_zone",
+      "role": "region"
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1,
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [
+        291,
+        184,
+        705,
+        444
+      ],
+      "area": 313020,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          291,
+          184,
+          996,
+          184,
+          996,
+          628,
+          291,
+          628
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "image_id": 1,
+      "category_id": 2,
+      "bbox": [
+        352,
+        197,
+        290,
+        24
+      ],
+      "area": 6960,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          352,
+          197,
+          642,
+          197,
+          642,
+          221,
+          352,
+          221
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "image_id": 1,
+      "category_id": 3,
+      "bbox": [
+        703,
+        196,
+        108,
+        20
+      ],
+      "area": 2160,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          703,
+          196,
+          811,
+          196,
+          811,
+          216,
+          703,
+          216
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "image_id": 1,
+      "category_id": 4,
+      "bbox": [
+        872,
+        202,
+        26,
+        17
+      ],
+      "area": 442,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          872,
+          202,
+          898,
+          202,
+          898,
+          219,
+          872,
+          219
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "image_id": 1,
+      "category_id": 5,
+      "bbox": [
+        493,
+        240,
+        251,
+        15
+      ],
+      "area": 3765,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          493,
+          240,
+          744,
+          240,
+          744,
+          255,
+          493,
+          255
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "image_id": 1,
+      "category_id": 6,
+      "bbox": [
+        493,
+        263,
+        226,
+        15
+      ],
+      "area": 3390,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          493,
+          263,
+          719,
+          263,
+          719,
+          278,
+          493,
+          278
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "image_id": 1,
+      "category_id": 7,
+      "bbox": [
+        493,
+        286,
+        147,
+        15
+      ],
+      "area": 2205,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          493,
+          286,
+          640,
+          286,
+          640,
+          301,
+          493,
+          301
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "image_id": 1,
+      "category_id": 8,
+      "bbox": [
+        493,
+        309,
+        120,
+        15
+      ],
+      "area": 1800,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          493,
+          309,
+          613,
+          309,
+          613,
+          324,
+          493,
+          324
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "image_id": 1,
+      "category_id": 9,
+      "bbox": [
+        493,
+        332,
+        91,
+        15
+      ],
+      "area": 1365,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          493,
+          332,
+          584,
+          332,
+          584,
+          347,
+          493,
+          347
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "image_id": 1,
+      "category_id": 10,
+      "bbox": [
+        330,
+        488,
+        622,
+        100
+      ],
+      "area": 62200,
+      "iscrowd": 0,
+      "segmentation": [
+        [
+          330,
+          488,
+          952,
+          488,
+          952,
+          588,
+          330,
+          588
+        ]
+      ]
+    }
+  ]
+}

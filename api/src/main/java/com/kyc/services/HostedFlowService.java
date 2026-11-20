@@ -102,6 +102,7 @@ public class HostedFlowService {
     private final IdvPolicyService policies;
     private final IdentityScreeningService identityScreening;
     private final CreditService credits;
+    private final AuthenticitySession authenticity;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -127,7 +128,8 @@ public class HostedFlowService {
             DocumentAnalysisStore analyses,
             IdvPolicyService policies,
             IdentityScreeningService identityScreening,
-            CreditService credits) {
+            CreditService credits,
+            AuthenticitySession authenticity) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -153,6 +155,7 @@ public class HostedFlowService {
         this.policies = policies;
         this.identityScreening = identityScreening;
         this.credits = credits;
+        this.authenticity = authenticity;
     }
 
     @Transactional
@@ -416,8 +419,14 @@ public class HostedFlowService {
         try {
             BiometricAiPort.BiometricSignals signals =
                     liveBiometricAi.match(objectStorage.read(document.getObjectKey()), result);
+            IdvDecisionEngine.Result documentDecision = authenticity.apply(
+                    storedDocument(loaded.verification()), loaded.verification().getAuthenticityVerdict());
+            if (documentDecision.decision() != VerificationDecision.APPROVED) {
+                commit(loaded, documentDecision, IdvDecisionEngine.VISION_RULES_VERSION, now);
+                return finished(loaded, null);
+            }
             IdvDecisionEngine.Result face = engine.applyFace(
-                    storedDocument(loaded.verification()), signals, applied(loaded.verification()).profile());
+                    documentDecision, signals, applied(loaded.verification()).profile());
             if (retryLiveness(face) && billedLiveness(loaded) < applied(loaded.verification()).maxLivenessAttempts()) {
                 return new CompleteCaptureResponse(
                         Enums.json(loaded.verification().getStatus()),
@@ -473,7 +482,8 @@ public class HostedFlowService {
         if (integration == null || !integration.isLive()) {
             return false;
         }
-        IdvDecisionEngine.Result document = storedDocument(loaded.verification());
+        IdvDecisionEngine.Result document = authenticity.apply(
+                storedDocument(loaded.verification()), loaded.verification().getAuthenticityVerdict());
         if (faceStepAllowed(document)) {
             return false;
         }
@@ -560,6 +570,10 @@ public class HostedFlowService {
             Verification verification = verifications.findById(verificationId).orElse(null);
             IdvPolicyService.Applied applied = policies.applied(verification == null ? null : verification.getPolicyId());
             IdvDecisionEngine.Result document = replayOrAnalyze(verificationId, documentBytes, now, applied);
+            if (document.decision() != VerificationDecision.APPROVED) {
+                return document;
+            }
+            document = authenticity.apply(document, verification == null ? null : verification.getAuthenticityVerdict());
             if (document.decision() != VerificationDecision.APPROVED) {
                 return document;
             }
@@ -685,6 +699,13 @@ public class HostedFlowService {
                         : result.reasons().get(0);
                 return retrySide(loaded, item, attempt, now, side, reason);
             }
+            if (result != null && result.decision() == VerificationDecision.APPROVED
+                    && ("FRONT".equals(side) || "BACK".equals(side))) {
+                CompleteCaptureResponse visual = authenticityGate(loaded, item, attempt, now, side, image);
+                if (visual != null) {
+                    return visual;
+                }
+            }
             return null;
         } catch (ProviderUnavailableException e) {
             log.info("document-ia capture side={} code=provider_unavailable", side);
@@ -714,6 +735,35 @@ public class HostedFlowService {
                 && view.accepted()
                 && view.response().decision() instanceof DocumentDecision decision
                 && "PASS".equals(decision.issue());
+    }
+
+    /**
+     * template-1 une fois la classe connue. Le recto sans gabarit bloque l'approbation.
+     * Le verso n'est mesuré que si son gabarit est chargé. L'alignement manqué redemande la photo.
+     */
+    private CompleteCaptureResponse authenticityGate(
+            Loaded loaded, VerificationMedia item, int attempt, Instant now, String side, byte[] image) {
+        var classification = analyses.classification(loaded.verification().getId(), side).orElse(null);
+        AuthenticitySession.Outcome outcome = authenticity.assess(classification, side, image, "FRONT".equals(side));
+        if (outcome.kind() == AuthenticitySession.Kind.SKIPPED) {
+            return null;
+        }
+        if (outcome.kind() == AuthenticitySession.Kind.RECAPTURE && attemptsRemain(loaded, item.getKind())) {
+            return retrySide(loaded, item, attempt, now, side, outcome.recaptureReason());
+        }
+        String verdict = switch (outcome.kind()) {
+            case ACCEPTED -> "conforme";
+            case DECLINED -> "suspect";
+            case UNSUPPORTED -> "unsupported";
+            case RECAPTURE, REVIEW -> "a_verifier";
+            case SKIPPED -> null;
+        };
+        loaded.verification().recordAuthenticity(
+                AuthenticitySession.combine(loaded.verification().getAuthenticityVerdict(), verdict),
+                AuthenticitySession.documents(loaded.verification().getAuthenticityDocumentId(), outcome.documentId()),
+                outcome.score(),
+                outcome.zones());
+        return null;
     }
 
     /** Redemande la face s'il reste un essai. Sinon laisse la décision se conclure. */
