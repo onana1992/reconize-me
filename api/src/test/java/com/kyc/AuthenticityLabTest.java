@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kyc.authenticity.SpecimenCache;
 import com.kyc.entities.ApiKey;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
@@ -31,9 +32,9 @@ import com.kyc.services.ApiKeyAuthenticator;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.UUID;
 import javax.imageio.ImageIO;
@@ -438,18 +439,16 @@ class AuthenticityLabTest {
     }
 
     private static MockMultipartFile reference() throws IOException {
-        try (InputStream in = AuthenticityLabTest.class.getResourceAsStream(
-                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg")) {
-            return new MockMultipartFile("file", "reference.jpg", MediaType.IMAGE_JPEG_VALUE, in.readAllBytes());
-        }
+        return new MockMultipartFile(
+                "file",
+                "reference.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT"));
     }
 
     private static MockMultipartFile maskedLogo() throws IOException {
         BufferedImage image;
-        try (InputStream in = AuthenticityLabTest.class.getResourceAsStream(
-                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg")) {
-            image = ImageIO.read(in);
-        }
+        image = ImageIO.read(new ByteArrayInputStream(SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT")));
         Graphics2D graphics = image.createGraphics();
         graphics.setColor(new Color(180, 180, 180));
         graphics.fillRect(314, 209, 154, 44);
@@ -461,10 +460,7 @@ class AuthenticityLabTest {
 
     private static MockMultipartFile shiftedName() throws IOException {
         BufferedImage image;
-        try (InputStream in = AuthenticityLabTest.class.getResourceAsStream(
-                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg")) {
-            image = ImageIO.read(in);
-        }
+        image = ImageIO.read(new ByteArrayInputStream(SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT")));
         int x = 584;
         int y = 302;
         int width = 154;

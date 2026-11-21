@@ -25,6 +25,12 @@ jobs:
           cache: maven
       - name: Compiler et tester
         run: mvn -B test
+        env:
+          KYC_AWS_S3_ENABLED: "true"
+          KYC_AWS_S3_BUCKET: ${{ secrets.KYC_AWS_S3_BUCKET }}
+          KYC_AWS_S3_REGION: ${{ secrets.KYC_AWS_S3_REGION }}
+          KYC_AWS_S3_ACCESS_KEY_ID: ${{ secrets.KYC_AWS_S3_ACCESS_KEY_ID }}
+          KYC_AWS_S3_SECRET_ACCESS_KEY: ${{ secrets.KYC_AWS_S3_SECRET_ACCESS_KEY }}
 
   web:
     name: Web ${{ matrix.app }}

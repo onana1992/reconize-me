@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.kyc.authenticity.SpecimenCache;
 import com.kyc.authenticity.TemplateRegistry;
 import com.kyc.dto.documentia.ParsedDocument.Classification;
 import com.kyc.enums.SignalOutcome;
@@ -14,7 +15,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -27,10 +27,7 @@ class AuthenticitySessionTest {
     @Test
     void theReferenceMatchesTheBench() throws Exception {
         byte[] image;
-        try (InputStream in = AuthenticitySessionTest.class.getResourceAsStream(
-                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg")) {
-            image = in.readAllBytes();
-        }
+        image = SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT");
 
         AuthenticitySession.Outcome outcome = session.assess(quebec(), "FRONT", image);
 

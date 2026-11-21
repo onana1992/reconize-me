@@ -37,6 +37,11 @@ application-secrets.properties
 .DS_Store
 Thumbs.db
 
+# Spécimens d'authenticité (objets S3, pas le dépôt)
+api/src/main/resources/authenticity/**/reference.jpg
+api/src/main/resources/authenticity/**/reference.png
+api/src/test/resources/authenticity/synthetic/**/*.jpg
+
 # Logs
 *.log
 logs/

@@ -136,7 +136,7 @@ class CardRectifierTest {
                 List.of(),
                 List.of(),
                 List.of(),
-                plate);
+                SpecimenPicture.held(plate));
         Rectified aligned = rectifier.rectify(template, plate).orElseThrow();
         assertEquals(160, aligned.image().getWidth());
         assertEquals(100, aligned.image().getHeight());
@@ -146,11 +146,9 @@ class CardRectifierTest {
     private static AuthenticityTemplate quebec() throws Exception {
         byte[] image;
         byte[] coco;
-        try (InputStream reference = CardRectifierTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg");
-                InputStream annotations = CardRectifierTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
-            image = reference.readAllBytes();
+        try (InputStream annotations = CardRectifierTest.class.getResourceAsStream(
+                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
+            image = SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT");
             coco = annotations.readAllBytes();
         }
         return TemplateRegistry.load("QUEBEC_DRIVER_LICENSE_2024_FRONT", image, coco);
