@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import com.kyc.config.KycProperties;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -28,18 +31,31 @@ public class TemplateRegistry {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private final Map<String, AuthenticityTemplate> byId;
+    private final DecodedSpecimens decoded = new DecodedSpecimens();
 
     public TemplateRegistry() {
+        this(SpecimenCache.open(null, ""));
+    }
+
+    @Autowired
+    public TemplateRegistry(
+            KycProperties properties, @Value("${kyc.authenticity.specimen-cache:}") String cacheDir) {
+        this(SpecimenCache.open(properties, cacheDir));
+    }
+
+    private TemplateRegistry(SpecimenCache cache) {
         OpenCvNatives.load();
         List<AuthenticityTemplate> loaded = new ArrayList<>();
         try {
             Resource[] files = new PathMatchingResourcePatternResolver()
                     .getResources("classpath*:authenticity/*/annotations.coco.json");
             for (Resource coco : files) {
-                loaded.add(readResource(coco));
+                loaded.add(readResource(coco, cache));
             }
         } catch (IOException e) {
             throw new IllegalStateException("Lecture des gabarits impossible", e);
+        } finally {
+            cache.close();
         }
         this.byId = index(loaded);
     }
@@ -93,6 +109,15 @@ public class TemplateRegistry {
         if (image == null) {
             throw invalid(folder, "le spécimen n'est pas un JPEG ou un PNG décodable");
         }
+        return parse(folder, cocoBytes, SpecimenPicture.held(image), image.getWidth(), image.getHeight());
+    }
+
+    private AuthenticityTemplate loadCached(String folder, byte[] cocoBytes, Path file) {
+        return parse(folder, cocoBytes, SpecimenPicture.lazy(folder, file, decoded, 0, 0), 0, 0);
+    }
+
+    private static AuthenticityTemplate parse(
+            String folder, byte[] cocoBytes, SpecimenPicture picture, int seenWidth, int seenHeight) {
         JsonNode root;
         try {
             root = JSON.readTree(cocoBytes);
@@ -109,13 +134,13 @@ public class TemplateRegistry {
         if (width <= 0 || height <= 0) {
             throw invalid(folder, "les dimensions COCO doivent être positives");
         }
-        if (image.getWidth() != width || image.getHeight() != height) {
+        if (seenWidth > 0 && (seenWidth != width || seenHeight != height)) {
             throw invalid(
                     folder,
                     "la taille du spécimen ("
-                            + image.getWidth()
+                            + seenWidth
                             + "x"
-                            + image.getHeight()
+                            + seenHeight
                             + ") diffère du COCO ("
                             + width
                             + "x"
@@ -251,31 +276,27 @@ public class TemplateRegistry {
                 .withBoxes(List.copyOf(boxes))
                 .withFixedTargets(List.copyOf(fixedTargets))
                 .withPositionTargets(List.copyOf(positionTargets))
-                .withReference(image)
+                .withPicture(picture.sized(width, height))
                 .build();
     }
 
-    private static AuthenticityTemplate readResource(Resource coco) throws IOException {
+    private AuthenticityTemplate readResource(Resource coco, SpecimenCache cache) throws IOException {
         String folder = folderName(coco);
-        // Dans le jar nested de Spring Boot, createRelative().exists() répond vrai
-        // pour reference.jpg et reference.png, même si un seul des deux est présent.
         ClassLoader loader = TemplateRegistry.class.getClassLoader();
         if (loader == null) {
             loader = Thread.currentThread().getContextClassLoader();
         }
         String base = "authenticity/" + folder + "/";
-        boolean hasJpg = loader.getResource(base + "reference.jpg") != null;
-        boolean hasPng = loader.getResource(base + "reference.png") != null;
-        if (hasJpg == hasPng) {
-            throw invalid(folder, "il faut un seul fichier reference.jpg ou reference.png");
-        }
-        String imageName = hasJpg ? "reference.jpg" : "reference.png";
-        try (InputStream imageStream = loader.getResourceAsStream(base + imageName);
+        try (InputStream sum = loader.getResourceAsStream(base + "reference.sha256");
                 InputStream cocoStream = loader.getResourceAsStream(base + "annotations.coco.json")) {
-            if (imageStream == null || cocoStream == null) {
+            if (sum == null) {
+                throw invalid(folder, "reference.sha256 est absent");
+            }
+            if (cocoStream == null) {
                 throw invalid(folder, "lecture impossible");
             }
-            return load(folder, imageStream.readAllBytes(), cocoStream.readAllBytes());
+            Path image = cache.ensure(folder, SpecimenCache.readSum(sum, folder));
+            return loadCached(folder, cocoStream.readAllBytes(), image);
         }
     }
 

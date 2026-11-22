@@ -71,7 +71,7 @@ class FixedMatcherTest {
                         new SourceBox("mark", "fixed", 8, 8, 18, 14),
                         new SourceBox("seal", "fixed", 46, 8, 18, 14)),
                 List.of(),
-                reference);
+                SpecimenPicture.held(reference));
     }
 
     private static BufferedImage plate(boolean maskFirst, int shift) {

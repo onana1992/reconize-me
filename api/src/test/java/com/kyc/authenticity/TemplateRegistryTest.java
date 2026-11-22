@@ -149,7 +149,7 @@ class TemplateRegistryTest {
                 List.of(),
                 List.of(),
                 List.of(),
-                new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB));
+                SpecimenPicture.held(new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB)));
     }
 
     static BufferedImage plate(int width, int height, int x, int y, int cardWidth, int cardHeight) {

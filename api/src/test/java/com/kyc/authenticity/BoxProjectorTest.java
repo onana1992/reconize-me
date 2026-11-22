@@ -47,7 +47,7 @@ class BoxProjectorTest {
                 List.of(new SourceBox("mark", "fixed", 30, 40, 10, 10)),
                 List.of(),
                 List.of(),
-                new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
+                SpecimenPicture.held(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB)));
 
         List<ProjectedBox> boxes = projector.project(template);
 
@@ -75,7 +75,7 @@ class BoxProjectorTest {
                 List.of(new SourceBox("mark", "fixed", 0, 0, 8, 8)),
                 List.of(),
                 List.of(),
-                new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB));
+                SpecimenPicture.held(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB)));
 
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> projector.project(template));
         assertTrue(error.getMessage().contains("mark"));
@@ -84,11 +84,9 @@ class BoxProjectorTest {
     private static AuthenticityTemplate quebec() throws Exception {
         byte[] image;
         byte[] coco;
-        try (InputStream reference = BoxProjectorTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg");
-                InputStream annotations = BoxProjectorTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
-            image = reference.readAllBytes();
+        try (InputStream annotations = BoxProjectorTest.class.getResourceAsStream(
+                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
+            image = SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT");
             coco = annotations.readAllBytes();
         }
         return TemplateRegistry.load("QUEBEC_DRIVER_LICENSE_2024_FRONT", image, coco);

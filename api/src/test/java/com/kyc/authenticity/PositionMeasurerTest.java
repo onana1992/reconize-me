@@ -161,11 +161,9 @@ class PositionMeasurerTest {
     private static AuthenticityTemplate quebec() throws Exception {
         byte[] image;
         byte[] coco;
-        try (InputStream reference = PositionMeasurerTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/reference.jpg");
-                InputStream annotations = PositionMeasurerTest.class.getResourceAsStream(
-                        "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
-            image = reference.readAllBytes();
+        try (InputStream annotations = PositionMeasurerTest.class.getResourceAsStream(
+                "/authenticity/QUEBEC_DRIVER_LICENSE_2024_FRONT/annotations.coco.json")) {
+            image = SpecimenCache.shipped("QUEBEC_DRIVER_LICENSE_2024_FRONT");
             coco = annotations.readAllBytes();
         }
         return TemplateRegistry.load("QUEBEC_DRIVER_LICENSE_2024_FRONT", image, coco);
@@ -191,7 +189,7 @@ class PositionMeasurerTest {
                 List.of(),
                 List.of(),
                 List.of(new SourceBox("portrait", "region", x, y, width, height)),
-                paper());
+                SpecimenPicture.held(paper()));
     }
 
     private static void fill(BufferedImage image, int x, int y, int width, int height, int value) {
@@ -227,7 +225,7 @@ class PositionMeasurerTest {
                 List.of(),
                 List.of(),
                 List.of(new SourceBox("nom", "value", 20, 20, fieldWidth, 18)),
-                reference);
+                SpecimenPicture.held(reference));
     }
 
     private static BufferedImage plate(int shift, boolean absent) {

@@ -23,7 +23,11 @@ public record AuthenticityTemplate(
         List<SourceBox> boxes,
         List<SourceBox> fixedTargets,
         List<SourceBox> positionTargets,
-        BufferedImage reference) {
+        SpecimenPicture picture) {
+
+    public BufferedImage reference() {
+        return picture.image();
+    }
 
     /** Valeurs lues du COCO. Le canevas et le ratio sont calculés dans build. */
     static final class Spec {
@@ -41,7 +45,7 @@ public record AuthenticityTemplate(
         private List<SourceBox> boxes = List.of();
         private List<SourceBox> fixedTargets = List.of();
         private List<SourceBox> positionTargets = List.of();
-        private BufferedImage reference;
+        private SpecimenPicture picture;
 
         Spec withCode(String value) {
             code = value;
@@ -114,7 +118,12 @@ public record AuthenticityTemplate(
         }
 
         Spec withReference(BufferedImage value) {
-            reference = value;
+            picture = SpecimenPicture.held(value);
+            return this;
+        }
+
+        Spec withPicture(SpecimenPicture value) {
+            picture = value;
             return this;
         }
 
@@ -138,7 +147,7 @@ public record AuthenticityTemplate(
                     boxes,
                     fixedTargets,
                     positionTargets,
-                    reference);
+                    picture);
         }
     }
 }
