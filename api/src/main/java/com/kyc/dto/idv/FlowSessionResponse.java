@@ -12,4 +12,16 @@ public record FlowSessionResponse(
         @JsonProperty("consent_text_version") String consentTextVersion,
         @JsonProperty("expires_at") Instant expiresAt,
         String next,
-        String reason) {}
+        String reason,
+        String product) {
+
+    public FlowSessionResponse(
+            UUID verificationId,
+            String status,
+            String consentTextVersion,
+            Instant expiresAt,
+            String next,
+            String reason) {
+        this(verificationId, status, consentTextVersion, expiresAt, next, reason, "identity");
+    }
+}

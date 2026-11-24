@@ -53,7 +53,6 @@ export async function AmlCase({ id }: { id: string }) {
           </div>
           <p className="rm-vcase-meta">
             <span>{t("console.verifications.createdOn").replace("{date}", formatUtc(screening.created_at, locale))}</span>
-            {screening.engine ? <span>{screening.engine}</span> : null}
             {screening.policy_version ? <span>{screening.policy_version}</span> : null}
           </p>
         </div>
@@ -141,7 +140,6 @@ export async function AmlCase({ id }: { id: string }) {
           <Field label={t("console.verifications.sessionId")}>
             <code title={screening.id}>{screening.id}</code>
           </Field>
-          <Field label={t("console.product.amlEngine")}>{screening.engine ?? "—"}</Field>
           <Field label={t("console.product.amlPolicyVersion")}>{screening.policy_version ?? "—"}</Field>
           {screening.external_id ? <Field label={t("console.verifications.externalId")}>{screening.external_id}</Field> : null}
           {screening.failure_reason ? <Field label={t("console.product.amlOutcomeFailed")}>{screening.failure_reason}</Field> : null}

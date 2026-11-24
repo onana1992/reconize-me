@@ -37,7 +37,6 @@ export default async function ProductIntegrationsPage({
         <PageHeader
           eyebrow={t(product.navKey)}
           title={t("console.product.tab.integrations")}
-          lead={t("console.product.integrationsLead")}
         />
         <div className="rm-empty">
           <p>{t("console.product.integrationsUnavailable")}</p>
@@ -54,7 +53,6 @@ export default async function ProductIntegrationsPage({
       <PageHeader
         eyebrow={t(product.navKey)}
         title={t("console.product.tab.integrations")}
-        lead={t("console.integrations.lead")}
         actions={
           canWrite ? (
             <CreateIntegrationButton product={productId} liveUnlocked={liveUnlockedFor(productId, me)} />

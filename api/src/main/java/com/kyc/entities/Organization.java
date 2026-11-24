@@ -28,10 +28,18 @@ public class Organization {
     @Column(nullable = false)
     private Instant createdAt;
 
+    @Column(name = "enrollment_enabled", nullable = false)
+    private boolean enrollmentEnabled;
+
     public Organization(UUID id, String name, String slug, Instant createdAt) {
         this.id = id;
         this.name = name;
         this.slug = slug;
         this.createdAt = createdAt;
+        this.enrollmentEnabled = false;
+    }
+
+    public void setEnrollmentEnabled(boolean enrollmentEnabled) {
+        this.enrollmentEnabled = enrollmentEnabled;
     }
 }

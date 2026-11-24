@@ -109,7 +109,8 @@ public class ConsoleService {
                 usage.liveCount(),
                 billing.liveUnlocked(),
                 billing.identityAmountMinor(),
-                billing.amlAmountMinor());
+                billing.amlAmountMinor(),
+                billing.authenticationAmountMinor());
     }
 
     @Transactional(readOnly = true)

@@ -46,6 +46,28 @@
     "decline": "Je refuse",
     "error": "Le consentement n’a pas pu être enregistré. Réessayez."
   },
+  "authConsent": {
+    "eyebrow": "Contrôle de connexion",
+    "title": "Confirmez que c’est bien vous",
+    "lead": "Un court contrôle facial confirme que vous êtes la personne enrôlée.",
+    "stepFace": "Confirmez votre présence",
+    "stepFaceLead": "Un bref défi vidéo, puis nous comparons votre visage à l’enrôlement.",
+    "body": "Nous capturerons une courte vidéo de votre visage pour confirmer votre présence et le comparer à celui enrôlé pour ce compte. Les images sont transmises uniquement à l’entreprise qui a ouvert cette session.",
+    "accept": "Accepter et continuer",
+    "decline": "Je refuse"
+  },
+  "authOutcome": {
+    "done": "Identité confirmée",
+    "doneLead": "Vous pouvez retourner à l’application qui vous a envoyé ici.",
+    "review": "Contrôle transmis",
+    "reviewLead": "L’entreprise qui vous a envoyé ici prendra la suite. Vous pouvez fermer cette page.",
+    "declined": "Contrôle non confirmé",
+    "declinedLead": "Vous pouvez retourner à l’application qui vous a envoyé ici.",
+    "refused": "Vous avez refusé le contrôle",
+    "refusedLead": "Aucune capture n’a été faite. Vous pouvez fermer cette page.",
+    "unavailable": "Contrôle impossible",
+    "unavailableLead": "Le contrôle n’a pas pu aboutir. Vous pouvez retourner à l’application qui vous a envoyé ici."
+  },
   "document": {
     "eyebrow": "Pièce d’identité · recto",
     "title": "Photographiez le recto",

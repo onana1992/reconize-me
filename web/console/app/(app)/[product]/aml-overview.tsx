@@ -24,7 +24,6 @@ export async function AmlOverview({ canRead, canWrite }: { canRead: boolean; can
     <main className="rm-idv">
       <PageHeader
         title={t("console.product.tab.verifications")}
-        lead={t("console.product.amlListLead")}
         actions={
           canWrite ? (
             integrationItems.length > 0 ? (

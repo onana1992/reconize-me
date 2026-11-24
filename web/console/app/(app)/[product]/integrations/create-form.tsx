@@ -12,7 +12,12 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
   const t = useT();
   const router = useRouter();
   const productLabel =
-    product === "aml" ? t("console.nav.aml") : product === "biometrics" ? t("console.nav.biometric") : t("console.nav.idv");
+    product === "aml"
+      ? t("console.nav.aml")
+      : product === "authentication"
+        ? t("console.nav.biometric")
+        : t("console.nav.idv");
+  const liveOnly = product === "authentication";
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -139,21 +144,27 @@ export function CreateIntegrationButton({ product, liveUnlocked }: { product: st
               <span className="rm-hint">{t("console.integrations.nameHint")}</span>
               <input name="name" type="text" required maxLength={128} />
             </label>
-            <label>
-              <span>{t("console.integrations.mode")}</span>
-              <select name="mode" defaultValue="test">
-                <option value="test">{t("console.integrations.modeTest")}</option>
-                <option value="live" disabled={!liveUnlocked}>
-                  {t("console.integrations.modeLive")}
-                </option>
-              </select>
-            </label>
-            {liveUnlocked ? null : (
+            {liveOnly ? (
+              <input type="hidden" name="mode" value="live" />
+            ) : (
+              <label>
+                <span>{t("console.integrations.mode")}</span>
+                <select name="mode" defaultValue="test">
+                  <option value="test">{t("console.integrations.modeTest")}</option>
+                  <option value="live" disabled={!liveUnlocked}>
+                    {t("console.integrations.modeLive")}
+                  </option>
+                </select>
+              </label>
+            )}
+            {!liveUnlocked ? (
               <p className="rm-hint">
                 {t("console.integrations.liveLocked")}{" "}
                 <Link href="/settings/billing">{t("console.nav.billing")}</Link>
               </p>
-            )}
+            ) : liveOnly ? (
+              <p className="rm-hint">{t("console.integrations.modeLive")}</p>
+            ) : null}
             {error ? (
               <p role="alert" className="rm-alert">
                 {error}

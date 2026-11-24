@@ -1,12 +1,8 @@
-import Link from "next/link";
-import { StatusBadge } from "@/brand";
-import { PageHeader } from "../../../components/page-header";
-import { getLocale, getT } from "../../../i18n";
-import { formatCount } from "../../../lib/pricing";
+import { notFound } from "next/navigation";
 import { parseProduct } from "../../../lib/parse-product";
-import { PRODUCTS, productTabHref } from "../../../lib/products";
 import { requireMe } from "../../../lib/session";
 import { AmlOverview } from "./aml-overview";
+import { AuthenticationOverview } from "./authentication-overview";
 import { IdentityOverview } from "./identity-overview";
 
 export default async function ProductOverviewPage({
@@ -17,10 +13,7 @@ export default async function ProductOverviewPage({
   searchParams: Promise<{ integration?: string }>;
 }) {
   const productId = await parseProduct(params);
-  const product = PRODUCTS[productId];
   const me = await requireMe();
-  const t = await getT();
-  const locale = await getLocale();
   const canReadSessions = me.permissions.includes("VERIFICATION_READ");
   const canWriteSessions = me.permissions.includes("VERIFICATION_WRITE");
   const integrationId = (await searchParams).integration?.trim();
@@ -40,35 +33,15 @@ export default async function ProductOverviewPage({
     );
   }
 
-  return (
-    <main>
-      <PageHeader
-        eyebrow={t("console.nav.services")}
-        title={t("console.product.tab.verifications")}
-        lead={t(product.leadKey)}
-        actions={
-          <StatusBadge
-            label={product.api ? t("console.home.available") : t("console.nav.soon")}
-            tone={product.api ? "info" : "neutral"}
-          />
-        }
+  if (productId === "authentication") {
+    return (
+      <AuthenticationOverview
+        canRead={canReadSessions}
+        canWrite={canWriteSessions}
+        integrationId={integrationId}
       />
-      <section className="rm-kpi-grid" aria-label={t("console.env.label")}>
-        <article className="rm-card rm-kpi">
-          <p className="rm-eyebrow">{t("console.product.tab.integrations")}</p>
-          <p className="rm-kpi-value">{formatCount(locale, 0)}</p>
-          <p className="rm-lead">{t("console.product.billingNotSold")}</p>
-        </article>
-      </section>
-      <section className="rm-section">
-        <h2>{t("console.product.tabsLabel")}</h2>
-        <div className="rm-link-grid">
-          <Link href={productTabHref(productId, "integrations")} className="rm-card rm-link-card">
-            <h3>{t("console.product.tab.integrations")}</h3>
-            <p>{t("console.product.integrationsLead")}</p>
-          </Link>
-        </div>
-      </section>
-    </main>
-  );
+    );
+  }
+
+  notFound();
 }

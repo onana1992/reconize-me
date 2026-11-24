@@ -14,6 +14,7 @@ import com.kyc.enums.LedgerResourceType;
 import com.kyc.enums.ProductCode;
 import com.kyc.entities.StripeCustomer;
 import com.kyc.ports.StripePort;
+import com.kyc.repositories.AuthenticationRepository;
 import com.kyc.repositories.CreditAccountRepository;
 import com.kyc.repositories.CreditLedgerEntryRepository;
 import com.kyc.repositories.OrganizationRepository;
@@ -49,6 +50,7 @@ public class CreditService {
     private final StripeCustomerRepository stripeCustomers;
     private final VerificationRepository verifications;
     private final ScreeningRepository screenings;
+    private final AuthenticationRepository authentications;
     private final OrganizationRepository organizations;
     private final AuditEventRepositoryAdapter audit;
     private final StripePort stripe;
@@ -60,6 +62,7 @@ public class CreditService {
             StripeCustomerRepository stripeCustomers,
             VerificationRepository verifications,
             ScreeningRepository screenings,
+            AuthenticationRepository authentications,
             OrganizationRepository organizations,
             com.kyc.repositories.AuditEventRepository auditEvents,
             StripePort stripe,
@@ -69,6 +72,7 @@ public class CreditService {
         this.stripeCustomers = stripeCustomers;
         this.verifications = verifications;
         this.screenings = screenings;
+        this.authentications = authentications;
         this.organizations = organizations;
         this.audit = new AuditEventRepositoryAdapter(auditEvents);
         this.stripe = stripe;
@@ -253,6 +257,42 @@ public class CreditService {
     }
 
     @Transactional
+    public void debitForAuthentication(UUID organizationId, UUID authenticationId, UUID actorId, String actorType) {
+        CreditAccount account = lockOrCreate(organizationId);
+        long unit = properties.billing().authenticationAmountMinor();
+        if (account.getBalanceMinor() < unit) {
+            throw ApiException.insufficientCredit();
+        }
+        if (ledger.existsByResourceTypeAndResourceId(LedgerResourceType.AUTHENTICATION, authenticationId)) {
+            return;
+        }
+        Instant now = Instant.now();
+        account.apply(-unit, now);
+        ledger.save(new CreditLedgerEntry(
+                UUID.randomUUID(),
+                organizationId,
+                LedgerEntryType.DEBIT,
+                -unit,
+                account.getBalanceMinor(),
+                ProductCode.AUTHENTICATION,
+                LedgerResourceType.AUTHENTICATION,
+                authenticationId,
+                null,
+                null,
+                actorId,
+                now));
+        audit.save(
+                organizationId,
+                actorType == null ? "system" : actorType,
+                actorId,
+                "credit.debited",
+                "authentication",
+                authenticationId,
+                "{\"amount_minor\":" + unit + ",\"product\":\"authentication\"}",
+                now);
+    }
+
+    @Transactional
     public void debitForLiveScreening(UUID organizationId, UUID screeningId, UUID actorId, String actorType) {
         CreditAccount account = lockOrCreate(organizationId);
         long unit = properties.billing().amlAmountMinor();
@@ -294,10 +334,12 @@ public class CreditService {
         long identityUnit = properties.billing().identityAmountMinor();
         long identityScreeningUnit = properties.billing().identityScreeningAmountMinor();
         long amlUnit = properties.billing().amlAmountMinor();
+        long authenticationUnit = properties.billing().authenticationAmountMinor();
         long balance = account == null ? 0 : account.getBalanceMinor();
         String currency = account == null ? properties.billing().currency() : account.getCurrency();
         long[] identityCounts = countsByMode(verifications.countByIntegrationMode(organizationId));
         long[] amlCounts = countsByMode(screenings.countByIntegrationMode(organizationId));
+        long[] authenticationCounts = countsByMode(authentications.countByIntegrationMode(organizationId));
         List<BillingResponse.ProductUsage> usage = List.of(
                 new BillingResponse.ProductUsage(
                         Enums.json(ProductCode.IDENTITY),
@@ -308,7 +350,12 @@ public class CreditService {
                         Enums.json(ProductCode.AML),
                         amlCounts[0],
                         amlCounts[1],
-                        ledger.sumDebits(organizationId, ProductCode.AML)));
+                        ledger.sumDebits(organizationId, ProductCode.AML)),
+                new BillingResponse.ProductUsage(
+                        Enums.json(ProductCode.AUTHENTICATION),
+                        authenticationCounts[0],
+                        authenticationCounts[1],
+                        ledger.sumDebits(organizationId, ProductCode.AUTHENTICATION)));
         BillingResponse.LedgerPage page = includeLedger
                 ? ledgerPage(organizationId, cursor, limit)
                 : new BillingResponse.LedgerPage(List.of(), null);
@@ -319,6 +366,7 @@ public class CreditService {
                 identityUnit,
                 identityScreeningUnit,
                 amlUnit,
+                authenticationUnit,
                 balance >= identityUnit,
                 properties.billing().packs(),
                 usage,

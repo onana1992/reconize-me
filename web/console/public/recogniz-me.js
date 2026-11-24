@@ -75,8 +75,8 @@
         }).then(function (session) {
           var url = session && session.hosted_url;
           if (!response.ok || !url) throw new Error(failureMessage(session));
-          if (settings.mode === "incontext") frame(url);
-          else window.location.assign(url);
+          if (settings.mode === "redirect") window.location.assign(url);
+          else frame(url);
         });
       });
   }

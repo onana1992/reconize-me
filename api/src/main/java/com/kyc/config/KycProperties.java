@@ -9,6 +9,7 @@ public record KycProperties(
         @DefaultValue("http://localhost:3001") String publicFlowBaseUrl,
         @DefaultValue("3600") int hostedUrlTtlSeconds,
         @DefaultValue("consent-v1") String consentTextVersion,
+        @DefaultValue("auth-consent-1") String authenticationConsentTextVersion,
         @DefaultValue("24") int idempotencyTtlHours,
         @DefaultValue("./data/media") String objectStorageRoot,
         @DefaultValue("local-dev-pepper") String ipHashPepper,
@@ -38,7 +39,8 @@ public record KycProperties(
             @DefaultValue("usd") String currency,
             @DefaultValue("80") long identityAmountMinor,
             @DefaultValue("130") long identityScreeningAmountMinor,
-            @DefaultValue("50") long amlAmountMinor) {
+            @DefaultValue("50") long amlAmountMinor,
+            @DefaultValue("40") long authenticationAmountMinor) {
 
         public static final java.util.List<Long> PACKS = java.util.List.of(5000L, 10000L, 25000L, 50000L);
 
@@ -113,3 +115,4 @@ public record KycProperties(
         return path.startsWith("/") ? base + path : base + "/" + path;
     }
 }
+

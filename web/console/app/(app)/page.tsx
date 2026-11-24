@@ -10,7 +10,7 @@ import { requireMe } from "../../lib/session";
 const HOME_LEAD: Record<ProductId, "console.home.idvHomeLead" | "console.home.biometricHomeLead" | "console.home.amlHomeLead"> =
   {
     identity: "console.home.idvHomeLead",
-    biometrics: "console.home.biometricHomeLead",
+    authentication: "console.home.biometricHomeLead",
     aml: "console.home.amlHomeLead",
   };
 

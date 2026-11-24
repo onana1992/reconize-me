@@ -12,6 +12,7 @@ public record BillingResponse(
         @JsonProperty("identity_amount_minor") long identityAmountMinor,
         @JsonProperty("identity_screening_amount_minor") long identityScreeningAmountMinor,
         @JsonProperty("aml_amount_minor") long amlAmountMinor,
+        @JsonProperty("authentication_amount_minor") long authenticationAmountMinor,
         @JsonProperty("live_unlocked") boolean liveUnlocked,
         List<Long> packs,
         List<ProductUsage> usage,

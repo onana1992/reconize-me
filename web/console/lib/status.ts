@@ -49,6 +49,58 @@ export function verificationTone(status: string): BadgeTone {
   return STATUS_TONE[status] ?? "neutral";
 }
 
+export const AUTHENTICATION_STATUSES = [
+  "created",
+  "pending_consent",
+  "selfie",
+  "recapture_requested",
+  "processing",
+  "approved",
+  "declined",
+  "review",
+  "failed",
+  "expired",
+  "cancelled",
+] as const;
+
+const AUTHENTICATION_TONE: Record<string, BadgeTone> = {
+  ...STATUS_TONE,
+  failed: "danger",
+};
+
+export function authenticationTone(status: string): BadgeTone {
+  return AUTHENTICATION_TONE[status] ?? "neutral";
+}
+
+export function tAuthenticationStatus(t: Translate, status: string): string {
+  switch (status) {
+    case "created":
+      return t("console.authentications.status.created");
+    case "pending_consent":
+      return t("console.authentications.status.pendingConsent");
+    case "selfie":
+      return t("console.authentications.status.selfie");
+    case "recapture_requested":
+      return t("console.authentications.status.recapture");
+    case "processing":
+      return t("console.authentications.status.processing");
+    case "approved":
+      return t("console.authentications.status.approved");
+    case "declined":
+      return t("console.authentications.status.declined");
+    case "review":
+      return t("console.authentications.status.review");
+    case "failed":
+      return t("console.authentications.status.failed");
+    case "expired":
+      return t("console.authentications.status.expired");
+    case "cancelled":
+      return t("console.authentications.status.cancelled");
+    default:
+      return status;
+  }
+}
+
 export function tVerificationStatus(t: Translate, status: string): string {
   switch (status) {
     case "created":

@@ -5,6 +5,7 @@ import com.kyc.dto.idv.MediaUrlResponse;
 import com.kyc.dto.idv.ReviewRequest;
 import com.kyc.dto.idv.VerificationListResponse;
 import com.kyc.dto.idv.VerificationResponse;
+import com.kyc.enums.ProductCode;
 import com.kyc.security.ApiPrincipal;
 import com.kyc.security.CurrentApiKey;
 import com.kyc.services.IntegrationService;
@@ -41,7 +42,8 @@ public class VerificationsController {
             @RequestBody(required = false) CreateVerificationRequest body,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         ApiPrincipal principal = CurrentApiKey.require();
-        var integration = integrations.requireInOrg(principal.organizationId(), principal.integrationId());
+        var integration = integrations.requireProduct(
+                principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.create(
                 principal.organizationId(), integration, "api_key", principal.apiKeyId(), body, idempotencyKey);
     }
@@ -53,6 +55,7 @@ public class VerificationsController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") int limit) {
         ApiPrincipal principal = CurrentApiKey.require();
+        integrations.requireProduct(principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.list(principal.organizationId(), status, principal.integrationId(), cursor, limit);
     }
 
@@ -60,6 +63,7 @@ public class VerificationsController {
     @Operation(summary = "Fiche vérification")
     public VerificationResponse get(@PathVariable UUID id) {
         ApiPrincipal principal = CurrentApiKey.require();
+        integrations.requireProduct(principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.get(principal.organizationId(), id);
     }
 
@@ -67,6 +71,7 @@ public class VerificationsController {
     @Operation(summary = "Annuler une vérification")
     public VerificationResponse cancel(@PathVariable UUID id) {
         ApiPrincipal principal = CurrentApiKey.require();
+        integrations.requireProduct(principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.cancel(principal.organizationId(), "api_key", principal.apiKeyId(), id);
     }
 
@@ -74,6 +79,7 @@ public class VerificationsController {
     @Operation(summary = "Trancher une vérification en revue")
     public VerificationResponse review(@PathVariable UUID id, @RequestBody ReviewRequest body) {
         ApiPrincipal principal = CurrentApiKey.require();
+        integrations.requireProduct(principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.review(
                 principal.organizationId(), "api_key", principal.apiKeyId(), id, body == null ? null : body.decision());
     }
@@ -82,6 +88,7 @@ public class VerificationsController {
     @Operation(summary = "URL signée d’un média accepté")
     public MediaUrlResponse media(@PathVariable UUID id, @PathVariable String kind) {
         ApiPrincipal principal = CurrentApiKey.require();
+        integrations.requireProduct(principal.organizationId(), principal.integrationId(), ProductCode.IDENTITY);
         return verifications.mediaUrl(principal.organizationId(), id, kind);
     }
 }

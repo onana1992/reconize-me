@@ -1,75 +1,105 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Authenticate } from "./authenticate-button";
 import { Verify } from "./verify-button";
 import { WebhookPanel } from "./webhook-panel";
 
 export default function HomePage() {
   const [mode, setMode] = useState<"redirect" | "incontext">("redirect");
   const [externalId, setExternalId] = useState("order-123");
+  const [authExternalId, setAuthExternalId] = useState("user-1");
   const [firstName, setFirstName] = useState("Ada");
   const [lastName, setLastName] = useState("Lovelace");
   const [email, setEmail] = useState("ada@example.com");
-  const [error, setError] = useState<string | null>(null);
-  const report = useCallback((message: string) => setError(message), []);
+  const [identityError, setIdentityError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const reportIdentity = useCallback((message: string) => setIdentityError(message || null), []);
+  const reportAuth = useCallback((message: string) => setAuthError(message || null), []);
 
   return (
     <main>
-      <h1>Vérifier une identité</h1>
-      <p className="lead">
-        Le bouton est celui de cette application. Au clic, le plugin Recogniz-Me ouvre le parcours hébergé.
-      </p>
-      <form
-        onSubmit={(event) => event.preventDefault()}
-        onChange={() => setError(null)}
-      >
-        <fieldset>
-          <label className="choice">
-            <input
-              type="radio"
-              name="mode"
-              checked={mode === "redirect"}
-              onChange={() => setMode("redirect")}
-            />
-            Redirection
+      <section className="panel">
+        <h1>Vérifier une identité</h1>
+        <p className="lead">
+          Le bouton est celui de cette application. Au clic, le plugin Recogniz-Me ouvre le parcours hébergé.
+        </p>
+        <form
+          onSubmit={(event) => event.preventDefault()}
+          onChange={() => setIdentityError(null)}
+        >
+          <fieldset>
+            <label className="choice">
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === "redirect"}
+                onChange={() => setMode("redirect")}
+              />
+              Redirection
+            </label>
+            <label className="choice">
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === "incontext"}
+                onChange={() => setMode("incontext")}
+              />
+              InContext
+            </label>
+          </fieldset>
+          <label>
+            Identifiant externe
+            <input value={externalId} onChange={(event) => setExternalId(event.target.value)} type="text" />
           </label>
-          <label className="choice">
-            <input
-              type="radio"
-              name="mode"
-              checked={mode === "incontext"}
-              onChange={() => setMode("incontext")}
-            />
-            InContext
+          <label>
+            Prénom
+            <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" />
           </label>
-        </fieldset>
-        <label>
-          Identifiant externe
-          <input value={externalId} onChange={(event) => setExternalId(event.target.value)} type="text" />
-        </label>
-        <label>
-          Prénom
-          <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" />
-        </label>
-        <label>
-          Nom
-          <input value={lastName} onChange={(event) => setLastName(event.target.value)} type="text" />
-        </label>
-        <label>
-          E-mail
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
-        </label>
-      </form>
-      <Verify
-        mode={mode}
-        externalId={externalId}
-        firstName={firstName}
-        lastName={lastName}
-        email={email}
-        onError={report}
-      />
-      {error ? <p className="error">{error}</p> : null}
-      <WebhookPanel />
+          <label>
+            Nom
+            <input value={lastName} onChange={(event) => setLastName(event.target.value)} type="text" />
+          </label>
+          <label>
+            E-mail
+            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+          </label>
+        </form>
+        <Verify
+          mode={mode}
+          externalId={externalId}
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          onError={reportIdentity}
+        />
+        {identityError ? <p className="error">{identityError}</p> : null}
+        <WebhookPanel />
+      </section>
+
+      <section className="panel">
+        <h1>Authentification biométrique</h1>
+        <p className="lead">
+          Production uniquement, ouverture InContext. Pas de webhook : cette page crée la session, ouvre le cadre,
+          puis relit le statut par GET.
+        </p>
+        <form
+          onSubmit={(event) => event.preventDefault()}
+          onChange={() => setAuthError(null)}
+        >
+          <label>
+            Identifiant externe (personne enrôlée)
+            <input
+              value={authExternalId}
+              onChange={(event) => setAuthExternalId(event.target.value)}
+              type="text"
+              required
+            />
+          </label>
+        </form>
+        <Authenticate externalId={authExternalId} onError={reportAuth} />
+        {authError ? <p className="error">{authError}</p> : null}
+      </section>
     </main>
   );
 }

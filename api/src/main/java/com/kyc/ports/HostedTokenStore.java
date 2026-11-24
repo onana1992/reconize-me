@@ -1,55 +1,46 @@
 package com.kyc.ports;
 
+import com.kyc.enums.ProductCode;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Store for managing short-lived tokens that link an organization and verification operation
- * to a token, used (for example) when constructing hosted URLs for a verification flow.
+ * Short-lived tokens that bind a hosted URL to an organization resource (identity verification or
+ * authentication session).
  */
 public interface HostedTokenStore {
 
     /**
-     * Represents an entry mapping a token to an organization and verification.
-     *
-     * @param organizationId  The unique identifier of the organization.
-     * @param verificationId  The unique identifier of the verification operation.
+     * @param organizationId organization that owns the resource
+     * @param verificationId resource id (verification or authentication session)
+     * @param product IDENTITY or AUTHENTICATION (null treated as IDENTITY for legacy Redis rows)
      */
-    record Entry(UUID organizationId, UUID verificationId) {}
+    record Entry(UUID organizationId, UUID verificationId, ProductCode product) {
+        public Entry {
+            if (product == null) {
+                product = ProductCode.IDENTITY;
+            }
+        }
 
-    /**
-     * Adds or updates a mapping from the given token to the specified organization and verification,
-     * with a time-to-live after which the mapping expires.
-     *
-     * @param token           The ephemeral token to store.
-     * @param organizationId  The organization's UUID.
-     * @param verificationId  The verification's UUID.
-     * @param ttl             The duration for which the mapping is valid.
-     */
-    void put(String token, UUID organizationId, UUID verificationId, Duration ttl);
+        public Entry(UUID organizationId, UUID verificationId) {
+            this(organizationId, verificationId, ProductCode.IDENTITY);
+        }
 
-    /**
-     * Retrieves the entry mapped to the given token, if it exists and is not expired.
-     *
-     * @param token  The token to look up.
-     * @return       An Optional containing the entry if found, or empty otherwise.
-     */
+        public boolean authentication() {
+            return product == ProductCode.AUTHENTICATION;
+        }
+    }
+
+    void put(String token, UUID organizationId, UUID resourceId, ProductCode product, Duration ttl);
+
+    default void put(String token, UUID organizationId, UUID verificationId, Duration ttl) {
+        put(token, organizationId, verificationId, ProductCode.IDENTITY, ttl);
+    }
+
     Optional<Entry> get(String token);
 
-    /**
-     * Retrieves the token currently mapped to the given verification, if one exists.
-     *
-     * @param verificationId  The UUID of the verification operation.
-     * @return                An Optional containing the token if it exists, or empty otherwise.
-     */
-    Optional<String> tokenFor(UUID verificationId);
+    Optional<String> tokenFor(UUID resourceId);
 
-    /**
-     * Removes any token mapped to the given verification, effectively revoking access
-     * for that verification operation.
-     *
-     * @param verificationId  The verification UUID whose token should be revoked.
-     */
-    void revokeByVerificationId(UUID verificationId);
+    void revokeByVerificationId(UUID resourceId);
 }

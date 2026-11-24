@@ -17,6 +17,7 @@ export type Me = {
   live_unlocked?: boolean;
   identity_amount_minor?: number;
   aml_amount_minor?: number;
+  authentication_amount_minor?: number;
 };
 
 export type ApiKeyItem = {
@@ -105,6 +106,7 @@ export type Billing = {
   identity_amount_minor?: number;
   identity_screening_amount_minor?: number;
   aml_amount_minor?: number;
+  authentication_amount_minor?: number;
   live_unlocked: boolean;
   packs: number[];
   usage: BillingUsage[];
@@ -398,6 +400,56 @@ export type Verification = {
 
 export type VerificationList = {
   items: Verification[];
+  next_cursor?: string | null;
+};
+
+export type AuthPolicy = {
+  version: string;
+  approval_threshold: number | string;
+  review_threshold: number | string;
+  on_borderline: string;
+  max_capture_attempts: number;
+  liveness_required: boolean;
+  published: boolean;
+  active?: boolean;
+  published_at?: string | null;
+  published_by_name?: string | null;
+};
+
+export type AuthPolicyVersions = {
+  versions: AuthPolicy[];
+};
+
+export type Enrollment = {
+  id?: string | null;
+  status: string;
+  source?: string | null;
+  external_id?: string | null;
+  source_verification_id?: string | null;
+  created_at?: string | null;
+  ended_at?: string | null;
+};
+
+export type AuthenticationSession = {
+  id: string;
+  integration_id?: string | null;
+  integration_mode?: string | null;
+  external_id?: string | null;
+  enrollment_id?: string | null;
+  status: string;
+  reasons?: string[] | null;
+  failure_reason?: string | null;
+  match_score?: number | null;
+  engine?: string | null;
+  policy_version?: string | null;
+  hosted_url?: string | null;
+  expires_at?: string | null;
+  created_at: string;
+  decided_at?: string | null;
+};
+
+export type AuthenticationList = {
+  data: AuthenticationSession[];
   next_cursor?: string | null;
 };
 

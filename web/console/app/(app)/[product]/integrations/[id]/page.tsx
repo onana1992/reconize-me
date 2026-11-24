@@ -35,6 +35,7 @@ export default async function IntegrationInstallPage({
 
   return (
     <InstallGuide
+      product={productId}
       apiBase={apiBase}
       keyPrefix={keyPrefix}
       keysHref={integrationTabHref(productId, integration.id, "keys")}

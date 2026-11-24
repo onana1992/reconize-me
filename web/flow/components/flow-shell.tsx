@@ -6,20 +6,29 @@ import { FlowBrand } from "./flow-brand";
 import { CheckIcon, LockIcon } from "./icons";
 
 export type FlowStep = "consent" | "document" | "face" | "done";
+export type FlowProduct = "identity" | "authentication";
 
-const STEPS: { id: FlowStep; label: MessageKey }[] = [
+const IDENTITY_STEPS: { id: FlowStep; label: MessageKey }[] = [
   { id: "consent", label: "steps.consent" },
   { id: "document", label: "steps.document" },
   { id: "face", label: "steps.face" },
   { id: "done", label: "steps.done" },
 ];
 
+const AUTH_STEPS: { id: FlowStep; label: MessageKey }[] = [
+  { id: "consent", label: "steps.consent" },
+  { id: "face", label: "steps.face" },
+  { id: "done", label: "steps.done" },
+];
+
 export function FlowShell({
   step,
+  product = "identity",
   wide = false,
   children,
 }: {
   step: FlowStep | null;
+  product?: FlowProduct;
   wide?: boolean;
   children: React.ReactNode;
 }) {
@@ -28,7 +37,7 @@ export function FlowShell({
       <main className="rm-flow" data-wide={wide ? "true" : undefined}>
         <FlowBrand />
         <section className="rm-flow-card">
-          {step ? <Stepper step={step} /> : null}
+          {step ? <Stepper step={step} product={product} /> : null}
           <div className="rm-flow-body">{children}</div>
         </section>
         <FlowFooter />
@@ -37,17 +46,18 @@ export function FlowShell({
   );
 }
 
-function Stepper({ step }: { step: FlowStep }) {
+function Stepper({ step, product }: { step: FlowStep; product: FlowProduct }) {
   const t = useT();
-  const current = STEPS.findIndex((candidate) => candidate.id === step);
+  const steps = product === "authentication" ? AUTH_STEPS : IDENTITY_STEPS;
+  const current = Math.max(0, steps.findIndex((candidate) => candidate.id === step));
   const label = t("shell.stepOf")
     .replace("{current}", String(current + 1))
-    .replace("{total}", String(STEPS.length));
+    .replace("{total}", String(steps.length));
 
   return (
     <nav className="rm-stepper" aria-label={label}>
       <ol>
-        {STEPS.map((candidate, index) => {
+        {steps.map((candidate, index) => {
           const state = index < current ? "done" : index === current ? "current" : "todo";
           return (
             <li key={candidate.id} data-state={state} aria-current={state === "current" ? "step" : undefined}>
@@ -61,10 +71,10 @@ function Stepper({ step }: { step: FlowStep }) {
       </ol>
       <p className="rm-stepper-mobile" aria-hidden="true">
         <span>{label}</span>
-        <strong>{t(STEPS[current].label)}</strong>
+        <strong>{t(steps[current].label)}</strong>
       </p>
       <span className="rm-stepper-bar" aria-hidden="true">
-        <span style={{ width: `${((current + 1) / STEPS.length) * 100}%` }} />
+        <span style={{ width: `${((current + 1) / steps.length) * 100}%` }} />
       </span>
     </nav>
   );

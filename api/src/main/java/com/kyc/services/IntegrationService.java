@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,15 +91,24 @@ public class IntegrationService {
         ConsoleAuth.require(principal, Permission.API_KEY_WRITE);
         ProductCode productCode = normalizeProduct(product);
         IntegrationMode normalized = normalizeMode(mode);
+        if (productCode == ProductCode.AUTHENTICATION && normalized != IntegrationMode.LIVE) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "invalid",
+                    "Authentication integrations are live only",
+                    List.of(new ErrorDetail("mode", "invalid")));
+        }
         if (productCode == ProductCode.AML
                 && normalized == IntegrationMode.LIVE
                 && !properties.opensanctions().inService()) {
             throw ApiException.conflict("engine_unavailable", "Live screening is not in service");
         }
         if (normalized == IntegrationMode.LIVE) {
-            long required = productCode == ProductCode.AML
-                    ? properties.billing().amlAmountMinor()
-                    : properties.billing().identityAmountMinor();
+            long required = switch (productCode) {
+                case AML -> properties.billing().amlAmountMinor();
+                case AUTHENTICATION -> properties.billing().authenticationAmountMinor();
+                case IDENTITY -> properties.billing().identityAmountMinor();
+            };
             if (!credits.covers(principal.organizationId(), required)) {
                 throw ApiException.forbidden("insufficient_credit", "Live integrations require a credit balance");
             }
@@ -107,6 +117,15 @@ public class IntegrationService {
         Integration saved = saveNew(principal.organizationId(), productCode, normalized, resolvedName, principal.userId());
         IssuedApiKeyResponse issued = apiKeyIssuer.issue(saved, principal.userId());
         return toResponse(saved, keysOf(saved.getId()), issued.key());
+    }
+
+    @Transactional(readOnly = true)
+    public Integration requireProduct(UUID organizationId, UUID integrationId, ProductCode product) {
+        Integration integration = requireInOrg(organizationId, integrationId);
+        if (integration.getProduct() != product) {
+            throw ApiException.unauthorized("unauthorized", "API key is not valid");
+        }
+        return integration;
     }
 
     @Transactional

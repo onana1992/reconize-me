@@ -17,7 +17,8 @@ public record MeResponse(
         @JsonProperty("live_count") long liveCount,
         @JsonProperty("live_unlocked") boolean liveUnlocked,
         @JsonProperty("identity_amount_minor") long identityAmountMinor,
-        @JsonProperty("aml_amount_minor") long amlAmountMinor) {
+        @JsonProperty("aml_amount_minor") long amlAmountMinor,
+        @JsonProperty("authentication_amount_minor") long authenticationAmountMinor) {
 
     public record OrganizationMe(UUID id, String name, String slug) {}
 }

@@ -1,5 +1,6 @@
 package com.kyc.adapters;
 
+import com.kyc.enums.ProductCode;
 import com.kyc.ports.HostedTokenStore;
 import java.time.Duration;
 import java.time.Instant;
@@ -11,12 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class InMemoryHostedTokenStore implements HostedTokenStore {
 
     private final Map<String, Held> byToken = new ConcurrentHashMap<>();
-    private final Map<UUID, String> byVerification = new ConcurrentHashMap<>();
+    private final Map<UUID, String> byResource = new ConcurrentHashMap<>();
 
     @Override
-    public void put(String token, UUID organizationId, UUID verificationId, Duration ttl) {
-        byToken.put(token, new Held(new Entry(organizationId, verificationId), Instant.now().plus(ttl)));
-        byVerification.put(verificationId, token);
+    public void put(String token, UUID organizationId, UUID resourceId, ProductCode product, Duration ttl) {
+        byToken.put(
+                token,
+                new Held(new Entry(organizationId, resourceId, product), Instant.now().plus(ttl)));
+        byResource.put(resourceId, token);
     }
 
     @Override
@@ -33,8 +36,8 @@ public class InMemoryHostedTokenStore implements HostedTokenStore {
     }
 
     @Override
-    public Optional<String> tokenFor(UUID verificationId) {
-        String token = byVerification.get(verificationId);
+    public Optional<String> tokenFor(UUID resourceId) {
+        String token = byResource.get(resourceId);
         if (token == null) {
             return Optional.empty();
         }
@@ -42,8 +45,8 @@ public class InMemoryHostedTokenStore implements HostedTokenStore {
     }
 
     @Override
-    public void revokeByVerificationId(UUID verificationId) {
-        String token = byVerification.remove(verificationId);
+    public void revokeByVerificationId(UUID resourceId) {
+        String token = byResource.remove(resourceId);
         if (token != null) {
             byToken.remove(token);
         }

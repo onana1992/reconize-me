@@ -103,6 +103,7 @@ public class HostedFlowService {
     private final IdentityScreeningService identityScreening;
     private final CreditService credits;
     private final AuthenticitySession authenticity;
+    private final EnrollmentService enrollments;
 
     public HostedFlowService(
             VerificationRepository verifications,
@@ -129,7 +130,8 @@ public class HostedFlowService {
             IdvPolicyService policies,
             IdentityScreeningService identityScreening,
             CreditService credits,
-            AuthenticitySession authenticity) {
+            AuthenticitySession authenticity,
+            EnrollmentService enrollments) {
         this.verifications = verifications;
         this.consents = consents;
         this.media = media;
@@ -156,6 +158,7 @@ public class HostedFlowService {
         this.identityScreening = identityScreening;
         this.credits = credits;
         this.authenticity = authenticity;
+        this.enrollments = enrollments;
     }
 
     @Transactional
@@ -437,10 +440,21 @@ public class HostedFlowService {
                         "liveness_fail");
             }
             commit(loaded, face, IdvDecisionEngine.BIO_RULES_VERSION, now);
+            maybeEnroll(loaded, face, reference);
         } catch (ProviderUnavailableException e) {
             commit(loaded, engine.providerUnavailable(), IdvDecisionEngine.BIO_RULES_VERSION, now);
         }
         return finished(loaded, null);
+    }
+
+    private void maybeEnroll(Loaded loaded, IdvDecisionEngine.Result face, byte[] livenessReference) {
+        if (face == null || face.decision() != VerificationDecision.APPROVED) {
+            return;
+        }
+        Integration identity = integrations
+                .findById(loaded.verification().getIntegrationId())
+                .orElse(null);
+        enrollments.afterIdvApproved(loaded.verification(), identity, face.reasons(), livenessReference);
     }
 
     private void decide(Loaded loaded, Instant now) {
@@ -1036,7 +1050,8 @@ public class HostedFlowService {
                 properties.consentTextVersion(),
                 verification.getHostedExpiresAt(),
                 nextOf(verification),
-                failureReason(verification));
+                failureReason(verification),
+                "identity");
     }
 
     private void requireLive(Loaded loaded) {
