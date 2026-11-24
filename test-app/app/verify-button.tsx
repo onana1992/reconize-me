@@ -7,7 +7,7 @@ declare global {
   interface Window {
     RecognizMe: {
       open: (options: {
-        mode: "redirect" | "incontext";
+        mode?: "redirect" | "incontext";
         endpoint: string;
         externalId?: string;
         firstName?: string;

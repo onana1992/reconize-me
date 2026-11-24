@@ -8,6 +8,7 @@ import com.kyc.dto.idv.FlowSessionResponse;
 import com.kyc.dto.idv.LivenessCompleteRequest;
 import com.kyc.dto.idv.LivenessSessionResponse;
 import com.kyc.dto.idv.UploadResponse;
+import com.kyc.services.AuthenticationHostedFlowService;
 import com.kyc.services.HostedFlowService;
 import com.kyc.web.ClientIps;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,15 +31,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class FlowController {
 
     private final HostedFlowService flow;
+    private final AuthenticationHostedFlowService authFlow;
 
-    public FlowController(HostedFlowService flow) {
+    public FlowController(HostedFlowService flow, AuthenticationHostedFlowService authFlow) {
         this.flow = flow;
+        this.authFlow = authFlow;
     }
 
     @GetMapping
     @Operation(summary = "Hydrater la session applicant")
     public FlowSessionResponse get(@PathVariable String token, HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            return authFlow.hydrate(token);
+        }
         return flow.hydrate(token);
     }
 
@@ -52,14 +58,22 @@ public class FlowController {
             HttpServletRequest request,
             HttpServletResponse response) {
         noStore(response);
-        String resolved = body != null && body.decision() != null && !body.decision().isBlank() ? body.decision() : decision;
-        return flow.consent(token, new ConsentRequest(resolved), ClientIps.from(request), request.getHeader("User-Agent"));
+        String resolved =
+                body != null && body.decision() != null && !body.decision().isBlank() ? body.decision() : decision;
+        ConsentRequest consent = new ConsentRequest(resolved);
+        if (authFlow.owns(token)) {
+            return authFlow.consent(token, consent);
+        }
+        return flow.consent(token, consent, ClientIps.from(request), request.getHeader("User-Agent"));
     }
 
     @PostMapping("/document/uploads")
     @Operation(summary = "URL signée pour la pièce")
     public UploadResponse documentUploads(@PathVariable String token, HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            authFlow.rejectIdentityCapture();
+        }
         return flow.documentUpload(token);
     }
 
@@ -68,6 +82,9 @@ public class FlowController {
     public CompleteCaptureResponse documentComplete(
             @PathVariable String token, @RequestBody(required = false) CompleteUploadRequest body, HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            authFlow.rejectIdentityCapture();
+        }
         return flow.documentComplete(token, body);
     }
 
@@ -75,6 +92,9 @@ public class FlowController {
     @Operation(summary = "URL signée pour le selfie")
     public UploadResponse selfieUploads(@PathVariable String token, HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            authFlow.rejectIdentityCapture();
+        }
         return flow.selfieUpload(token);
     }
 
@@ -85,6 +105,9 @@ public class FlowController {
             @RequestParam(value = "fresh", defaultValue = "false") boolean fresh,
             HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            return authFlow.openLiveness(token, fresh);
+        }
         return flow.openLiveness(token, fresh);
     }
 
@@ -95,6 +118,9 @@ public class FlowController {
             @RequestBody(required = false) LivenessCompleteRequest body,
             HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            return authFlow.completeLiveness(token, body);
+        }
         return flow.completeLiveness(token, body);
     }
 
@@ -103,6 +129,9 @@ public class FlowController {
     public CompleteCaptureResponse selfieComplete(
             @PathVariable String token, @RequestBody(required = false) CompleteUploadRequest body, HttpServletResponse response) {
         noStore(response);
+        if (authFlow.owns(token)) {
+            authFlow.rejectIdentityCapture();
+        }
         return flow.selfieComplete(token, body);
     }
 

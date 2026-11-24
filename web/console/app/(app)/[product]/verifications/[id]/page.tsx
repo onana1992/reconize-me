@@ -21,6 +21,7 @@ import {
   verificationTone,
 } from "../../../../../lib/status";
 import { AmlCase } from "../../aml-case";
+import { AuthenticationCase } from "./authentication-case";
 import { IdentityScreeningReport } from "./screening-report";
 import { VerificationActions } from "./verification-actions";
 
@@ -39,6 +40,9 @@ export default async function VerificationDetailPage({
   const id = resolved.id;
   if (productId === "aml") {
     return <AmlCase id={id} />;
+  }
+  if (productId === "authentication") {
+    return <AuthenticationCase id={id} />;
   }
   if (productId !== "identity") {
     notFound();

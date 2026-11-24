@@ -38,7 +38,6 @@ export async function IdentityOverview({
     <main className="rm-idv">
       <PageHeader
         title={t("console.product.tab.verifications")}
-        lead={t("console.verifications.lead")}
         actions={
           canWrite ? (
             integrationItems.length > 0 ? (

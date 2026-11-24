@@ -57,6 +57,7 @@ class ObjectStorageHmacTest {
                 "http://localhost:3001",
                 3600,
                 "consent-v1",
+                "auth-consent-1",
                 24,
                 tempDir.toString(),
                 "pepper",
@@ -64,7 +65,7 @@ class ObjectStorageHmacTest {
                 5,
                 15,
                 new KycProperties.Mail("log", "noreply@localhost", ""),
-                new KycProperties.Billing("usd", 80L, 130L, 50L),
+                new KycProperties.Billing("usd", 80L, 130L, 50L, 40L),
                 new KycProperties.Stripe("log", "", "whsec_test"),
                 new KycProperties.Aws(
                         false,

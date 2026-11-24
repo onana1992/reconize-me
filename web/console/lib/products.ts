@@ -1,13 +1,12 @@
 import type { IconName } from "../components/nav-icons";
 
-export const PRODUCT_IDS = ["identity", "biometrics", "aml"] as const;
+export const PRODUCT_IDS = ["identity", "authentication", "aml"] as const;
 
 export type ProductId = (typeof PRODUCT_IDS)[number];
 
-/** Affichés dans la console. L'authentification biométrique est retirée pour l'instant. */
-export const LISTED_PRODUCT_IDS: ProductId[] = PRODUCT_IDS.filter((id) => id !== "biometrics");
+export const LISTED_PRODUCT_IDS: ProductId[] = [...PRODUCT_IDS];
 
-export type ProductTabId = "verifications" | "integrations";
+export type ProductTabId = "verifications" | "enrollments" | "integrations";
 
 export type ProductDef = {
   id: ProductId;
@@ -15,7 +14,7 @@ export type ProductDef = {
   icon: IconName;
   navKey: "console.nav.idv" | "console.nav.biometric" | "console.nav.aml";
   sidebarKey: "console.nav.idvTitle" | "console.nav.biometricTitle" | "console.nav.amlTitle";
-  topKey: "console.top.identity" | "console.top.biometrics" | "console.top.aml";
+  topKey: "console.top.identity" | "console.top.authentication" | "console.top.aml";
   titleKey: "console.home.idvTitle" | "console.nav.biometric" | "console.nav.aml";
   leadKey: "console.home.idvCardLead" | "console.home.biometricLead" | "console.home.amlLead";
   /** Live usage of this service debits the organization credit. Teasers do not. */
@@ -37,17 +36,17 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
     metered: true,
     api: true,
   },
-  biometrics: {
-    id: "biometrics",
-    href: "/biometrics",
+  authentication: {
+    id: "authentication",
+    href: "/authentication",
     icon: "scan",
     navKey: "console.nav.biometric",
     sidebarKey: "console.nav.biometricTitle",
-    topKey: "console.top.biometrics",
+    topKey: "console.top.authentication",
     titleKey: "console.nav.biometric",
     leadKey: "console.home.biometricLead",
-    metered: false,
-    api: false,
+    metered: true,
+    api: true,
   },
   aml: {
     id: "aml",
@@ -63,17 +62,37 @@ export const PRODUCTS: Record<ProductId, ProductDef> = {
   },
 };
 
-export const PRODUCT_TABS: { id: ProductTabId; path: string; labelKey: `console.product.tab.${ProductTabId}` }[] = [
-  { id: "verifications", path: "", labelKey: "console.product.tab.verifications" },
-  { id: "integrations", path: "/integrations", labelKey: "console.product.tab.integrations" },
-];
+export function productTabs(product: ProductId): {
+  id: ProductTabId;
+  path: string;
+  labelKey: `console.product.tab.${ProductTabId}`;
+}[] {
+  const verifications = {
+    id: "verifications" as const,
+    path: "",
+    labelKey: "console.product.tab.verifications" as const,
+  };
+  const integrations = {
+    id: "integrations" as const,
+    path: "/integrations",
+    labelKey: "console.product.tab.integrations" as const,
+  };
+  if (product === "authentication") {
+    return [
+      verifications,
+      { id: "enrollments", path: "/enrollments", labelKey: "console.product.tab.enrollments" },
+      integrations,
+    ];
+  }
+  return [verifications, integrations];
+}
 
 export function isProductId(value: string): value is ProductId {
   return (PRODUCT_IDS as readonly string[]).includes(value);
 }
 
 export function productTabHref(product: ProductId, tab: ProductTabId): string {
-  const path = PRODUCT_TABS.find((item) => item.id === tab)?.path ?? "";
+  const path = productTabs(product).find((item) => item.id === tab)?.path ?? "";
   return `${PRODUCTS[product].href}${path}`;
 }
 
@@ -106,7 +125,7 @@ export const INTEGRATION_TABS: {
 
 export function visibleIntegrationTabs(product: ProductId, mode: string) {
   return INTEGRATION_TABS.filter((tab) => {
-    if (product === "aml" && tab.id === "settings") {
+    if ((product === "aml" || product === "authentication") && tab.id === "settings") {
       return false;
     }
     if (tab.id === "rules" && mode !== "live") {
@@ -142,4 +161,3 @@ export function matchIntegrationTab(
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
-

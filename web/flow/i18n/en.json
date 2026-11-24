@@ -46,6 +46,28 @@
     "decline": "I decline",
     "error": "Consent could not be saved. Try again."
   },
+  "authConsent": {
+    "eyebrow": "Sign-in check",
+    "title": "Confirm it’s you",
+    "lead": "A short face check confirms you are the enrolled person.",
+    "stepFace": "Confirm your presence",
+    "stepFaceLead": "A brief video challenge, then we match your face to your enrollment.",
+    "body": "We will capture a short video of your face to confirm your presence and match it to the face enrolled for this account. Images are sent only to the company that opened this session.",
+    "accept": "Accept and continue",
+    "decline": "I decline"
+  },
+  "authOutcome": {
+    "done": "You’re confirmed",
+    "doneLead": "You can return to the application that sent you here.",
+    "review": "Check sent",
+    "reviewLead": "The company that sent you here will take it from here. You can close this page.",
+    "declined": "Not confirmed",
+    "declinedLead": "You can return to the application that sent you here.",
+    "refused": "You declined the check",
+    "refusedLead": "Nothing was captured. You can close this page.",
+    "unavailable": "Check unavailable",
+    "unavailableLead": "The check could not be completed. You can return to the application that sent you here."
+  },
   "document": {
     "eyebrow": "ID document · front",
     "title": "Photograph the front",

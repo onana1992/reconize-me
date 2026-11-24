@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 type Item = {
   at: string;
@@ -11,25 +11,22 @@ type Item = {
 
 export function WebhookPanel() {
   const [items, setItems] = useState<Item[]>([]);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const response = await fetch("/api/webhooks/recognizme");
-      if (!response.ok || cancelled) {
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/webhooks/recognizme", { cache: "no-store" });
+      if (!response.ok) {
         return;
       }
       const payload = (await response.json()) as { items?: Item[] };
-      if (!cancelled) {
-        setItems(payload.items ?? []);
-      }
+      setItems(payload.items ?? []);
+    } catch {
+      // ignore
+    } finally {
+      setBusy(false);
     }
-    void load();
-    const timer = window.setInterval(() => void load(), 2000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
   }, []);
 
   const latest = items[0];
@@ -40,6 +37,9 @@ export function WebhookPanel() {
       <p className="lead">
         Recogniz-Me poste <code>verification.completed</code> sur <code>/api/webhooks/recognizme</code>.
       </p>
+      <button type="button" className="verify" disabled={busy} onClick={() => void load()}>
+        {busy ? "Chargement…" : "Rafraîchir le webhook"}
+      </button>
       {latest ? (
         <>
           <p className={latest.signatureOk ? "ok" : "error"}>
@@ -49,7 +49,7 @@ export function WebhookPanel() {
           <pre>{latest.body}</pre>
         </>
       ) : (
-        <p className="lead">Aucun envoi reçu.</p>
+        <p className="lead">Aucun envoi affiché. Cliquez sur rafraîchir après une vérification.</p>
       )}
     </section>
   );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useT } from "../i18n/client";
-import { matchProductTab, PRODUCTS, PRODUCT_TABS, integrationWorkspaceId, type ProductId } from "../lib/products";
+import { matchProductTab, PRODUCTS, productTabs, integrationWorkspaceId, type ProductId } from "../lib/products";
 
 export function ProductChrome({ product, children }: { product: ProductId; children: ReactNode }) {
   const t = useT();
@@ -16,9 +16,13 @@ export function ProductChrome({ product, children }: { product: ProductId; child
     <>
       <div className="rm-product-bar">
         <nav className="rm-product-tabs" aria-label={t("console.product.tabsLabel")}>
-          {PRODUCT_TABS.map((tab) => {
+          {productTabs(product).map((tab) => {
             const target = `${href}${tab.path}`;
             const current = matchProductTab(pathname, product, tab.id);
+            const labelKey =
+              product === "authentication" && tab.id === "verifications"
+                ? "console.product.tab.authentications"
+                : tab.labelKey;
             return (
               <Link
                 key={tab.id}
@@ -27,7 +31,7 @@ export function ProductChrome({ product, children }: { product: ProductId; child
                 className="rm-product-tab"
                 aria-current={current ? "page" : undefined}
               >
-                {t(tab.labelKey)}
+                {t(labelKey)}
               </Link>
             );
           })}

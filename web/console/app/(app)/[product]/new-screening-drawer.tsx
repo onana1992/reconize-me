@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { CountrySelect } from "../../../components/country-select";
-import { RequiredMark } from "../../../components/required-mark";
 import { useT } from "../../../i18n/client";
 import { tIntegrationMode } from "../../../lib/environment";
 import { createScreeningAction } from "./aml-actions";
@@ -266,7 +265,6 @@ export function NewScreeningDrawer({
             <div className="rm-drawer-row">
               <label>
                 {t("console.verifications.firstName")}
-                <RequiredMark />
                 <input
                   name="first_name"
                   type="text"
@@ -279,7 +277,6 @@ export function NewScreeningDrawer({
               </label>
               <label>
                 {t("console.verifications.lastName")}
-                <RequiredMark />
                 <input
                   name="last_name"
                   type="text"

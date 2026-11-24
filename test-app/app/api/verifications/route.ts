@@ -1,3 +1,5 @@
+import { rewriteHostedUrl } from "@/lib/hosted-url";
+
 const DEPLOYED_API_URL = "https://recogniz-me-api.onrender.com";
 
 type ClientBody = {
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
       { status: response.ok ? 502 : response.status },
     );
   }
-  return Response.json({ hosted_url: session.hosted_url });
+  return Response.json({ hosted_url: rewriteHostedUrl(session.hosted_url) });
 }
 
 function emptyToUndefined(value: string | undefined): string | undefined {

@@ -4,11 +4,14 @@ import {
   consoleApi,
   type AmlPolicy,
   type AmlPolicyVersions,
+  type AuthPolicy,
+  type AuthPolicyVersions,
   type IdvPolicy,
   type IdvPolicyVersions,
 } from "../../../../../../lib/api";
 import { parseProduct } from "../../../../../../lib/parse-product";
 import { requireMe, sessionCookieHeader } from "../../../../../../lib/session";
+import { AuthPolicyForm } from "../../../auth-policy-form";
 import { AmlPolicyForm } from "../../../aml-policy-form";
 import { PolicyForm } from "../../../rules/policy-form";
 import { loadIntegration } from "../../load";
@@ -22,7 +25,7 @@ export default async function IntegrationRulesPage({
 }) {
   const resolved = await params;
   const productId = await parseProduct(Promise.resolve({ product: resolved.product }));
-  if (productId !== "identity" && productId !== "aml") {
+  if (productId !== "identity" && productId !== "aml" && productId !== "authentication") {
     notFound();
   }
   const [me, t, locale, result] = await Promise.all([
@@ -46,6 +49,25 @@ export default async function IntegrationRulesPage({
 
   const cookie = await sessionCookieHeader();
   const query = `integration_id=${encodeURIComponent(integration.id)}`;
+
+  if (productId === "authentication") {
+    const [policy, versions] = await Promise.all([
+      consoleApi<AuthPolicy>(`/v1/console/authentication/policy?${query}`, cookie),
+      consoleApi<AuthPolicyVersions>(`/v1/console/authentication/policy/versions?${query}`, cookie),
+    ]);
+    if (!policy.ok) {
+      return <p className="rm-lead">{t("console.rules.loadError")}</p>;
+    }
+    return (
+      <AuthPolicyForm
+        integrationId={integration.id}
+        policy={policy.data}
+        versions={versions.ok ? versions.data.versions : []}
+        canWrite={canWrite}
+        locale={locale}
+      />
+    );
+  }
 
   if (productId === "aml") {
     const [policy, versions] = await Promise.all([

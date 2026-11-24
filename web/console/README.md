@@ -40,7 +40,7 @@ Cookie `rm_session` (posé par l’API au login / signup). Le middleware redirig
 |---|---|
 | `/` | Accueil org : usage sandbox / live, crédit, catalogue produits |
 | `/identity` | IDV (seul produit live) : overview, configuration, intégrations, vérifications |
-| `/biometrics` · `/aml` | Teasers « bientôt » |
+| `/authentication` · `/aml` | Authentification biométrique (live only) · AML |
 | `/settings/account` | Profil, mot de passe |
 | `/settings/team` | Membres, invites, rôles |
 | `/settings/keys` | Clés `ky_test_` / `ky_live_` |

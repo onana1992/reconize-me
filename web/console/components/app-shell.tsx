@@ -61,7 +61,7 @@ function sectionTitle(
 ):
   | "console.top.home"
   | "console.top.identity"
-  | "console.top.biometrics"
+  | "console.top.authentication"
   | "console.top.aml"
   | "console.top.billing"
   | "console.top.keys"
@@ -71,8 +71,8 @@ function sectionTitle(
   if (path.startsWith("/identity")) {
     return "console.top.identity";
   }
-  if (path.startsWith("/biometrics")) {
-    return "console.top.biometrics";
+  if (path.startsWith("/authentication")) {
+    return "console.top.authentication";
   }
   if (path.startsWith("/aml")) {
     return "console.top.aml";

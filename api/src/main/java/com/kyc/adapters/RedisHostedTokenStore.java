@@ -2,6 +2,7 @@ package com.kyc.adapters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kyc.enums.ProductCode;
 import com.kyc.ports.HostedTokenStore;
 import java.time.Duration;
 import java.util.Optional;
@@ -22,10 +23,14 @@ public class RedisHostedTokenStore implements HostedTokenStore {
     }
 
     @Override
-    public void put(String token, UUID organizationId, UUID verificationId, Duration ttl) {
+    public void put(String token, UUID organizationId, UUID resourceId, ProductCode product, Duration ttl) {
         try {
-            redis.opsForValue().set(PREFIX + token, objectMapper.writeValueAsString(new Entry(organizationId, verificationId)), ttl);
-            redis.opsForValue().set(VID_PREFIX + verificationId, token, ttl);
+            redis.opsForValue()
+                    .set(
+                            PREFIX + token,
+                            objectMapper.writeValueAsString(new Entry(organizationId, resourceId, product)),
+                            ttl);
+            redis.opsForValue().set(VID_PREFIX + resourceId, token, ttl);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Unable to serialize hosted token", e);
         }
@@ -45,14 +50,14 @@ public class RedisHostedTokenStore implements HostedTokenStore {
     }
 
     @Override
-    public Optional<String> tokenFor(UUID verificationId) {
-        return Optional.ofNullable(redis.opsForValue().get(VID_PREFIX + verificationId));
+    public Optional<String> tokenFor(UUID resourceId) {
+        return Optional.ofNullable(redis.opsForValue().get(VID_PREFIX + resourceId));
     }
 
     @Override
-    public void revokeByVerificationId(UUID verificationId) {
-        String token = redis.opsForValue().get(VID_PREFIX + verificationId);
-        redis.delete(VID_PREFIX + verificationId);
+    public void revokeByVerificationId(UUID resourceId) {
+        String token = redis.opsForValue().get(VID_PREFIX + resourceId);
+        redis.delete(VID_PREFIX + resourceId);
         if (token != null) {
             redis.delete(PREFIX + token);
         }

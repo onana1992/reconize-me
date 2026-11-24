@@ -3441,8 +3441,18 @@ a.rm-idv-row:focus-visible {
   background: var(--rm-surface-subtle);
 }
 
-.rm-int-open-option:has(:checked) {
+.rm-int-open-option:has(:checked),
+.rm-int-open-option[data-selected="true"] {
   border-color: var(--rm-accent-border);
+  background: var(--rm-accent-subtle);
+}
+
+.rm-int-open-option[data-selected="true"] {
+  grid-template-columns: minmax(0, 1fr);
+  cursor: default;
+}
+
+.rm-int-open-option[data-selected="true"]:hover {
   background: var(--rm-accent-subtle);
 }
 

@@ -47,9 +47,9 @@ function openRecognizMe(options) {
 }`;
 }
 
-function typedOpen(): string {
-  return `function openRecognizMe(options: {
-  mode: string;
+function typedOpen(includeMode: boolean): string {
+  const modeField = includeMode ? "\n  mode: string;" : "";
+  return `function openRecognizMe(options: {${modeField}
   endpoint: string;
   externalId?: string;
   firstName?: string;
@@ -66,22 +66,23 @@ function modeValue(mode: OpenMode): string {
   return mode === "incontext" ? "incontext" : "redirect";
 }
 
-function openCall(mode: OpenMode, fields: string): string {
+function openCall(mode: OpenMode | null, fields: string): string {
+  const modeLine = mode == null ? "" : `mode: "${modeValue(mode)}",\n      `;
   return `openRecognizMe({
-      mode: "${modeValue(mode)}",
-      endpoint: "/api/verifications",
+      ${modeLine}endpoint: "/api/verifications",
       ${fields}
     })`;
 }
 
 export function clientSnippet(
   library: ClientLibrary,
-  mode: OpenMode,
+  mode: OpenMode | null,
   buttonComment: string,
   buttonLabel: string,
   scriptUrl: string,
   loadError: string,
 ): string {
+  const includeMode = mode != null;
   const literal = openCall(
     mode,
     `externalId: "order-123",
@@ -97,6 +98,7 @@ export function clientSnippet(
       email,`,
   );
   const load = loader(scriptUrl, loadError);
+  const modeProp = includeMode ? `\n    mode: "${modeValue(mode)}",` : "";
 
   switch (library) {
     case "javascript":
@@ -136,8 +138,7 @@ ${load}
 const props = defineProps(["externalId", "firstName", "lastName", "email"]);
 
 function verify() {
-  openRecognizMe({
-    mode: "${modeValue(mode)}",
+  openRecognizMe({${modeProp}
     endpoint: "/api/verifications",
     externalId: props.externalId,
     firstName: props.firstName,
@@ -150,14 +151,14 @@ function verify() {
 <template>
   <button type="button" @click="verify">${buttonLabel}</button>
 </template>`;
-    case "angular":
+    case "angular": {
+      const declareMode = includeMode ? "\n        mode: string;" : "";
       return `import { Component, Input } from "@angular/core";
 
 declare global {
   interface Window {
     RecognizMe: {
-      open(options: {
-        mode: string;
+      open(options: {${declareMode}
         endpoint: string;
         externalId?: string;
         firstName?: string;
@@ -168,7 +169,7 @@ declare global {
   }
 }
 
-${load.replace("function openRecognizMe(options) {\n  return loadRecognizMe().then(function () {\n    return window.RecognizMe.open(options);\n  });\n}", typedOpen())}
+${load.replace("function openRecognizMe(options) {\n  return loadRecognizMe().then(function () {\n    return window.RecognizMe.open(options);\n  });\n}", typedOpen(includeMode))}
 
 // ${buttonComment}
 @Component({
@@ -182,8 +183,7 @@ export class VerifyComponent {
   @Input() email?: string;
 
   verify() {
-    openRecognizMe({
-      mode: "${modeValue(mode)}",
+    openRecognizMe({${modeProp}
       endpoint: "/api/verifications",
       externalId: this.externalId,
       firstName: this.firstName,
@@ -192,6 +192,7 @@ export class VerifyComponent {
     }).catch((error: { message?: string }) => console.error(error.message));
   }
 }`;
+    }
     case "svelte":
       return `<script>
   ${load.replaceAll("\n", "\n  ")}

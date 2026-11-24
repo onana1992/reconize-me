@@ -3,7 +3,7 @@
 import { assessDocumentFrame, assessSelfieFrame } from "@/capture";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
-import { FlowShell, Notice, StateScreen, type FlowStep } from "../../../components/flow-shell";
+import { FlowShell, Notice, StateScreen, type FlowProduct, type FlowStep } from "../../../components/flow-shell";
 import {
   BarcodeIcon,
   ClockIcon,
@@ -29,6 +29,7 @@ type Session = {
   expires_at: string;
   next: string;
   reason?: string;
+  product?: FlowProduct;
 };
 
 type CaptureNext = "capture_document" | "capture_document_back" | "capture_selfie";
@@ -50,6 +51,9 @@ export function FlowClient({ token }: { token: string }) {
     setLiveCamera(Boolean(navigator.mediaDevices?.getUserMedia));
   }, []);
 
+  const sessionRef = useRef<Session | null>(null);
+  sessionRef.current = session;
+
   const load = useCallback(async () => {
     try {
       const response = await fetch(`/v1/flow/${encodeURIComponent(token)}`, { cache: "no-store" });
@@ -58,6 +62,10 @@ export function FlowClient({ token }: { token: string }) {
         return;
       }
       if (response.status === 410) {
+        const current = sessionRef.current;
+        if (current?.product === "authentication" && authClosed(current.status)) {
+          return;
+        }
         setError("expired");
         return;
       }
@@ -75,6 +83,17 @@ export function FlowClient({ token }: { token: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  function settle(result?: { status: string; next: string; reason?: string }) {
+    if (result?.status && result.next) {
+      setError(null);
+      setSession((current) =>
+        current ? { ...current, status: result.status, next: result.next, reason: result.reason } : current,
+      );
+      return;
+    }
+    void load();
+  }
 
   const facing = facingFor(session?.next);
   const facingRef = useRef(facing);
@@ -342,18 +361,24 @@ export function FlowClient({ token }: { token: string }) {
   }
 
   const next = session.next;
+  const product: FlowProduct = session.product === "authentication" ? "authentication" : "identity";
 
   if (next === "consent") {
     return (
-      <FlowShell step="consent">
-        <ConsentScreen busy={busy} hint={hint} onDecide={(decision) => void consent(decision)} />
+      <FlowShell step="consent" product={product}>
+        <ConsentScreen
+          product={product}
+          busy={busy}
+          hint={hint}
+          onDecide={(decision) => void consent(decision)}
+        />
       </FlowShell>
     );
   }
 
   if (next === "capture_document" || next === "capture_document_back" || next === "capture_selfie") {
     return (
-      <FlowShell step={stepFor(next)}>
+      <FlowShell step={stepFor(next)} product={product}>
         <CaptureScreen
           next={next}
           busy={busy}
@@ -370,23 +395,34 @@ export function FlowClient({ token }: { token: string }) {
 
   if (next === "liveness") {
     return (
-      <FlowShell step="face">
-        <LivenessCheck token={token} onDone={() => void load()} />
+      <FlowShell step="face" product={product}>
+        <LivenessCheck token={token} onDone={settle} />
       </FlowShell>
     );
   }
 
   if (next === "wait") {
     return (
-      <FlowShell step="done">
+      <FlowShell step="done" product={product}>
         <StateScreen tone="progress" title={t("outcome.wait")} lead={t("outcome.waitLead")} />
       </FlowShell>
     );
   }
 
+  if (product === "authentication") {
+    const closing = authClosing(session.status, session.reason, refused);
+    if (closing) {
+      return (
+        <FlowShell step="done" product={product}>
+          <StateScreen tone={closing.tone} icon={closing.icon} title={t(closing.title)} lead={t(closing.lead)} />
+        </FlowShell>
+      );
+    }
+  }
+
   if (session.status === "declined" && refused) {
     return (
-      <FlowShell step={null}>
+      <FlowShell step={null} product={product}>
         <StateScreen tone="neutral" icon={<ShieldIcon size={30} />} title={t("outcome.declined")} lead={t("outcome.declinedLead")} />
       </FlowShell>
     );
@@ -395,17 +431,53 @@ export function FlowClient({ token }: { token: string }) {
   const failure = terminalFailure(session.status, session.reason);
   if (failure) {
     return (
-      <FlowShell step="done">
+      <FlowShell step="done" product={product}>
         <StateScreen tone="neutral" icon={failure.icon} title={t(failure.title)} lead={t(failure.lead)} />
       </FlowShell>
     );
   }
 
   return (
-    <FlowShell step="done">
-      <StateScreen tone="success" title={t("outcome.done")} lead={t("outcome.doneLead")} />
+    <FlowShell step="done" product={product}>
+      <StateScreen
+        tone="success"
+        title={t(product === "authentication" ? "authOutcome.done" : "outcome.done")}
+        lead={t(product === "authentication" ? "authOutcome.doneLead" : "outcome.doneLead")}
+      />
     </FlowShell>
   );
+}
+
+function authClosed(status: string): boolean {
+  return status === "approved" || status === "declined" || status === "review" || status === "failed";
+}
+
+function authClosing(
+  status: string,
+  reason: string | undefined,
+  refused: boolean,
+): { tone: "success" | "neutral"; icon?: React.ReactNode; title: MessageKey; lead: MessageKey } | null {
+  if (status === "approved") {
+    return { tone: "success", title: "authOutcome.done", lead: "authOutcome.doneLead" };
+  }
+  if (status === "review") {
+    return { tone: "neutral", icon: <ShieldIcon size={30} />, title: "authOutcome.review", lead: "authOutcome.reviewLead" };
+  }
+  if (status === "declined" && (refused || reason === "consent_refused" || reason === "consent_declined")) {
+    return { tone: "neutral", icon: <ShieldIcon size={30} />, title: "authOutcome.refused", lead: "authOutcome.refusedLead" };
+  }
+  if (status === "declined") {
+    return { tone: "neutral", icon: <FaceIcon size={30} />, title: "authOutcome.declined", lead: "authOutcome.declinedLead" };
+  }
+  if (status === "failed") {
+    return {
+      tone: "neutral",
+      icon: <WifiOffIcon size={30} />,
+      title: "authOutcome.unavailable",
+      lead: "authOutcome.unavailableLead",
+    };
+  }
+  return null;
 }
 
 function terminalFailure(
@@ -431,7 +503,13 @@ function terminalFailure(
     case "provider_unavailable":
       return { icon: <WifiOffIcon size={30} />, title: "outcome.provider", lead: "outcome.providerLead" };
     case "consent_declined":
+    case "consent_refused":
       return { icon: <ShieldIcon size={30} />, title: "outcome.declined", lead: "outcome.declinedLead" };
+    case "attempt_limit":
+      return { icon: <FaceIcon size={30} />, title: "outcome.attempts", lead: "outcome.attemptsLead" };
+    case "enrollment_inactive":
+    case "presentation_attack":
+      return { icon: <FaceIcon size={30} />, title: "outcome.face", lead: "outcome.faceLead" };
     case "MISSING_REQUIRED_FIELD":
     case "LOW_OCR_CONFIDENCE":
     case "LOW_CONFIDENCE":
@@ -475,44 +553,49 @@ function ErrorScreen({ kind, onRetry }: { kind: "invalid" | "expired" | "network
 }
 
 function ConsentScreen({
+  product,
   busy,
   hint,
   onDecide,
 }: {
+  product: FlowProduct;
   busy: boolean;
   hint: MessageKey | null;
   onDecide: (decision: "accepted" | "declined") => void;
 }) {
   const t = useT();
+  const auth = product === "authentication";
   return (
     <div className="rm-screen">
       <div className="rm-hero-badge" aria-hidden="true">
         <ShieldIcon size={30} />
       </div>
-      <p className="rm-eyebrow">{t("consent.eyebrow")}</p>
-      <h1>{t("consent.title")}</h1>
-      <p className="rm-lead">{t("consent.lead")}</p>
+      <p className="rm-eyebrow">{t(auth ? "authConsent.eyebrow" : "consent.eyebrow")}</p>
+      <h1>{t(auth ? "authConsent.title" : "consent.title")}</h1>
+      <p className="rm-lead">{t(auth ? "authConsent.lead" : "consent.lead")}</p>
       <ol className="rm-plan">
-        <li>
-          <span className="rm-plan-icon" aria-hidden="true">
-            <IdCardIcon size={22} />
-          </span>
-          <span>
-            <strong>{t("consent.stepDocument")}</strong>
-            <span>{t("consent.stepDocumentLead")}</span>
-          </span>
-        </li>
+        {auth ? null : (
+          <li>
+            <span className="rm-plan-icon" aria-hidden="true">
+              <IdCardIcon size={22} />
+            </span>
+            <span>
+              <strong>{t("consent.stepDocument")}</strong>
+              <span>{t("consent.stepDocumentLead")}</span>
+            </span>
+          </li>
+        )}
         <li>
           <span className="rm-plan-icon" aria-hidden="true">
             <FaceIcon size={22} />
           </span>
           <span>
-            <strong>{t("consent.stepFace")}</strong>
-            <span>{t("consent.stepFaceLead")}</span>
+            <strong>{t(auth ? "authConsent.stepFace" : "consent.stepFace")}</strong>
+            <span>{t(auth ? "authConsent.stepFaceLead" : "consent.stepFaceLead")}</span>
           </span>
         </li>
       </ol>
-      <p className="rm-consent-text">{t("consent.body")}</p>
+      <p className="rm-consent-text">{t(auth ? "authConsent.body" : "consent.body")}</p>
       {hint ? <Notice tone="danger">{t(hint)}</Notice> : null}
       <form
         className="rm-flow-cta"
@@ -523,10 +606,10 @@ function ConsentScreen({
       >
         <button type="submit" className="rm-btn-primary" disabled={busy}>
           {busy ? <span className="rm-spinner" data-size="sm" aria-hidden="true" /> : null}
-          {t("consent.accept")}
+          {t(auth ? "authConsent.accept" : "consent.accept")}
         </button>
         <button type="button" className="rm-btn-ghost" disabled={busy} onClick={() => onDecide("declined")}>
-          {t("consent.decline")}
+          {t(auth ? "authConsent.decline" : "consent.decline")}
         </button>
       </form>
     </div>

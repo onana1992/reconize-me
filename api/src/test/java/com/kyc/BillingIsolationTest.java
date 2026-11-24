@@ -44,6 +44,7 @@ class BillingIsolationTest {
                 .andExpect(jsonPath("$.identity_amount_minor").value(80))
                 .andExpect(jsonPath("$.identity_screening_amount_minor").value(130))
                 .andExpect(jsonPath("$.aml_amount_minor").value(50))
+                .andExpect(jsonPath("$.authentication_amount_minor").value(40))
                 .andExpect(jsonPath("$.live_unlocked").value(false))
                 .andExpect(jsonPath("$.packs", hasSize(4)))
                 .andExpect(jsonPath("$.packs[0]").value(5000))

@@ -225,7 +225,13 @@ function livenessFailure(state: string): MessageKey {
   }
 }
 
-export default function LivenessCheck({ token, onDone }: { token: string; onDone: () => void }) {
+export type LivenessDone = {
+  status: string;
+  next: string;
+  reason?: string;
+};
+
+export default function LivenessCheck({ token, onDone }: { token: string; onDone: (result?: LivenessDone) => void }) {
   const t = useT();
   const [opened, setOpened] = useState<Opened | null>(null);
   const [error, setError] = useState(false);
@@ -322,6 +328,7 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
       const body = (await response.json().catch(() => ({}))) as {
         error?: { code?: string };
         accepted?: boolean;
+        status?: string;
         next?: string;
         reason?: string;
       };
@@ -335,6 +342,10 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
         setFailure(null);
         setOpened(null);
         setPhase("intro");
+        return;
+      }
+      if (response.ok && body.status && body.next) {
+        onDone({ status: body.status, next: body.next, reason: body.reason });
         return;
       }
       if (!response.ok && response.status !== 409) {
