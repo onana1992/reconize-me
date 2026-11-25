@@ -80,6 +80,9 @@ public class IdvPolicy {
     @Column(name = "screening_on_match", nullable = false, length = 16)
     private IdentityScreeningEffect screeningOnMatch;
 
+    @Column(name = "enrollment_enabled", nullable = false)
+    private boolean enrollmentEnabled;
+
     @Column(name = "published_at", nullable = false)
     private Instant publishedAt;
 
@@ -104,6 +107,7 @@ public class IdvPolicy {
             int maxLivenessAttempts,
             boolean screeningEnabled,
             IdentityScreeningEffect screeningOnMatch,
+            boolean enrollmentEnabled,
             UUID publishedBy,
             Instant publishedAt) {
         this.id = id;
@@ -123,6 +127,7 @@ public class IdvPolicy {
         this.maxLivenessAttempts = maxLivenessAttempts;
         this.screeningEnabled = screeningEnabled;
         this.screeningOnMatch = screeningOnMatch;
+        this.enrollmentEnabled = enrollmentEnabled;
         this.publishedBy = publishedBy;
         this.publishedAt = publishedAt;
     }

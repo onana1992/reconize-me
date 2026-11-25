@@ -182,7 +182,7 @@ Codes stables, anglais dans l’API. Aucune raison ne porte de donnée personnel
 
 ### 3.3 Crédit
 
-Une unité `AUTHENTICATION` **à la décision**, pas à la création, pour `approved`, `review`, ou `declined` de présence, score ou plafond.
+Une unité `AUTHENTICATION` de **0,10 $** **à la fin** de la session live exécutée, pas à la création, pour `approved`, `review`, ou `declined` de présence, score ou plafond.
 
 Aucun débit : `consent_refused`, `enrollment_inactive`, `failed`, `expired`, `cancelled`, recapture, revue, rejeu d’idempotence. Ce n’est pas une unité d’identité.
 

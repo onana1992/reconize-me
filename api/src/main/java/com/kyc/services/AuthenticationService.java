@@ -301,46 +301,7 @@ public class AuthenticationService {
     public AuthenticationResponse review(
             Integration integration, String actorType, UUID actorId, UUID id, String decision) {
         requireAuthentication(integration);
-        String normalized = decision == null ? "" : decision.trim().toLowerCase(Locale.ROOT);
-        AuthenticationStatus next;
-        String analystReason;
-        if ("approved".equals(normalized)) {
-            next = AuthenticationStatus.APPROVED;
-            analystReason = "analyst_approved";
-        } else if ("declined".equals(normalized)) {
-            next = AuthenticationStatus.DECLINED;
-            analystReason = "analyst_declined";
-        } else {
-            throw ApiException.validation(
-                    "Invalid review decision", List.of(new ErrorDetail("decision", "invalid")));
-        }
-        AuthenticationSession session = require(integration, id);
-        if (session.getStatus() != AuthenticationStatus.REVIEW) {
-            throw ApiException.conflict("invalid_status", "Authentication is not in review");
-        }
-        List<String> reasons = new ArrayList<>();
-        List<String> existing = readReasons(session.getReasons());
-        if (existing != null) {
-            reasons.addAll(existing);
-        }
-        if (!reasons.contains(analystReason)) {
-            reasons.add(analystReason);
-        }
-        Instant now = Instant.now();
-        String previous = Enums.json(AuthenticationStatus.REVIEW);
-        session.applyReview(next, reasonsJson(reasons), now);
-        authentications.save(session);
-        captures.discardSessionSelfies(id);
-        auditEvents.save(new AuditEvent(
-                integration.getOrganizationId(),
-                actorType,
-                actorId,
-                "authentication.reviewed",
-                "authentication",
-                id,
-                "{\"from\":\"" + previous + "\",\"to\":\"" + Enums.json(next) + "\"}",
-                now));
-        return toResponse(session, integration, true);
+        throw ApiException.conflict("invalid_status", "Authentication has no review");
     }
 
     @Transactional

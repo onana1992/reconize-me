@@ -88,7 +88,7 @@ class AuthIntegrationTest {
 
         mockMvc.perform(get("/v1/console/billing").cookie(owner))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.authentication_amount_minor").value(40))
+                .andExpect(jsonPath("$.authentication_amount_minor").value(10))
                 .andExpect(jsonPath("$.usage[2].product").value("authentication"))
                 .andExpect(jsonPath("$.usage[2].live_count").value(0));
 

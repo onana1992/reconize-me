@@ -13,6 +13,7 @@ public record IdvPolicyResponse(
         List<Document> documents,
         Flow flow,
         Screening screening,
+        Enrollment enrollment,
         Bounds bounds) {
 
     public record Profile(
@@ -37,6 +38,8 @@ public record IdvPolicyResponse(
             @JsonProperty("consent_text_version") String consentTextVersion) {}
 
     public record Screening(boolean enabled, @JsonProperty("on_match") String onMatch) {}
+
+    public record Enrollment(boolean enabled) {}
 
     public record Bounds(
             @JsonProperty("ocr_review_at") double[] ocrReviewAt,

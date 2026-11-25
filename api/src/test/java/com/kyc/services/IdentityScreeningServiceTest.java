@@ -98,7 +98,8 @@ class IdentityScreeningServiceTest {
                 3,
                 false,
                 screeningEnabled,
-                IdentityScreeningEffect.REVIEW);
+                IdentityScreeningEffect.REVIEW,
+                false);
     }
 
     private static Integration integration(Verification verification, IntegrationMode mode) {

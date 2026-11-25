@@ -1,6 +1,7 @@
 package com.kyc.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,6 +54,7 @@ class IdvPolicyServiceTest {
         IdvPolicyResponse platform = policies.effective(organizationId, live.getId());
         assertEquals("platform", platform.source());
         assertNull(platform.version());
+        assertFalse(platform.enrollment().enabled());
         assertTrue(platform.documents().stream().anyMatch(document -> "QUEBEC_DRIVER_LICENSE".equals(document.code()) && document.enabled()));
 
         IdvPolicyResponse first = policies.publish(organizationId, UUID.randomUUID(), sameAs(platform, live.getId()));
@@ -65,6 +67,10 @@ class IdvPolicyServiceTest {
         assertEquals(2, second.version());
         long active = stored.findByIntegrationIdOrderByVersionDesc(live.getId()).stream().filter(IdvPolicy::isActive).count();
         assertEquals(1, active);
+
+        IdvPolicyResponse enrolled = policies.publish(organizationId, UUID.randomUUID(), withEnrollment(platform, live.getId(), true));
+        assertTrue(enrolled.enrollment().enabled());
+        assertTrue(policies.effective(organizationId, live.getId()).enrollment().enabled());
 
         ApiException low = assertThrows(ApiException.class, () -> policies.publish(organizationId, UUID.randomUUID(), withOcr(platform, live.getId(), 0.50)));
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, low.status());
@@ -97,6 +103,7 @@ class IdvPolicyServiceTest {
                         policy.flow().maxCaptureAttempts(),
                         policy.flow().maxLivenessAttempts()),
                 new PublishIdvPolicyRequest.Screening(policy.screening().enabled(), policy.screening().onMatch()),
+                new PublishIdvPolicyRequest.Enrollment(policy.enrollment().enabled()),
                 integrationId);
     }
 
@@ -113,12 +120,13 @@ class IdvPolicyServiceTest {
                 base.documentCodes(),
                 base.flow(),
                 base.screening(),
+                base.enrollment(),
                 integrationId);
     }
 
     private static PublishIdvPolicyRequest withCodes(IdvPolicyResponse policy, UUID integrationId, List<String> codes) {
         PublishIdvPolicyRequest base = sameAs(policy, integrationId);
-        return new PublishIdvPolicyRequest(base.profile(), codes, base.flow(), base.screening(), integrationId);
+        return new PublishIdvPolicyRequest(base.profile(), codes, base.flow(), base.screening(), base.enrollment(), integrationId);
     }
 
     private static PublishIdvPolicyRequest withFaces(IdvPolicyResponse policy, UUID integrationId, double fail, double pass) {
@@ -134,6 +142,18 @@ class IdvPolicyServiceTest {
                 base.documentCodes(),
                 base.flow(),
                 base.screening(),
+                base.enrollment(),
+                integrationId);
+    }
+
+    private static PublishIdvPolicyRequest withEnrollment(IdvPolicyResponse policy, UUID integrationId, boolean enabled) {
+        PublishIdvPolicyRequest base = sameAs(policy, integrationId);
+        return new PublishIdvPolicyRequest(
+                base.profile(),
+                base.documentCodes(),
+                base.flow(),
+                base.screening(),
+                new PublishIdvPolicyRequest.Enrollment(enabled),
                 integrationId);
     }
 }

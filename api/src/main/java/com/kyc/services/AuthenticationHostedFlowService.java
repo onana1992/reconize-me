@@ -366,8 +366,9 @@ public class AuthenticationHostedFlowService {
     }
 
     /**
-     * One AUTHENTICATION unit at a billable decision. Analyst review, recapture and idempotent replay
-     * do not call this again. {@link CreditService#debitForAuthentication} is itself idempotent.
+     * One AUTHENTICATION unit ($0.10) at the end of an executed live session.
+     * Not at creation. Analyst review, recapture and idempotent replay do not call this again.
+     * {@link CreditService#debitForAuthentication} is itself idempotent.
      */
     private void finalizeDecision(AuthenticationSession session) {
         if (!billable(session)) {

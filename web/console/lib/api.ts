@@ -262,6 +262,9 @@ export type IdvPolicy = {
     enabled: boolean;
     on_match: "ignore" | "review" | "block";
   };
+  enrollment: {
+    enabled: boolean;
+  };
   bounds: {
     ocr_review_at: number[];
     liveness_pass_at: number[];

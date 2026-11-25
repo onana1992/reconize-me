@@ -9,6 +9,7 @@ public record PublishIdvPolicyRequest(
         @JsonProperty("document_codes") List<String> documentCodes,
         Flow flow,
         Screening screening,
+        Enrollment enrollment,
         @JsonProperty("integration_id") UUID integrationId) {
 
     public record Profile(
@@ -25,4 +26,6 @@ public record PublishIdvPolicyRequest(
             @JsonProperty("max_liveness_attempts") Integer maxLivenessAttempts) {}
 
     public record Screening(Boolean enabled, @JsonProperty("on_match") String onMatch) {}
+
+    public record Enrollment(Boolean enabled) {}
 }

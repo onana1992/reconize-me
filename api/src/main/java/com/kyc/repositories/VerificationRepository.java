@@ -17,8 +17,6 @@ public interface VerificationRepository extends JpaRepository<Verification, UUID
 
     Optional<Verification> findByHostedTokenHash(String hostedTokenHash);
 
-    boolean existsByOrganizationIdAndExternalId(UUID organizationId, String externalId);
-
     List<Verification> findByOrganizationIdOrderByCreatedAtDescIdDesc(UUID organizationId, Pageable pageable);
 
     @Query(

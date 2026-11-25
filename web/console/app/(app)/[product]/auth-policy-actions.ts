@@ -10,7 +10,7 @@ export async function publishAuthPolicyAction(formData: FormData): Promise<ApiRe
       integration_id: String(formData.get("integration_id") ?? ""),
       approval_threshold: formData.get("approval_threshold"),
       review_threshold: formData.get("review_threshold"),
-      on_borderline: String(formData.get("on_borderline") ?? "review"),
+      on_borderline: "decline",
       max_capture_attempts: Number(formData.get("max_capture_attempts") ?? 3),
     }),
   });

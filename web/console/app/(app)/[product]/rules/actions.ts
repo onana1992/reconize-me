@@ -13,6 +13,7 @@ export async function publishPolicyAction(body: {
     max_liveness_attempts: number;
   };
   screening: IdvPolicy["screening"];
+  enrollment: IdvPolicy["enrollment"];
 }) {
   return consoleApi<IdvPolicy>("/v1/console/identity/policy", await sessionCookieHeader(), {
     method: "POST",

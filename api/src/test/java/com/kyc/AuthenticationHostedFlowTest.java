@@ -158,7 +158,7 @@ class AuthenticationHostedFlowTest {
         assertEquals(0, webhooks.count());
         assertEquals(0, media.countByAuthenticationId(fixture.authenticationId()));
         assertFalse(objectStorage.exists(selfieKey(fixture)));
-        assertEquals(4960, credits.findById(fixture.orgId()).orElseThrow().getBalanceMinor());
+        assertEquals(4990, credits.findById(fixture.orgId()).orElseThrow().getBalanceMinor());
         assertTrue(ledgerEntries.existsByResourceTypeAndResourceId(
                 LedgerResourceType.AUTHENTICATION, fixture.authenticationId()));
     }
