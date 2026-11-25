@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -55,7 +56,7 @@ class CreateVerificationTest {
         String body = """
                 {"external_id":"ext-1","applicant":{"email":"marie@example.com"},"metadata":{"sandbox_scenario":"approved"}}
                 """;
-        mockMvc.perform(post("/v1/verifications")
+        MvcResult created = mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + KEY)
                         .header("Idempotency-Key", "idem-create-01")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +65,9 @@ class CreateVerificationTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.status").value("created"))
                 .andExpect(jsonPath("$.hosted_url").value(startsWith("http://localhost:3001/flow/")))
-                .andExpect(jsonPath("$.applicant.email").value("marie@example.com"));
+                .andExpect(jsonPath("$.applicant.email").value("marie@example.com"))
+                .andReturn();
+        String firstId = com.jayway.jsonpath.JsonPath.read(created.getResponse().getContentAsString(), "$.id");
 
         mockMvc.perform(post("/v1/verifications")
                         .header("Authorization", "Bearer " + KEY)
@@ -86,8 +89,9 @@ class CreateVerificationTest {
                         .header("Authorization", "Bearer " + KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"external_id\":\"ext-1\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("external_id_conflict"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", not(firstId)))
+                .andExpect(jsonPath("$.status").value("created"));
 
         List<AuditEvent> events = auditEvents.findAll();
         org.junit.jupiter.api.Assertions.assertTrue(

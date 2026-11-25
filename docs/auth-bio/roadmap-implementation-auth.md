@@ -336,7 +336,7 @@ Rôles : comme le contrat (développeur ne revoit pas / ne révoque pas).
 
 `RekognitionFaceCollectionClient` implémente le port en `us-east-1`. Création de collection, Index, Search, Delete. Les credentials plateforme existent déjà au lancement du conteneur.
 
-Débit : une unité `AUTHENTICATION` à la décision live quand `approved` / `review` / `declined` pour présence, score ou plafond. Pas de débit sur `consent_refused`, `enrollment_inactive`, `failed`, `expired`, `cancelled`, recapture, revue, replay d’idempotence.
+Débit : **0,10 $** (`AUTHENTICATION`) à la fin de la session live exécutée, quand `approved` / `review` / `declined` pour présence, score ou plafond. Pas de débit sur `consent_refused`, `enrollment_inactive`, `failed`, `expired`, `cancelled`, recapture, revue, replay d’idempotence.
 
 Journaux : ids, statut, raisons, durée, statut fournisseur. Pas d’image, pas de FaceId, pas d’`external_id`, pas de vecteur.
 

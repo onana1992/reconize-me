@@ -28,6 +28,7 @@ export default async function OrgBillingPage({
   const liveUnlocked = data?.live_unlocked ?? me.live_unlocked ?? false;
   const packs = data?.packs ?? [5000, 10000, 25000, 50000];
   const identity = data?.usage.find((row) => row.product === "identity");
+  const authentication = data?.usage.find((row) => row.product === "authentication");
   const aml = data?.usage.find((row) => row.product === "aml");
   const entries = data?.ledger.entries ?? [];
 
@@ -99,6 +100,15 @@ export default async function OrgBillingPage({
             </li>
             <li>
               <div>
+                <h3>{t("console.billing.priceAuthentication")}</h3>
+                <p className="rm-lead">{t("console.billing.priceAuthenticationWhen")}</p>
+              </div>
+              <p className="rm-usage-price">
+                {formatMinor(locale, data?.authentication_amount_minor ?? 10)}
+              </p>
+            </li>
+            <li>
+              <div>
                 <h3>{t("console.billing.priceAml")}</h3>
                 <p className="rm-lead">{t("console.billing.priceAmlWhen")}</p>
               </div>
@@ -115,6 +125,14 @@ export default async function OrgBillingPage({
               sandbox={identity?.sandbox_count ?? 0}
               live={identity?.live_count ?? 0}
               debit={identity?.live_debit_minor ?? 0}
+            />
+            <UsageFigures
+              title={t("console.nav.biometric")}
+              liveLabel={t("console.env.live")}
+              debitLabel={t("console.billing.debit")}
+              locale={locale}
+              live={authentication?.live_count ?? 0}
+              debit={authentication?.live_debit_minor ?? 0}
             />
             <UsageFigures
               title={t("console.nav.aml")}
@@ -156,11 +174,11 @@ function UsageFigures({
   debit,
 }: {
   title: string;
-  sandboxLabel: string;
+  sandboxLabel?: string;
   liveLabel: string;
   debitLabel: string;
   locale: Locale;
-  sandbox: number;
+  sandbox?: number;
   live: number;
   debit: number;
 }) {
@@ -168,10 +186,12 @@ function UsageFigures({
     <div>
       <h3>{title}</h3>
       <dl>
-        <div>
-          <dt>{sandboxLabel}</dt>
-          <dd>{formatCount(locale, sandbox)}</dd>
-        </div>
+        {sandboxLabel != null && sandbox != null ? (
+          <div>
+            <dt>{sandboxLabel}</dt>
+            <dd>{formatCount(locale, sandbox)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>{liveLabel}</dt>
           <dd>{formatCount(locale, live)}</dd>

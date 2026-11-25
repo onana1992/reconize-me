@@ -65,7 +65,7 @@ class ObjectStorageHmacTest {
                 5,
                 15,
                 new KycProperties.Mail("log", "noreply@localhost", ""),
-                new KycProperties.Billing("usd", 80L, 130L, 50L, 40L),
+                new KycProperties.Billing("usd", 80L, 130L, 50L, 10L),
                 new KycProperties.Stripe("log", "", "whsec_test"),
                 new KycProperties.Aws(
                         false,

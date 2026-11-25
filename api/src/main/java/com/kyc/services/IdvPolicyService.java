@@ -97,7 +97,8 @@ public class IdvPolicyService {
             int maxLivenessAttempts,
             boolean reviewOnCaptureExhausted,
             boolean screeningEnabled,
-            IdentityScreeningEffect screeningOnMatch) {}
+            IdentityScreeningEffect screeningOnMatch,
+            boolean enrollmentEnabled) {}
 
     @Transactional(readOnly = true)
     public IdvPolicyResponse effective(UUID organizationId, UUID integrationId) {
@@ -166,6 +167,7 @@ public class IdvPolicyService {
                 checked.livenessAttempts(),
                 checked.screeningEnabled(),
                 checked.screeningOnMatch(),
+                checked.enrollmentEnabled(),
                 userId,
                 now);
         policies.save(policy);
@@ -197,7 +199,8 @@ public class IdvPolicyService {
                 policy.getMaxLivenessAttempts(),
                 policy.getAttemptsOutcome() == VerificationDecision.REVIEW,
                 policy.isScreeningEnabled(),
-                policy.getScreeningOnMatch());
+                policy.getScreeningOnMatch(),
+                policy.isEnrollmentEnabled());
     }
 
     private Applied platformApplied() {
@@ -208,7 +211,8 @@ public class IdvPolicyService {
                 PLATFORM_ATTEMPTS,
                 false,
                 false,
-                IdentityScreeningEffect.REVIEW);
+                IdentityScreeningEffect.REVIEW,
+                false);
     }
 
     private IdvPolicyResponse platformResponse() {
@@ -232,6 +236,7 @@ public class IdvPolicyService {
                         PLATFORM_ATTEMPTS,
                         properties.consentTextVersion()),
                 new IdvPolicyResponse.Screening(false, IdentityScreeningEffect.REVIEW.json()),
+                new IdvPolicyResponse.Enrollment(false),
                 BOUNDS);
     }
 
@@ -256,6 +261,7 @@ public class IdvPolicyService {
                         properties.consentTextVersion()),
                 new IdvPolicyResponse.Screening(
                         policy.isScreeningEnabled(), policy.getScreeningOnMatch().json()),
+                new IdvPolicyResponse.Enrollment(policy.isEnrollmentEnabled()),
                 BOUNDS);
     }
 
@@ -362,6 +368,8 @@ public class IdvPolicyService {
         PublishIdvPolicyRequest.Screening screening = request == null ? null : request.screening();
         boolean screeningEnabled = screening != null && Boolean.TRUE.equals(screening.enabled());
         IdentityScreeningEffect screeningOnMatch = screeningEffect(screening == null ? null : screening.onMatch(), errors);
+        PublishIdvPolicyRequest.Enrollment enrollment = request == null ? null : request.enrollment();
+        boolean enrollmentEnabled = enrollment != null && Boolean.TRUE.equals(enrollment.enabled());
         if (!errors.isEmpty()) {
             throw ApiException.unprocessable("validation_error", "Policy validation failed", errors);
         }
@@ -377,7 +385,8 @@ public class IdvPolicyService {
                 livenessAttempts,
                 codes,
                 screeningEnabled,
-                screeningOnMatch);
+                screeningOnMatch,
+                enrollmentEnabled);
     }
 
     private static IdentityScreeningEffect screeningEffect(String raw, List<ErrorDetail> errors) {
@@ -494,5 +503,6 @@ public class IdvPolicyService {
             int livenessAttempts,
             Set<String> codes,
             boolean screeningEnabled,
-            IdentityScreeningEffect screeningOnMatch) {}
+            IdentityScreeningEffect screeningOnMatch,
+            boolean enrollmentEnabled) {}
 }

@@ -4,7 +4,6 @@ import com.kyc.dto.auth.EnrollmentResponse;
 import com.kyc.entities.AuditEvent;
 import com.kyc.entities.Enrollment;
 import com.kyc.entities.Integration;
-import com.kyc.entities.Organization;
 import com.kyc.entities.Verification;
 import com.kyc.enums.EnrollmentSource;
 import com.kyc.enums.EnrollmentStatus;
@@ -15,7 +14,6 @@ import com.kyc.ports.FaceCollectionClient;
 import com.kyc.ports.FaceCollectionClient.IndexResult;
 import com.kyc.repositories.AuditEventRepository;
 import com.kyc.repositories.EnrollmentRepository;
-import com.kyc.repositories.OrganizationRepository;
 import com.kyc.web.ApiException;
 import java.time.Instant;
 import java.util.List;
@@ -32,17 +30,17 @@ public class EnrollmentService {
     private static final Logger log = LoggerFactory.getLogger(EnrollmentService.class);
 
     private final EnrollmentRepository enrollments;
-    private final OrganizationRepository organizations;
+    private final IdvPolicyService policies;
     private final FaceCollectionClient faces;
     private final AuditEventRepository auditEvents;
 
     public EnrollmentService(
             EnrollmentRepository enrollments,
-            OrganizationRepository organizations,
+            IdvPolicyService policies,
             FaceCollectionClient faces,
             AuditEventRepository auditEvents) {
         this.enrollments = enrollments;
-        this.organizations = organizations;
+        this.policies = policies;
         this.faces = faces;
         this.auditEvents = auditEvents;
     }
@@ -75,8 +73,7 @@ public class EnrollmentService {
         if (reasons == null || !reasons.contains("liveness_pass") || !reasons.contains("face_match_pass")) {
             return;
         }
-        Organization organization = organizations.findById(verification.getOrganizationId()).orElse(null);
-        if (organization == null || !organization.isEnrollmentEnabled()) {
+        if (!policies.applied(verification.getPolicyId()).enrollmentEnabled()) {
             return;
         }
         String collectionId;

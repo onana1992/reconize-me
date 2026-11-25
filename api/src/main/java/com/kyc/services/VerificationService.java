@@ -136,9 +136,6 @@ public class VerificationService {
             }
         }
         String externalId = blankToNull(request == null ? null : request.externalId());
-        if (externalId != null && verifications.existsByOrganizationIdAndExternalId(organizationId, externalId)) {
-            throw ApiException.conflict("external_id_conflict", "external_id already used in this organization");
-        }
         Map<String, Object> metadata = request == null ? null : request.metadata();
         String metadataJson = validateMetadata(metadata);
         String scenario = integration.isLive() ? null : sandboxScenario(metadata);

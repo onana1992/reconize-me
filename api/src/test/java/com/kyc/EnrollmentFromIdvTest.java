@@ -11,11 +11,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kyc.adapters.InMemoryFaceCollectionClient;
 import com.kyc.entities.ApiKey;
+import com.kyc.entities.IdvPolicy;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
 import com.kyc.entities.StripeCustomer;
 import com.kyc.entities.Verification;
 import com.kyc.enums.EnrollmentStatus;
+import com.kyc.enums.IdentityScreeningEffect;
 import com.kyc.enums.IntegrationMode;
 import com.kyc.enums.ProductCode;
 import com.kyc.enums.VerificationDecision;
@@ -24,6 +26,7 @@ import com.kyc.ports.FaceCollectionClient.SearchResult;
 import com.kyc.ports.MailPort;
 import com.kyc.repositories.ApiKeyRepository;
 import com.kyc.repositories.EnrollmentRepository;
+import com.kyc.repositories.IdvPolicyRepository;
 import com.kyc.repositories.IntegrationRepository;
 import com.kyc.repositories.OrganizationRepository;
 import com.kyc.repositories.StripeCustomerRepository;
@@ -31,6 +34,7 @@ import com.kyc.services.ApiKeyAuthenticator;
 import com.kyc.services.CryptoTokens;
 import com.kyc.services.EnrollmentService;
 import jakarta.servlet.http.Cookie;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -73,6 +77,9 @@ class EnrollmentFromIdvTest {
 
     @Autowired
     private EnrollmentRepository enrollments;
+
+    @Autowired
+    private IdvPolicyRepository policies;
 
     @Autowired
     private EnrollmentService enrollmentService;
@@ -175,6 +182,7 @@ class EnrollmentFromIdvTest {
                 "bio-1",
                 null,
                 Instant.parse("2026-11-22T13:01:00Z"));
+        second.attachPolicy(first.verification().getPolicyId(), first.verification().getPolicyVersion());
         byte[] secondRef = ("second-" + first.orgId()).getBytes(StandardCharsets.UTF_8);
         enrollmentService.afterIdvApproved(
                 second, first.identity(), List.of("liveness_pass", "face_match_pass"), secondRef);
@@ -258,7 +266,6 @@ class EnrollmentFromIdvTest {
         Instant now = Instant.parse("2026-11-22T12:00:00Z");
         UUID orgId = UUID.randomUUID();
         Organization org = new Organization(orgId, "Enroll Org", "enroll-" + orgId, now);
-        org.setEnrollmentEnabled(enrollmentEnabled);
         organizations.save(org);
         Integration identity = integrations.save(new Integration(
                 UUID.randomUUID(), orgId, ProductCode.IDENTITY, IntegrationMode.LIVE, "Production", now));
@@ -281,6 +288,28 @@ class EnrollmentFromIdvTest {
                 "bio-1",
                 null,
                 now);
+        if (enrollmentEnabled) {
+            IdvPolicy policy = policies.save(new IdvPolicy(
+                    UUID.randomUUID(),
+                    orgId,
+                    identity.getId(),
+                    1,
+                    VerificationDecision.DECLINED,
+                    VerificationDecision.DECLINED,
+                    new BigDecimal("0.800"),
+                    new BigDecimal("0.800"),
+                    new BigDecimal("0.700"),
+                    new BigDecimal("0.900"),
+                    3600,
+                    3,
+                    3,
+                    false,
+                    IdentityScreeningEffect.REVIEW,
+                    true,
+                    UUID.randomUUID(),
+                    now));
+            verification.attachPolicy(policy.getId(), policy.getVersion());
+        }
         return new Fixture(orgId, identity, verification);
     }
 

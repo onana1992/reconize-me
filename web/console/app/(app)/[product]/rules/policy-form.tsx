@@ -24,6 +24,7 @@ type Draft = {
   codes: string[];
   screening: boolean;
   onMatch: ScreeningEffect;
+  enrollment: boolean;
 };
 
 export function PolicyForm({
@@ -98,6 +99,9 @@ export function PolicyForm({
       screening: {
         enabled: draft.screening,
         on_match: draft.onMatch,
+      },
+      enrollment: {
+        enabled: draft.enrollment,
       },
     });
     setPending(false);
@@ -202,6 +206,23 @@ export function PolicyForm({
         </section>
 
         <div className="rm-rules-side">
+          <section className="rm-rules-panel">
+            <div className="rm-rules-panel-head">
+              <h2>{t("console.rules.enrollmentTitle")}</h2>
+              <p>{t("console.rules.enrollmentHint")}</p>
+            </div>
+            <label className="rm-rules-doc" data-on={draft.enrollment ? "true" : "false"}>
+              <input
+                type="checkbox"
+                checked={draft.enrollment}
+                disabled={!canWrite}
+                onChange={(event) => setField("enrollment", event.target.checked)}
+              />
+              <span className="rm-rules-doc-mark" aria-hidden="true" />
+              <span>{t("console.rules.enrollmentEnable")}</span>
+            </label>
+          </section>
+
           <section className="rm-rules-panel">
             <div className="rm-rules-panel-head">
               <h2>{t("console.rules.amlTitle")}</h2>
@@ -622,6 +643,7 @@ function draftOf(policy: IdvPolicy): Draft {
     codes: policy.documents.filter((document) => document.enabled).map((document) => document.code),
     screening: policy.screening?.enabled ?? false,
     onMatch: screeningEffect(policy),
+    enrollment: policy.enrollment?.enabled ?? false,
   };
 }
 

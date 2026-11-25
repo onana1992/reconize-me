@@ -40,7 +40,7 @@ public record KycProperties(
             @DefaultValue("80") long identityAmountMinor,
             @DefaultValue("130") long identityScreeningAmountMinor,
             @DefaultValue("50") long amlAmountMinor,
-            @DefaultValue("40") long authenticationAmountMinor) {
+            @DefaultValue("10") long authenticationAmountMinor) {
 
         public static final java.util.List<Long> PACKS = java.util.List.of(5000L, 10000L, 25000L, 50000L);
 

@@ -90,7 +90,12 @@ export default async function ProductIntegrationsPage({
 }
 
 function liveUnlockedFor(productId: string, me: Me): boolean {
-  const price = productId === "aml" ? me.aml_amount_minor : me.identity_amount_minor;
+  const price =
+    productId === "aml"
+      ? me.aml_amount_minor
+      : productId === "authentication"
+        ? me.authentication_amount_minor
+        : me.identity_amount_minor;
   if (price == null) {
     return Boolean(me.live_unlocked);
   }
