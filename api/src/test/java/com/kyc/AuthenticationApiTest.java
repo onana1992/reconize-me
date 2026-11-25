@@ -12,7 +12,6 @@ import com.kyc.entities.CreditAccount;
 import com.kyc.entities.Enrollment;
 import com.kyc.entities.Integration;
 import com.kyc.entities.Organization;
-import com.kyc.enums.AuthenticationStatus;
 import com.kyc.enums.AuthOnBorderline;
 import com.kyc.enums.EnrollmentSource;
 import com.kyc.enums.IntegrationMode;
@@ -202,32 +201,14 @@ class AuthenticationApiTest {
     }
 
     @Test
-    void reviewAppendsAnalystReasonWithoutChangingScore() throws Exception {
+    void reviewIsNotAvailable() throws Exception {
         Fixture fixture = seed(true, 5000);
         String id = createSession(fixture, "idem-review-01");
-        var session = authentications.findById(UUID.fromString(id)).orElseThrow();
-        session.applyDecision(
-                AuthenticationStatus.REVIEW,
-                "[\"face_match_borderline\"]",
-                new BigDecimal("0.850"),
-                null,
-                Instant.parse("2026-11-22T18:05:00Z"));
-        authentications.saveAndFlush(session);
 
         mockMvc.perform(post("/v1/authentications/" + id + "/review")
                         .header("Authorization", "Bearer " + fixture.authKey())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"decision\":\"approved\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("approved"))
-                .andExpect(jsonPath("$.match_score").value(0.85))
-                .andExpect(jsonPath("$.reasons[0]").value("face_match_borderline"))
-                .andExpect(jsonPath("$.reasons[1]").value("analyst_approved"));
-
-        mockMvc.perform(post("/v1/authentications/" + id + "/review")
-                        .header("Authorization", "Bearer " + fixture.authKey())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"decision\":\"declined\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("invalid_status"));
     }

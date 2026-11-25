@@ -94,9 +94,9 @@ public class AuthPolicyService {
                     "Capture attempts must be 1, 2 or 3",
                     List.of(new ErrorDetail("max_capture_attempts", "invalid")));
         }
-        if (onBorderline == null) {
+        if (onBorderline != AuthOnBorderline.DECLINE) {
             throw ApiException.validation(
-                    "on_borderline is required", List.of(new ErrorDetail("on_borderline", "invalid")));
+                    "Authentication has no review", List.of(new ErrorDetail("on_borderline", "invalid")));
         }
         int next = policies.findByIntegrationIdOrderByVersionDesc(integration.getId()).stream()
                 .mapToInt(AuthenticationPolicyEntity::getVersion)

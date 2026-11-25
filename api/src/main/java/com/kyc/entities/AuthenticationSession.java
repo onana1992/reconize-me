@@ -116,6 +116,7 @@ public class AuthenticationSession {
     public boolean terminal() {
         return status == AuthenticationStatus.APPROVED
                 || status == AuthenticationStatus.DECLINED
+                || status == AuthenticationStatus.REVIEW
                 || status == AuthenticationStatus.FAILED
                 || status == AuthenticationStatus.EXPIRED
                 || status == AuthenticationStatus.CANCELLED;

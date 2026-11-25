@@ -460,13 +460,10 @@ function authClosing(
   if (status === "approved") {
     return { tone: "success", title: "authOutcome.done", lead: "authOutcome.doneLead" };
   }
-  if (status === "review") {
-    return { tone: "neutral", icon: <ShieldIcon size={30} />, title: "authOutcome.review", lead: "authOutcome.reviewLead" };
-  }
   if (status === "declined" && (refused || reason === "consent_refused" || reason === "consent_declined")) {
     return { tone: "neutral", icon: <ShieldIcon size={30} />, title: "authOutcome.refused", lead: "authOutcome.refusedLead" };
   }
-  if (status === "declined") {
+  if (status === "declined" || status === "review") {
     return { tone: "neutral", icon: <FaceIcon size={30} />, title: "authOutcome.declined", lead: "authOutcome.declinedLead" };
   }
   if (status === "failed") {

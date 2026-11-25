@@ -57,7 +57,6 @@ export const AUTHENTICATION_STATUSES = [
   "processing",
   "approved",
   "declined",
-  "review",
   "failed",
   "expired",
   "cancelled",

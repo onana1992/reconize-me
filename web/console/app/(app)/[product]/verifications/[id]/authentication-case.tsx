@@ -6,7 +6,7 @@ import { CopyButton } from "../../../../../components/copy-button";
 import { getLocale, getT } from "../../../../../i18n";
 import { consoleApi, type AuthenticationSession } from "../../../../../lib/api";
 import { tIntegrationMode } from "../../../../../lib/environment";
-import { requireMe, sessionCookieHeader } from "../../../../../lib/session";
+import { sessionCookieHeader } from "../../../../../lib/session";
 import {
   authenticationTone,
   formatUtc,
@@ -14,8 +14,6 @@ import {
   tAuthenticationStatus,
   tSignalOutcome,
 } from "../../../../../lib/status";
-import { AuthenticationReview } from "./authentication-review";
-
 type Translate = Awaited<ReturnType<typeof getT>>;
 type VerdictTone = "success" | "danger" | "warning" | "info" | "neutral";
 type CheckOutcome = "pass" | "fail" | "unavailable" | "review";
@@ -41,8 +39,7 @@ const FOLDED_REASONS = new Set([
 
 export async function AuthenticationCase({ id }: { id: string }) {
   const cookie = await sessionCookieHeader();
-  const [me, t, locale, result] = await Promise.all([
-    requireMe(),
+  const [t, locale, result] = await Promise.all([
     getT(),
     getLocale(),
     consoleApi<AuthenticationSession>(`/v1/console/authentications/${encodeURIComponent(id)}`, cookie),
@@ -51,7 +48,6 @@ export async function AuthenticationCase({ id }: { id: string }) {
     notFound();
   }
   const session = result.data;
-  const canReview = me.permissions.includes("VERIFICATION_WRITE") && session.status === "review";
   const mode = session.integration_mode ? tIntegrationMode(t, session.integration_mode) : null;
   const title = session.external_id?.trim() || t("console.authentications.untitled");
   const verdict = verdictFor(t, session.status);
@@ -75,7 +71,7 @@ export async function AuthenticationCase({ id }: { id: string }) {
   ].filter((row) => row.value);
   const duration = session.decided_at ? formatDuration(session.created_at, session.decided_at, t) : "—";
   const linkState = linkStateLabel(session.hosted_url, session.expires_at, t);
-  const hasActions = Boolean(session.hosted_url) || canReview;
+  const hasActions = Boolean(session.hosted_url);
 
   return (
     <main className="rm-idv rm-vcase">
@@ -104,7 +100,6 @@ export async function AuthenticationCase({ id }: { id: string }) {
                   <CopyButton value={session.hosted_url} label={t("console.authentications.copyLink")} />
                 </>
               ) : null}
-              {canReview ? <AuthenticationReview id={session.id} /> : null}
             </div>
           </div>
         ) : null}
@@ -254,9 +249,9 @@ function verdictFor(t: Translate, status: string) {
   }
   if (status === "review") {
     return {
-      tone: "warning" as const,
-      title: t("console.authentications.verdictReview"),
-      lead: t("console.authentications.verdictReviewLead"),
+      tone: "danger" as const,
+      title: t("console.authentications.verdictDeclined"),
+      lead: t("console.authentications.verdictDeclinedLead"),
     };
   }
   if (status === "recapture_requested") {
@@ -429,14 +424,12 @@ function decidedStatus(status: string): boolean {
 
 function faceOutcome(status: string): CheckOutcome {
   if (status === "approved") return "pass";
-  if (status === "review") return "review";
   return "fail";
 }
 
 function unknownOutcome(status: string): CheckOutcome {
   if (status === "approved") return "pass";
-  if (status === "declined" || status === "failed") return "fail";
-  if (status === "review") return "review";
+  if (status === "declined" || status === "failed" || status === "review") return "fail";
   return "unavailable";
 }
 
