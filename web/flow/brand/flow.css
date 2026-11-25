@@ -819,6 +819,7 @@ body {
 .rm-liveness-stage-frame {
   width: min(100%, 44rem);
   height: min(100%, 38rem);
+  overflow: auto;
 }
 
 .rm-liveness-stage-frame .liveness-detector {

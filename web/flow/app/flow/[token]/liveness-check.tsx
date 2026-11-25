@@ -128,8 +128,7 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-/** La caméra avant vient d'être relâchée par la photo du document. On la laisse exposer avant les couleurs. */
-const CAMERA_SETTLE_MS = 1500;
+/** Délai après avoir relâché le sondage, pour que le détecteur puisse rouvrir la caméra. */
 const CAMERA_RELEASE_MS = 400;
 
 async function claimFrontCamera(): Promise<string | null> {
@@ -156,48 +155,6 @@ async function claimFrontCamera(): Promise<string | null> {
     }
   }
   return null;
-}
-
-async function openFrontCamera(deviceId: string | null): Promise<MediaStream> {
-  if (deviceId) {
-    try {
-      return await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { deviceId: { exact: deviceId } },
-      });
-    } catch {
-      // L'identifiant du premier sondage n'est plus utilisable.
-    }
-  }
-  return navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: { facingMode: { ideal: "user" } },
-  });
-}
-
-function settleCamera(stream: MediaStream): Promise<void> {
-  return new Promise((resolve) => {
-    const video = document.createElement("video");
-    video.muted = true;
-    video.playsInline = true;
-    video.srcObject = stream;
-    let finished = false;
-    const finish = () => {
-      if (finished) {
-        return;
-      }
-      finished = true;
-      video.pause();
-      video.srcObject = null;
-      resolve();
-    };
-    const started = performance.now();
-    video.onloadeddata = () => {
-      window.setTimeout(finish, Math.max(0, CAMERA_SETTLE_MS - (performance.now() - started)));
-    };
-    void video.play().catch(() => window.setTimeout(finish, CAMERA_SETTLE_MS));
-    window.setTimeout(finish, CAMERA_SETTLE_MS + 1000);
-  });
 }
 
 function livenessFailure(state: string): MessageKey {
@@ -374,39 +331,17 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
     setBelow(false);
     setArmed(false);
     setPhase("running");
-    let stream: MediaStream | null = null;
     try {
-      const session = open(true);
-      stream = await openFrontCamera(frontDeviceId);
-      const track = stream.getVideoTracks()[0];
-      const facing = track?.getSettings().facingMode;
-      if (!track || facing === "environment") {
-        setFailure("livenessUi.cameraNotFoundMessageText");
-        setPhase("intro");
-        return;
-      }
-      const deviceId = track.getSettings().deviceId || frontDeviceId;
-      if (!deviceId) {
-        setFailure("livenessUi.cameraNotFoundMessageText");
-        setPhase("intro");
-        return;
-      }
-      await settleCamera(stream);
-      const ready = await session;
+      const ready = await open(true);
       if (!ready) {
         setPhase("intro");
         return;
       }
-      setFrontDeviceId(deviceId);
-      stream.getTracks().forEach((item) => item.stop());
-      stream = null;
-      await wait(CAMERA_RELEASE_MS);
       setArmed(true);
     } catch {
       setFailure("livenessUi.cameraNotFoundMessageText");
       setPhase("intro");
     } finally {
-      stream?.getTracks().forEach((item) => item.stop());
       starting.current = false;
     }
   }
@@ -450,7 +385,6 @@ export default function LivenessCheck({ token, onDone }: { token: string; onDone
               key={opened.session_id}
               sessionId={opened.session_id}
               region={opened.region}
-              disableStartScreen
               displayText={displayText}
               components={components}
               onAnalysisComplete={async () => {
